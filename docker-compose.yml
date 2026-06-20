@@ -1,0 +1,22 @@
+# PSOVA — runs the Next.js app as a container on the Nginx Proxy Manager
+# network so NPM can reverse-proxy psova.polytronx.com -> http://psova:3000.
+# No host ports are published (NPM reaches the container over the shared
+# Docker network), so this cannot collide with any existing service.
+
+services:
+  psova:
+    build: .
+    image: psova:latest
+    container_name: psova
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    networks:
+      - npm
+
+networks:
+  npm:
+    external: true
+    name: nginx-proxy-manager_default
