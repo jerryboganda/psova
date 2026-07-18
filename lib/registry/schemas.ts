@@ -254,6 +254,7 @@ export const adminRecordsQuerySchema = z.object({
   to: z.string().max(40).optional(),
   q: z.string().max(120).optional(),
   qType: z.enum(['cnic', 'phone', 'code']).optional(),
+  order: z.enum(['asc', 'desc']).optional(), // queue uses 'asc' (oldest first)
   page: z.coerce.number().int().min(1).default(1),
 });
 export type AdminRecordsQuery = z.infer<typeof adminRecordsQuerySchema>;

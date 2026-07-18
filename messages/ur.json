@@ -820,5 +820,120 @@
     },
     "given": "دی گئی",
     "notGiven": "نہیں دی گئی"
+  },
+  "RegistryAdmin": {
+    "nav": {
+      "overview": "مجموعی جائزہ",
+      "queue": "قطار",
+      "records": "ریکارڈز",
+      "clinicians": "معالجین",
+      "audit": "آڈٹ"
+    },
+    "overview": {
+      "title": "مجموعی جائزہ",
+      "pending": "زیرِ جائزہ",
+      "verified": "تصدیق شدہ",
+      "rejected": "مسترد",
+      "cliniciansPending": "منظوری کے منتظر معالجین",
+      "recent": "حالیہ درخواستیں",
+      "viewAll": "سب دیکھیں"
+    },
+    "queue": {
+      "title": "تصدیقی قطار",
+      "lede": "زیرِ التوا ریکارڈز، پرانے پہلے۔",
+      "empty": "قطار خالی ہے۔"
+    },
+    "records": {
+      "title": "تمام ریکارڈز",
+      "filters": "فلٹرز",
+      "search": "تلاش",
+      "searchPlaceholder": "مکمل قدر…",
+      "anyStatus": "کوئی بھی صورتحال",
+      "anyProvince": "کوئی بھی صوبہ",
+      "anyCondition": "کوئی بھی کیفیت",
+      "anySource": "کوئی بھی ماخذ",
+      "dupOnly": "صرف ممکنہ نقول",
+      "apply": "لاگو کریں",
+      "clear": "صاف کریں",
+      "searchType": {
+        "code": "ٹریکنگ کوڈ",
+        "cnic": "شناختی کارڈ",
+        "phone": "فون"
+      }
+    },
+    "table": {
+      "code": "کوڈ",
+      "status": "صورتحال",
+      "source": "ماخذ",
+      "province": "صوبہ",
+      "district": "ضلع",
+      "condition": "کیفیت",
+      "gender": "جنس",
+      "birthYear": "سالِ پیدائش",
+      "date": "جمع کرایا",
+      "dup": "نقل؟"
+    },
+    "record": {
+      "back": "ریکارڈز پر واپس",
+      "duplicateBanner": "ممکنہ نقل ریکارڈز",
+      "duplicateOf": "اس کی نقل قرار دیا",
+      "open": "کھولیں",
+      "actions": "اقدامات",
+      "verify": "تصدیق کریں",
+      "reject": "مسترد کریں",
+      "markDuplicate": "نقل قرار دیں",
+      "edit": "طبی خانے ترمیم کریں",
+      "rejectTitle": "ریکارڈ مسترد کریں",
+      "publicReason": "عوامی وجہ (درخواست دہندہ کو دکھائی جائے گی)",
+      "internalNote": "اندرونی نوٹ (اختیاری)",
+      "duplicateTitle": "نقل قرار دیں",
+      "canonicalCode": "اصل ریکارڈ آئی ڈی یا ٹریکنگ کوڈ",
+      "updateTitle": "طبی خانے ترمیم کریں",
+      "confirm": "تصدیق",
+      "cancel": "منسوخ",
+      "done": "مکمل۔",
+      "error": "اقدام ناکام۔ براہِ کرم دوبارہ کوشش کریں۔"
+    },
+    "clinicians": {
+      "title": "معالجین کی منظوری",
+      "empty": "ابھی کوئی معالج رجسٹریشن نہیں۔",
+      "approve": "منظور کریں",
+      "reject": "مسترد کریں",
+      "filterAll": "سب",
+      "filterPending": "زیرِ التوا",
+      "filterApproved": "منظور شدہ",
+      "name": "نام",
+      "email": "ای میل",
+      "pmc": "PMC نمبر",
+      "specialty": "تخصص",
+      "facility": "ادارہ",
+      "city": "شہر",
+      "province": "صوبہ",
+      "date": "رجسٹرڈ",
+      "status": "صورتحال",
+      "approved": "منظور شدہ",
+      "pending": "زیرِ التوا",
+      "confirmApproveTitle": "معالج منظور کریں",
+      "confirmApproveBody": "یہ معالج کیس جمع کروا سکے گا۔",
+      "confirmRejectTitle": "معالج مسترد کریں",
+      "confirmRejectBody": "اس سے معالج کا اکاؤنٹ مستقل طور پر حذف ہو جائے گا۔"
+    },
+    "audit": {
+      "title": "آڈٹ لاگ",
+      "time": "وقت",
+      "actor": "کارندہ",
+      "role": "کردار",
+      "action": "عمل",
+      "entity": "ادارہ",
+      "entityId": "ادارہ آئی ڈی",
+      "ip": "IP"
+    },
+    "export": {
+      "button": "CSV برآمد",
+      "confirmTitle": "ریکارڈز برآمد کریں",
+      "confirmBody": "یہ میڈیکل بورڈ کے لیے ڈی کرپٹ شدہ ریکارڈز برآمد کرتا ہے۔ برآمدگی آڈٹ میں درج ہوتی ہے۔",
+      "confirm": "CSV ڈاؤن لوڈ",
+      "cancel": "منسوخ"
+    }
   }
 }

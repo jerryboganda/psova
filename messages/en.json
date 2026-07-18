@@ -820,5 +820,120 @@
     },
     "given": "Given",
     "notGiven": "Not given"
+  },
+  "RegistryAdmin": {
+    "nav": {
+      "overview": "Overview",
+      "queue": "Queue",
+      "records": "Records",
+      "clinicians": "Clinicians",
+      "audit": "Audit"
+    },
+    "overview": {
+      "title": "Overview",
+      "pending": "Pending review",
+      "verified": "Verified",
+      "rejected": "Rejected",
+      "cliniciansPending": "Clinicians awaiting approval",
+      "recent": "Recent submissions",
+      "viewAll": "View all"
+    },
+    "queue": {
+      "title": "Verification queue",
+      "lede": "Pending records, oldest first.",
+      "empty": "The queue is empty."
+    },
+    "records": {
+      "title": "All records",
+      "filters": "Filters",
+      "search": "Search",
+      "searchPlaceholder": "Exact value…",
+      "anyStatus": "Any status",
+      "anyProvince": "Any province",
+      "anyCondition": "Any condition",
+      "anySource": "Any source",
+      "dupOnly": "Possible duplicates only",
+      "apply": "Apply",
+      "clear": "Clear",
+      "searchType": {
+        "code": "Tracking code",
+        "cnic": "CNIC",
+        "phone": "Phone"
+      }
+    },
+    "table": {
+      "code": "Code",
+      "status": "Status",
+      "source": "Source",
+      "province": "Province",
+      "district": "District",
+      "condition": "Condition",
+      "gender": "Gender",
+      "birthYear": "Birth year",
+      "date": "Submitted",
+      "dup": "Dup?"
+    },
+    "record": {
+      "back": "Back to records",
+      "duplicateBanner": "Possible duplicate records",
+      "duplicateOf": "Marked duplicate of",
+      "open": "Open",
+      "actions": "Actions",
+      "verify": "Verify",
+      "reject": "Reject",
+      "markDuplicate": "Mark duplicate",
+      "edit": "Edit clinical fields",
+      "rejectTitle": "Reject record",
+      "publicReason": "Public reason (shown to the enrollee)",
+      "internalNote": "Internal note (optional)",
+      "duplicateTitle": "Mark as duplicate",
+      "canonicalCode": "Canonical record ID or tracking code",
+      "updateTitle": "Edit clinical fields",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "done": "Done.",
+      "error": "Action failed. Please try again."
+    },
+    "clinicians": {
+      "title": "Clinician approvals",
+      "empty": "No clinician registrations yet.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "filterAll": "All",
+      "filterPending": "Pending",
+      "filterApproved": "Approved",
+      "name": "Name",
+      "email": "Email",
+      "pmc": "PMC no.",
+      "specialty": "Specialty",
+      "facility": "Facility",
+      "city": "City",
+      "province": "Province",
+      "date": "Registered",
+      "status": "Status",
+      "approved": "Approved",
+      "pending": "Pending",
+      "confirmApproveTitle": "Approve clinician",
+      "confirmApproveBody": "This clinician will be able to submit cases.",
+      "confirmRejectTitle": "Reject clinician",
+      "confirmRejectBody": "This permanently deletes the clinician account."
+    },
+    "audit": {
+      "title": "Audit log",
+      "time": "Time",
+      "actor": "Actor",
+      "role": "Role",
+      "action": "Action",
+      "entity": "Entity",
+      "entityId": "Entity ID",
+      "ip": "IP"
+    },
+    "export": {
+      "button": "Export CSV",
+      "confirmTitle": "Export records",
+      "confirmBody": "This exports decrypted records for the medical board. The export is audit-logged.",
+      "confirm": "Download CSV",
+      "cancel": "Cancel"
+    }
   }
 }

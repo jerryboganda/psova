@@ -2,8 +2,9 @@ import { headers } from 'next/headers';
 import { setRequestLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
 import { getSession } from '@/lib/registry/guards';
+import { AdminNav } from '@/components/registry/AdminNav';
 
-// Reads session/DB — never static. The AdminNav sidebar is added in P5.
+// Reads session/DB — never static.
 export const dynamic = 'force-dynamic';
 
 export default async function AdminLayout({
@@ -22,5 +23,10 @@ export default async function AdminLayout({
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <div className="pt-24 md:pt-28">
+      <AdminNav />
+      {children}
+    </div>
+  );
 }

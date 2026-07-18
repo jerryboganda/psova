@@ -15,8 +15,20 @@ import { deriveDobParts } from './normalize';
 import { generateUniqueTrackingCode, normalizeTrackingCode } from './codes';
 import { writeAudit } from './audit';
 import { AuditAction, type ActorRole } from './constants';
-import { sendEnrollmentConfirmation } from './mailer';
-import type { CaseInput, CasesQuery, EnrollInput, StatusInput } from './schemas';
+import { sendEnrollmentConfirmation, sendClinicianApproval } from './mailer';
+import { RegistryApiError } from './guards';
+import type {
+  CaseInput,
+  CasesQuery,
+  EnrollInput,
+  StatusInput,
+  AdminRecordsQuery,
+  AdminCliniciansQuery,
+  AdminAuditQuery,
+  AdminExportQuery,
+  AdminActionInput,
+  ClinicianActionInput,
+} from './schemas';
 
 /** First whitespace-delimited token of a decrypted full name (public/status use). */
 export function firstToken(name: string): string {
@@ -501,4 +513,517 @@ export async function getDecryptedRecord(
   });
 
   return mapDecrypted(rec);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Admin: record listing (metadata only — NO decryption)                     */
+/* -------------------------------------------------------------------------- */
+
+export type AdminRecordRow = {
+  id: string;
+  trackingCode: string;
+  status: string;
+  source: string;
+  province: string;
+  district: string;
+  gender: string;
+  birthYear: number;
+  conditionSlug: string;
+  possibleDuplicate: boolean;
+  createdAt: string;
+};
+
+function buildRecordWhere(query: {
+  status?: string;
+  province?: string;
+  conditionSlug?: string;
+  source?: string;
+  possibleDuplicate?: 'true' | 'false';
+  from?: string;
+  to?: string;
+  q?: string;
+  qType?: 'cnic' | 'phone' | 'code';
+}): Prisma.RegistryPatientWhereInput {
+  const where: Prisma.RegistryPatientWhereInput = {};
+  if (query.status) where.status = query.status as Prisma.RegistryPatientWhereInput['status'];
+  if (query.province) where.province = query.province as Prisma.RegistryPatientWhereInput['province'];
+  if (query.source) where.source = query.source as Prisma.RegistryPatientWhereInput['source'];
+  if (query.possibleDuplicate) where.possibleDuplicate = query.possibleDuplicate === 'true';
+  if (query.conditionSlug) where.diagnoses = { some: { conditionSlug: query.conditionSlug } };
+  if (query.from || query.to) {
+    where.createdAt = {
+      ...(query.from ? { gte: new Date(query.from) } : {}),
+      ...(query.to ? { lte: new Date(`${query.to}T23:59:59.999Z`) } : {}),
+    };
+  }
+  if (query.q && query.qType) {
+    if (query.qType === 'code') where.trackingCode = normalizeTrackingCode(query.q);
+    else if (query.qType === 'cnic') where.cnicHash = blindIndex(query.q, 'cnic');
+    else if (query.qType === 'phone') where.phoneHash = blindIndex(query.q, 'phone');
+  }
+  return where;
+}
+
+export async function listRecords(
+  query: AdminRecordsQuery,
+): Promise<{ items: AdminRecordRow[]; page: number; pageSize: number; total: number }> {
+  const where = buildRecordWhere(query);
+  const [rows, total] = await Promise.all([
+    prisma.registryPatient.findMany({
+      where,
+      orderBy: { createdAt: query.order === 'asc' ? 'asc' : 'desc' },
+      skip: (query.page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      select: {
+        id: true,
+        trackingCode: true,
+        status: true,
+        source: true,
+        province: true,
+        district: true,
+        gender: true,
+        birthYear: true,
+        possibleDuplicate: true,
+        createdAt: true,
+        diagnoses: { select: { conditionSlug: true }, take: 1 },
+      },
+    }),
+    prisma.registryPatient.count({ where }),
+  ]);
+  return {
+    items: rows.map((r) => ({
+      id: r.id,
+      trackingCode: r.trackingCode,
+      status: r.status,
+      source: r.source,
+      province: r.province,
+      district: r.district,
+      gender: r.gender,
+      birthYear: r.birthYear,
+      conditionSlug: r.diagnoses[0]?.conditionSlug ?? 'not-sure',
+      possibleDuplicate: r.possibleDuplicate,
+      createdAt: r.createdAt.toISOString(),
+    })),
+    page: query.page,
+    pageSize: PAGE_SIZE,
+    total,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Admin: full decrypted record detail + duplicate candidates                */
+/* -------------------------------------------------------------------------- */
+
+export type DuplicateCandidate = { id: string; trackingCode: string; status: string };
+
+export async function getAdminRecordDetail(
+  id: string,
+  ctx: { actorId: string; ip: string | null },
+): Promise<{ record: DecryptedRecord; duplicates: DuplicateCandidate[] } | null> {
+  const rec = await prisma.registryPatient.findUnique({
+    where: { id },
+    include: {
+      diagnoses: { include: { treatments: true } },
+      clinician: { include: { user: { select: { name: true, email: true } } } },
+    },
+  });
+  if (!rec) return null;
+
+  await writeAudit({
+    actorId: ctx.actorId,
+    actorRole: 'admin',
+    action: AuditAction.RECORD_VIEW_PII,
+    entity: 'RegistryPatient',
+    entityId: rec.id,
+    ip: ctx.ip,
+  });
+
+  const duplicates = await prisma.registryPatient.findMany({
+    where: {
+      id: { not: id },
+      OR: [{ cnicHash: rec.cnicHash }, { phoneHash: rec.phoneHash }],
+    },
+    select: { id: true, trackingCode: true, status: true },
+    take: 10,
+  });
+
+  return { record: mapDecrypted(rec), duplicates };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Admin: status transitions & non-PII updates                               */
+/* -------------------------------------------------------------------------- */
+
+function assertTransition(from: string, to: 'VERIFIED' | 'REJECTED' | 'DUPLICATE') {
+  const allowed: Record<string, string[]> = {
+    VERIFIED: ['PENDING', 'REJECTED'],
+    REJECTED: ['PENDING', 'VERIFIED'],
+    DUPLICATE: ['PENDING'],
+  };
+  if (!allowed[to].includes(from)) {
+    throw new RegistryApiError(409, 'invalid-transition');
+  }
+}
+
+export async function applyAdminAction(
+  id: string,
+  action: AdminActionInput,
+  ctx: { adminId: string; ip: string | null },
+): Promise<{ status: string }> {
+  const current = await prisma.registryPatient.findUnique({
+    where: { id },
+    select: { id: true, status: true, diagnoses: { select: { id: true }, take: 1 } },
+  });
+  if (!current) throw new RegistryApiError(404, 'not-found');
+
+  switch (action.action) {
+    case 'VERIFY': {
+      assertTransition(current.status, 'VERIFIED');
+      await prisma.registryPatient.update({
+        where: { id },
+        data: { status: 'VERIFIED', verifiedAt: new Date(), verifiedById: ctx.adminId },
+      });
+      await writeAudit({
+        actorId: ctx.adminId,
+        actorRole: 'admin',
+        action: AuditAction.RECORD_VERIFY,
+        entity: 'RegistryPatient',
+        entityId: id,
+        meta: { from: current.status },
+        ip: ctx.ip,
+      });
+      return { status: 'VERIFIED' };
+    }
+    case 'REJECT': {
+      assertTransition(current.status, 'REJECTED');
+      await prisma.registryPatient.update({
+        where: { id },
+        data: {
+          status: 'REJECTED',
+          publicReason: action.publicReason,
+          internalNote: action.internalNote ?? null,
+        },
+      });
+      await writeAudit({
+        actorId: ctx.adminId,
+        actorRole: 'admin',
+        action: AuditAction.RECORD_REJECT,
+        entity: 'RegistryPatient',
+        entityId: id,
+        meta: { from: current.status },
+        ip: ctx.ip,
+      });
+      return { status: 'REJECTED' };
+    }
+    case 'DUPLICATE': {
+      assertTransition(current.status, 'DUPLICATE');
+      if (action.canonicalId === id) throw new RegistryApiError(409, 'conflict');
+      const canonical = await prisma.registryPatient.findUnique({
+        where: { id: action.canonicalId },
+        select: { id: true, status: true },
+      });
+      if (!canonical || canonical.status === 'DUPLICATE') {
+        throw new RegistryApiError(409, 'conflict');
+      }
+      await prisma.registryPatient.update({
+        where: { id },
+        data: { status: 'DUPLICATE', duplicateOfId: action.canonicalId },
+      });
+      await writeAudit({
+        actorId: ctx.adminId,
+        actorRole: 'admin',
+        action: AuditAction.RECORD_DUPLICATE,
+        entity: 'RegistryPatient',
+        entityId: id,
+        meta: { from: current.status, canonicalId: action.canonicalId },
+        ip: ctx.ip,
+      });
+      return { status: 'DUPLICATE' };
+    }
+    case 'UPDATE': {
+      const diagnosisId = current.diagnoses[0]?.id;
+      if (diagnosisId) {
+        await prisma.registryDiagnosis.update({
+          where: { id: diagnosisId },
+          data: {
+            ...(action.issvaCategory ? { issvaCategory: action.issvaCategory } : {}),
+            ...(action.severity ? { severity: action.severity } : {}),
+            ...(action.basis ? { basis: action.basis } : {}),
+            ...(action.conditionSlug ? { conditionSlug: action.conditionSlug } : {}),
+            ...(action.bodySite ? { bodySite: action.bodySite } : {}),
+            ...(action.onset ? { onset: action.onset } : {}),
+          },
+        });
+      }
+      if (action.internalNote !== undefined) {
+        await prisma.registryPatient.update({
+          where: { id },
+          data: { internalNote: action.internalNote },
+        });
+      }
+      await writeAudit({
+        actorId: ctx.adminId,
+        actorRole: 'admin',
+        action: AuditAction.RECORD_UPDATE,
+        entity: 'RegistryPatient',
+        entityId: id,
+        meta: { fields: Object.keys(action).filter((k) => k !== 'action') },
+        ip: ctx.ip,
+      });
+      return { status: current.status };
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Admin: clinician approvals                                                */
+/* -------------------------------------------------------------------------- */
+
+export type ClinicianRow = {
+  id: string;
+  name: string;
+  email: string;
+  pmcNumber: string;
+  specialty: string;
+  facility: string;
+  city: string;
+  province: string;
+  approved: boolean;
+  createdAt: string;
+};
+
+export async function listClinicians(
+  query: AdminCliniciansQuery,
+): Promise<{ items: ClinicianRow[]; page: number; pageSize: number; total: number }> {
+  const where: Prisma.ClinicianProfileWhereInput = {};
+  if (query.approved) where.approved = query.approved === 'true';
+
+  const [rows, total] = await Promise.all([
+    prisma.clinicianProfile.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (query.page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: { user: { select: { name: true, email: true } } },
+    }),
+    prisma.clinicianProfile.count({ where }),
+  ]);
+
+  return {
+    items: rows.map((r) => ({
+      id: r.id,
+      name: r.user.name,
+      email: r.user.email,
+      pmcNumber: decryptField(r.pmcNumber),
+      specialty: r.specialty,
+      facility: r.facility,
+      city: r.city,
+      province: r.province,
+      approved: r.approved,
+      createdAt: r.createdAt.toISOString(),
+    })),
+    page: query.page,
+    pageSize: PAGE_SIZE,
+    total,
+  };
+}
+
+export async function setClinicianApproval(
+  id: string,
+  action: ClinicianActionInput,
+  ctx: { adminId: string; ip: string | null },
+): Promise<void> {
+  const profile = await prisma.clinicianProfile.findUnique({
+    where: { id },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  });
+  if (!profile) throw new RegistryApiError(404, 'not-found');
+
+  if (action.action === 'APPROVE') {
+    await prisma.clinicianProfile.update({
+      where: { id },
+      data: { approved: true, approvedAt: new Date(), approvedById: ctx.adminId },
+    });
+    await writeAudit({
+      actorId: ctx.adminId,
+      actorRole: 'admin',
+      action: AuditAction.CLINICIAN_APPROVE,
+      entity: 'ClinicianProfile',
+      entityId: id,
+      meta: { province: profile.province },
+      ip: ctx.ip,
+    });
+    void sendClinicianApproval(profile.user.email, profile.user.name);
+  } else {
+    // Reject: remove the user account (cascade deletes profile + sessions).
+    await prisma.user.delete({ where: { id: profile.user.id } });
+    await writeAudit({
+      actorId: ctx.adminId,
+      actorRole: 'admin',
+      action: AuditAction.CLINICIAN_REJECT,
+      entity: 'ClinicianProfile',
+      entityId: id,
+      meta: { province: profile.province },
+      ip: ctx.ip,
+    });
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Admin: audit log listing                                                  */
+/* -------------------------------------------------------------------------- */
+
+export type AuditRow = {
+  id: string;
+  createdAt: string;
+  actorName: string | null;
+  actorEmail: string | null;
+  actorRole: string | null;
+  action: string;
+  entity: string;
+  entityId: string | null;
+  ip: string | null;
+};
+
+const AUDIT_PAGE_SIZE = 50;
+
+export async function listAudit(
+  query: AdminAuditQuery,
+): Promise<{ items: AuditRow[]; page: number; pageSize: number; total: number }> {
+  const where: Prisma.AuditLogWhereInput = {};
+  if (query.actorId) where.actorId = query.actorId;
+  if (query.action) where.action = query.action;
+  if (query.from || query.to) {
+    where.createdAt = {
+      ...(query.from ? { gte: new Date(query.from) } : {}),
+      ...(query.to ? { lte: new Date(`${query.to}T23:59:59.999Z`) } : {}),
+    };
+  }
+
+  const [rows, total] = await Promise.all([
+    prisma.auditLog.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (query.page - 1) * AUDIT_PAGE_SIZE,
+      take: AUDIT_PAGE_SIZE,
+      include: { actor: { select: { name: true, email: true } } },
+    }),
+    prisma.auditLog.count({ where }),
+  ]);
+
+  return {
+    items: rows.map((r) => ({
+      id: r.id,
+      createdAt: r.createdAt.toISOString(),
+      actorName: r.actor?.name ?? null,
+      actorEmail: r.actor?.email ?? null,
+      actorRole: r.actorRole,
+      action: r.action,
+      entity: r.entity,
+      entityId: r.entityId,
+      ip: r.ip,
+    })),
+    page: query.page,
+    pageSize: AUDIT_PAGE_SIZE,
+    total,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Admin: overview counts                                                    */
+/* -------------------------------------------------------------------------- */
+
+export async function getAdminOverview(): Promise<{
+  pending: number;
+  verified: number;
+  rejected: number;
+  cliniciansPending: number;
+}> {
+  const [pending, verified, rejected, cliniciansPending] = await Promise.all([
+    prisma.registryPatient.count({ where: { status: 'PENDING' } }),
+    prisma.registryPatient.count({ where: { status: 'VERIFIED' } }),
+    prisma.registryPatient.count({ where: { status: 'REJECTED' } }),
+    prisma.clinicianProfile.count({ where: { approved: false } }),
+  ]);
+  return { pending, verified, rejected, cliniciansPending };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Admin: CSV export (streamed, decrypted row-by-row)                        */
+/* -------------------------------------------------------------------------- */
+
+const EXPORT_COLUMNS = [
+  'trackingCode', 'status', 'source', 'fullName', 'guardianName', 'cnic', 'phone',
+  'altPhone', 'email', 'province', 'district', 'address', 'dob', 'gender', 'isMinor',
+  'conditionSlug', 'issvaCategory', 'bodySite', 'onset', 'severity', 'basis', 'facility',
+  'treatments', 'consentRegistry', 'consentContact', 'consentResearch', 'consentGuardian',
+  'clinicianName', 'clinicianFacility', 'createdAt', 'verifiedAt',
+] as const;
+
+function csvCell(value: unknown): string {
+  const s = value === null || value === undefined ? '' : String(value);
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+export async function countExportRows(query: AdminExportQuery): Promise<number> {
+  return prisma.registryPatient.count({ where: buildRecordWhere(query) });
+}
+
+/** Streams a UTF-8 CSV (BOM for Excel). Decrypts in batches to bound memory. */
+export function streamExportCsv(query: AdminExportQuery): ReadableStream<Uint8Array> {
+  const where = buildRecordWhere(query);
+  const encoder = new TextEncoder();
+  const BATCH = 100;
+
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      controller.enqueue(encoder.encode('﻿' + EXPORT_COLUMNS.join(',') + '\n'));
+      let skip = 0;
+      try {
+        for (;;) {
+          const rows = await prisma.registryPatient.findMany({
+            where,
+            orderBy: { createdAt: 'desc' },
+            skip,
+            take: BATCH,
+            include: {
+              diagnoses: { include: { treatments: true }, take: 1 },
+              clinician: { include: { user: { select: { name: true } } } },
+            },
+          });
+          if (rows.length === 0) break;
+          for (const r of rows) {
+            const d = r.diagnoses[0];
+            const treatments = d
+              ? d.treatments.map((tr) => `${tr.type}:${tr.year ?? ''}:${tr.outcome}`).join('|')
+              : '';
+            const cells: unknown[] = [
+              r.trackingCode, r.status, r.source,
+              decryptField(r.fullName),
+              decryptNullable(r.guardianName) ?? '',
+              decryptField(r.cnic), decryptField(r.phone),
+              decryptNullable(r.altPhone) ?? '',
+              decryptNullable(r.email) ?? '',
+              r.province, r.district,
+              decryptNullable(r.address) ?? '',
+              decryptField(r.dob), r.gender, r.isMinor,
+              d?.conditionSlug ?? '', d?.issvaCategory ?? '', d?.bodySite ?? '',
+              d?.onset ?? '', d?.severity ?? '', d?.basis ?? '', d?.facility ?? '',
+              treatments,
+              r.consentRegistry, r.consentContact, r.consentResearch, r.consentGuardian,
+              r.clinician?.user.name ?? '', r.clinician?.facility ?? '',
+              r.createdAt.toISOString(), r.verifiedAt ? r.verifiedAt.toISOString() : '',
+            ];
+            controller.enqueue(encoder.encode(cells.map(csvCell).join(',') + '\n'));
+          }
+          skip += rows.length;
+          if (rows.length < BATCH) break;
+        }
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+  });
 }
