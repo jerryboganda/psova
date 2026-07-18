@@ -25,6 +25,7 @@ export const NAV: NavEntry[] = [
     ],
   },
   { key: 'findCare', href: '/find-a-specialist' },
+  { key: 'registry', href: '/registry' },
   { key: 'news', href: '/news' },
 ];
 
@@ -56,6 +57,7 @@ export const FOOTER_LINKS: { titleKey: string; links: NavLink[] }[] = [
     titleKey: 'society',
     links: [
       { key: 'about', href: '/about' },
+      { key: 'registry', href: '/registry' },
       { key: 'news', href: '/news' },
       { key: 'getInvolved', href: '/get-involved' },
       { key: 'donate', href: '/donate' },

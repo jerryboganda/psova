@@ -62,9 +62,29 @@ This build ships with **representative placeholder content**. Replace/verify:
    provider (e.g. Resend) to actually deliver them.
 6. **Donations** — the Donate/Get-Involved CTAs link to Contact; wire a real donation channel.
 
+## NVAR — National Vascular Anomaly Registry
+
+The site now includes **NVAR**, Pakistan's first national registry of vascular anomaly cases.
+Families and clinicians enrol cases (no patient accounts — a tracking code is issued), PSOVA
+verifies them, and a **k-anonymised public dashboard** shows the national picture. All patient
+PII is **AES-256-GCM encrypted at rest** with HMAC blind indexes for dedup/lookup; every
+decrypt-for-display is audit-logged.
+
+- **Public:** `/[locale]/registry` (landing), `/registry/enroll` (5-step wizard),
+  `/registry/status` (code + phone lookup), `/registry/statistics` (dashboard).
+- **Clinician:** `/registry/login` (Better Auth), `/registry/clinician` (own cases + new case).
+- **Admin:** `/registry/admin` (overview, queue, records, clinicians, audit, CSV export).
+- **Stack additions:** Prisma (MySQL/MariaDB), Better Auth, Nodemailer, field-level crypto.
+- **Env:** copy `.env.example` → `.env`; generate keys per `docs/registry/SECURITY.md §2.2`.
+- **DB:** `npm run db:migrate` (local) / `npm run db:deploy` (prod) then `npm run db:seed`.
+
+Full specification lives in [`docs/registry/`](docs/registry/) — read `README.md` there first,
+then `TASKS.md` for the build order and `DEPLOYMENT-HOSTINGER.md` for the production runbook.
+
 ## Deployment
 
-Deploy to **Vercel** (zero-config for Next.js). Set the production domain in
+Deploy to **Vercel** (zero-config for Next.js) or **Hostinger Business** (managed Node.js — see
+`docs/registry/DEPLOYMENT-HOSTINGER.md`). Set the production domain in
 `app/[locale]/layout.tsx` (`metadataBase`), `app/sitemap.ts`, and `app/robots.ts`.
 
 ---

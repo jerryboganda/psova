@@ -23,7 +23,8 @@
     "close": "Close",
     "skipToContent": "Skip to content",
     "language": "Language",
-    "openMenu": "Open menu"
+    "openMenu": "Open menu",
+    "registry": "National Registry"
   },
   "Common": {
     "learnMore": "Learn more",
@@ -80,7 +81,12 @@
     "ctaTitle": "You are not alone.",
     "ctaBody": "Whether you are a worried parent or a clinician who wants to help — there is a place for you at PSOVA.",
     "ctaButton": "Get involved",
-    "ctaSecondary": "Contact us"
+    "ctaSecondary": "Contact us",
+    "registryEyebrow": "National Registry",
+    "registryTitle": "Be counted in Pakistan's first vascular anomaly registry",
+    "registryBody": "Families and clinicians can enrol a patient in minutes — encrypted and private — helping build the national picture that improves care for everyone.",
+    "registryCta": "Visit the registry",
+    "registryStats": "See the statistics"
   },
   "About": {
     "eyebrow": "About PSOVA",

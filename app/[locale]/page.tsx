@@ -5,6 +5,7 @@ import { StatsBand } from '@/components/sections/home/StatsBand';
 import { Mission } from '@/components/sections/home/Mission';
 import { ConditionsPreview } from '@/components/sections/home/ConditionsPreview';
 import { MapTeaser } from '@/components/sections/home/MapTeaser';
+import { RegistryCTA } from '@/components/sections/home/RegistryCTA';
 import { ValuesGrid } from '@/components/sections/home/ValuesGrid';
 import { NewsPreview } from '@/components/sections/home/NewsPreview';
 import { FinalCTA } from '@/components/sections/home/FinalCTA';
@@ -25,6 +26,7 @@ export default async function HomePage({
       <Mission />
       <ConditionsPreview />
       <MapTeaser />
+      <RegistryCTA />
       <ValuesGrid />
       <NewsPreview />
       <FinalCTA />

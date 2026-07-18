@@ -17,6 +17,11 @@ const PATHS = [
   '/get-involved',
   '/donate',
   '/contact',
+  // Public registry routes only (admin/clinician are excluded, see robots.ts).
+  '/registry',
+  '/registry/statistics',
+  '/registry/enroll',
+  '/registry/status',
   ...CONDITIONS.map((c) => `/conditions/${c.slug}`),
 ];
 
