@@ -6,11 +6,32 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { StatCard } from '@/components/registry/StatCard';
 import { BarList } from '@/components/registry/BarList';
 import { TrendLine } from '@/components/registry/TrendLine';
-import { getPublicStats } from '@/lib/registry/stats';
+import { getPublicStats, type PublicStats } from '@/lib/registry/stats';
 import { CONDITIONS } from '@/data/conditions';
 import { localized } from '@/lib/utils';
 
 export const revalidate = 3600;
+
+// Empty, unpublished stats used when the DB is unreachable (e.g. at build time
+// before the database is provisioned). ISR revalidates to real data later.
+const EMPTY_STATS: PublicStats = {
+  published: false,
+  totals: { verified: 0, provinces: 0, clinicians: 0, conditions: 0 },
+  byProvince: [],
+  byCondition: [],
+  byGender: [],
+  byAgeBand: [],
+  byYear: [],
+  updatedAt: new Date(0).toISOString(),
+};
+
+async function safeStats(): Promise<PublicStats> {
+  try {
+    return await getPublicStats();
+  } catch {
+    return EMPTY_STATS;
+  }
+}
 
 export default async function StatisticsPage({
   params,
@@ -23,7 +44,7 @@ export default async function StatisticsPage({
   const tc = await getTranslations('RegistryCommon');
   const te = await getTranslations('RegistryEnroll');
 
-  const stats = await getPublicStats();
+  const stats = await safeStats();
   const suppressed = t('suppressed');
   const suppressedSr = t('suppressedSr');
 
