@@ -705,5 +705,120 @@
       "REJECTED": "اس ریکارڈ کی تصدیق سے پہلے PSOVA کو مزید معلومات درکار ہیں۔",
       "DUPLICATE": "آپ کے ریکارڈ کی تصدیق ہو چکی ہے اور رجسٹری میں شمار ہو گیا ہے۔"
     }
+  },
+  "RegistryClinician": {
+    "nav": {
+      "cases": "میرے کیسز",
+      "new": "نیا کیس",
+      "logout": "لاگ آؤٹ"
+    },
+    "casesTitle": "میرے کیسز",
+    "casesLede": "وہ کیسز جو آپ نے رجسٹری میں جمع کروائے ہیں۔",
+    "empty": "آپ نے ابھی تک کوئی کیس جمع نہیں کروایا۔",
+    "table": {
+      "code": "ٹریکنگ کوڈ",
+      "patient": "مریض",
+      "condition": "کیفیت",
+      "status": "صورتحال",
+      "date": "جمع کرایا"
+    },
+    "newCaseTitle": "نیا طبی کیس",
+    "newCaseLede": "اپنے مریض کی طرف سے منظم کیس جمع کروائیں۔ PSOVA پھر بھی اس کی تصدیق کرے گا۔",
+    "steps": {
+      "patient": "مریض",
+      "contact": "رابطہ",
+      "clinical": "طبی",
+      "attestation": "اقرار"
+    },
+    "stepTitles": {
+      "patient": "مریض کی تفصیلات",
+      "contact": "رابطے کی تفصیلات",
+      "clinical": "طبی تفصیلات",
+      "attestation": "رضامندی کا اقرار"
+    },
+    "fields": {
+      "issva": "ISSVA زمرہ",
+      "severity": "شدت",
+      "basis": "تشخیص کی بنیاد",
+      "clinicalNotes": "طبی نوٹس",
+      "clinicalNotesPh": "نوٹس (خفیہ محفوظ)",
+      "diagnosingFacility": "تشخیص کرنے والا ادارہ"
+    },
+    "treatments": {
+      "heading": "دیا گیا علاج",
+      "add": "علاج شامل کریں",
+      "remove": "ہٹائیں",
+      "type": "قسم",
+      "facility": "ادارہ",
+      "year": "سال",
+      "outcome": "نتیجہ",
+      "none": "ابھی کوئی علاج شامل نہیں کیا گیا۔"
+    },
+    "attestation": {
+      "heading": "مریض کی رضامندی",
+      "text": "میں اقرار کرتا/کرتی ہوں کہ مریض (یا اس کے سرپرست) نے قومی ویسکولر اناملی رجسٹری میں اندراج اور اپنے خفیہ ڈیٹا کی محفوظگی پر رضامندی دی ہے۔"
+    },
+    "submit": "کیس جمع کرائیں",
+    "submitting": "جمع ہو رہا ہے…",
+    "submitError": "ہم کیس جمع نہ کر سکے۔ براہِ کرم دوبارہ کوشش کریں۔",
+    "successNote": "یہ ٹریکنگ کوڈ خاندان کو دے دیں تاکہ وہ اپنی صورتحال دیکھ سکیں۔",
+    "errors": {
+      "required": "یہ خانہ لازمی ہے۔",
+      "attestation": "جمع کروانے کے لیے مریض کی رضامندی کا اقرار لازمی ہے۔"
+    }
+  },
+  "RegistryRecord": {
+    "protectedData": "محفوظ ڈیٹا",
+    "protectedNote": "اس منظر کے لیے ڈی کرپٹ کیا گیا۔ ہر مشاہدہ آڈٹ میں درج ہوتا ہے۔",
+    "demographics": "آبادیاتی معلومات",
+    "diagnosis": "تشخیص",
+    "treatments": "علاج",
+    "noTreatments": "کوئی علاج درج نہیں۔",
+    "consent": "رضامندی",
+    "meta": "ریکارڈ",
+    "none": "—",
+    "fields": {
+      "fullName": "پورا نام",
+      "guardianName": "سرپرست",
+      "cnic": "شناختی کارڈ نمبر",
+      "phone": "فون",
+      "altPhone": "متبادل فون",
+      "email": "ای میل",
+      "address": "پتہ",
+      "dob": "تاریخِ پیدائش",
+      "gender": "جنس",
+      "province": "صوبہ",
+      "district": "ضلع",
+      "birthYear": "سالِ پیدائش",
+      "isMinor": "نابالغ",
+      "condition": "کیفیت",
+      "issva": "ISSVA زمرہ",
+      "bodySite": "متاثرہ حصہ",
+      "onset": "آغاز",
+      "doctorDiagnosed": "ڈاکٹر کی تشخیص",
+      "severity": "شدت",
+      "basis": "بنیاد",
+      "facility": "ادارہ",
+      "notes": "طبی نوٹس",
+      "treatmentType": "قسم",
+      "treatmentFacility": "ادارہ",
+      "treatmentYear": "سال",
+      "treatmentOutcome": "نتیجہ",
+      "consentRegistry": "رجسٹری محفوظگی",
+      "consentContact": "رابطہ",
+      "consentResearch": "تحقیق",
+      "consentGuardian": "سرپرست کا اقرار",
+      "consentVersion": "رضامندی ورژن",
+      "consentAt": "رضامندی کی تاریخ",
+      "trackingCode": "ٹریکنگ کوڈ",
+      "status": "صورتحال",
+      "source": "ماخذ",
+      "submittedAt": "جمع کرایا",
+      "verifiedAt": "تصدیق شدہ",
+      "clinician": "جمع کرانے والا",
+      "updatedAt": "آخری تبدیلی"
+    },
+    "given": "دی گئی",
+    "notGiven": "نہیں دی گئی"
   }
 }

@@ -5,6 +5,7 @@ import { redirect } from '@/i18n/navigation';
 import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { LogoutButton } from '@/components/registry/LogoutButton';
+import { ClinicianNav } from '@/components/registry/ClinicianNav';
 import { getSession } from '@/lib/registry/guards';
 import { prisma } from '@/lib/registry/db';
 import { SITE } from '@/data/site';
@@ -42,7 +43,7 @@ export default async function ClinicianLayout({
 
   if (!approved) {
     return (
-      <Section>
+      <Section className="pt-28 md:pt-32">
         <GlassCard interactive={false} className="mx-auto max-w-xl text-center">
           <div className="mx-auto mb-5 grid size-14 place-items-center rounded-full bg-amber-400/15 text-amber-300">
             <ShieldAlert className="size-7" />
@@ -60,5 +61,10 @@ export default async function ClinicianLayout({
     );
   }
 
-  return <>{children}</>;
+  return (
+    <div className="pt-24 md:pt-28">
+      <ClinicianNav />
+      {children}
+    </div>
+  );
 }

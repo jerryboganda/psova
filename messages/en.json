@@ -705,5 +705,120 @@
       "REJECTED": "PSOVA needs more information before this record can be verified.",
       "DUPLICATE": "Your record has been verified and counted in the registry."
     }
+  },
+  "RegistryClinician": {
+    "nav": {
+      "cases": "My cases",
+      "new": "New case",
+      "logout": "Log out"
+    },
+    "casesTitle": "My cases",
+    "casesLede": "Cases you have submitted to the registry.",
+    "empty": "You have not submitted any cases yet.",
+    "table": {
+      "code": "Tracking code",
+      "patient": "Patient",
+      "condition": "Condition",
+      "status": "Status",
+      "date": "Submitted"
+    },
+    "newCaseTitle": "New clinical case",
+    "newCaseLede": "Submit a structured case on behalf of your patient. PSOVA still verifies it.",
+    "steps": {
+      "patient": "Patient",
+      "contact": "Contact",
+      "clinical": "Clinical",
+      "attestation": "Attest"
+    },
+    "stepTitles": {
+      "patient": "Patient details",
+      "contact": "Contact details",
+      "clinical": "Clinical details",
+      "attestation": "Consent attestation"
+    },
+    "fields": {
+      "issva": "ISSVA category",
+      "severity": "Severity",
+      "basis": "Basis of diagnosis",
+      "clinicalNotes": "Clinical notes",
+      "clinicalNotesPh": "Notes (stored encrypted)",
+      "diagnosingFacility": "Diagnosing facility"
+    },
+    "treatments": {
+      "heading": "Treatments given",
+      "add": "Add treatment",
+      "remove": "Remove",
+      "type": "Type",
+      "facility": "Facility",
+      "year": "Year",
+      "outcome": "Outcome",
+      "none": "No treatments added yet."
+    },
+    "attestation": {
+      "heading": "Patient consent",
+      "text": "I attest that the patient (or their guardian) has consented to enrolment in the National Vascular Anomaly Registry and to storage of their encrypted data."
+    },
+    "submit": "Submit case",
+    "submitting": "Submitting…",
+    "submitError": "We could not submit the case. Please try again.",
+    "successNote": "Give this tracking code to the family so they can check their status.",
+    "errors": {
+      "required": "This field is required.",
+      "attestation": "You must attest patient consent to submit."
+    }
+  },
+  "RegistryRecord": {
+    "protectedData": "Protected data",
+    "protectedNote": "Decrypted for this view. Every view is audit-logged.",
+    "demographics": "Demographics",
+    "diagnosis": "Diagnosis",
+    "treatments": "Treatments",
+    "noTreatments": "No treatments recorded.",
+    "consent": "Consent",
+    "meta": "Record",
+    "none": "—",
+    "fields": {
+      "fullName": "Full name",
+      "guardianName": "Guardian",
+      "cnic": "CNIC",
+      "phone": "Phone",
+      "altPhone": "Alternate phone",
+      "email": "Email",
+      "address": "Address",
+      "dob": "Date of birth",
+      "gender": "Gender",
+      "province": "Province",
+      "district": "District",
+      "birthYear": "Birth year",
+      "isMinor": "Minor",
+      "condition": "Condition",
+      "issva": "ISSVA category",
+      "bodySite": "Affected area",
+      "onset": "Onset",
+      "doctorDiagnosed": "Doctor-diagnosed",
+      "severity": "Severity",
+      "basis": "Basis",
+      "facility": "Facility",
+      "notes": "Clinical notes",
+      "treatmentType": "Type",
+      "treatmentFacility": "Facility",
+      "treatmentYear": "Year",
+      "treatmentOutcome": "Outcome",
+      "consentRegistry": "Registry storage",
+      "consentContact": "Contact",
+      "consentResearch": "Research",
+      "consentGuardian": "Guardian declaration",
+      "consentVersion": "Consent version",
+      "consentAt": "Consented on",
+      "trackingCode": "Tracking code",
+      "status": "Status",
+      "source": "Source",
+      "submittedAt": "Submitted",
+      "verifiedAt": "Verified",
+      "clinician": "Submitted by",
+      "updatedAt": "Last updated"
+    },
+    "given": "Given",
+    "notGiven": "Not given"
   }
 }
