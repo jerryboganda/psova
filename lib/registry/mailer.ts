@@ -26,7 +26,8 @@ function getTransport(): Transporter | null {
 async function send(to: string, subject: string, text: string): Promise<void> {
   const transport = getTransport();
   if (!transport) {
-    console.log('[registry mail skipped]', { to, subject });
+    // Never log the recipient — email is PII (SECURITY §1/§8). Subject only.
+    console.log('[registry mail skipped]', { subject });
     return;
   }
   try {

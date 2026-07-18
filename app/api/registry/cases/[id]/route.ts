@@ -9,6 +9,7 @@ import {
   getClientIp,
   handleApiError,
   requireApprovedClinician,
+  roleOf,
 } from '@/lib/registry/guards';
 
 export const runtime = 'nodejs';
@@ -20,7 +21,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const record = await getDecryptedRecord(
       id,
-      { actorId: user.id, actorRole: 'clinician', ip: getClientIp(req) },
+      // An admin reaches this endpoint with profile=null (unrestricted view), so
+      // the audit role must reflect the real session role, not a hardcoded value.
+      { actorId: user.id, actorRole: roleOf(user), ip: getClientIp(req) },
       profile ? { restrictClinicianId: profile.id } : undefined,
     );
     if (!record) return apiError('not-found', 404);

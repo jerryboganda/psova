@@ -27,9 +27,11 @@ export async function POST(req: Request) {
 
     const raw = await req.json().catch(() => null);
 
-    // Honeypot: silently accept & drop (uniform fake success) when filled.
+    // Honeypot: silently accept & drop when filled. Must be INDISTINGUISHABLE
+    // from a genuine success (SECURITY §5.3) — a genuine register returns 201,
+    // so the fake success must return 201 too.
     if (raw && typeof raw === 'object' && typeof raw.website === 'string' && raw.website.length > 0) {
-      return apiOk();
+      return apiOk(undefined, { status: 201 });
     }
 
     const limited = checkLimit('register', ip);

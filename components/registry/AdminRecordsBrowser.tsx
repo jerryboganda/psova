@@ -49,25 +49,24 @@ export function AdminRecordsBrowser({ queue = false }: { queue?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [exportOpen, setExportOpen] = useState(false);
 
-  const buildParams = useCallback(
+  const buildBody = useCallback(
     (p: number) => {
-      const params = new URLSearchParams();
-      params.set('page', String(p));
+      const body: Record<string, string | number> = { page: p };
       if (queue) {
-        params.set('status', 'PENDING');
-        params.set('order', 'asc');
+        body.status = 'PENDING';
+        body.order = 'asc';
       } else if (status) {
-        params.set('status', status);
+        body.status = status;
       }
-      if (province) params.set('province', province);
-      if (conditionSlug) params.set('conditionSlug', conditionSlug);
-      if (source) params.set('source', source);
-      if (dupOnly) params.set('possibleDuplicate', 'true');
+      if (province) body.province = province;
+      if (conditionSlug) body.conditionSlug = conditionSlug;
+      if (source) body.source = source;
+      if (dupOnly) body.possibleDuplicate = 'true';
       if (!queue && applied?.q) {
-        params.set('q', applied.q);
-        params.set('qType', applied.qType);
+        body.q = applied.q;
+        body.qType = applied.qType;
       }
-      return params;
+      return body;
     },
     [queue, status, province, conditionSlug, source, dupOnly, applied],
   );
@@ -76,7 +75,13 @@ export function AdminRecordsBrowser({ queue = false }: { queue?: boolean }) {
     async (p: number) => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/registry/admin/records?${buildParams(p).toString()}`, { cache: 'no-store' });
+        // POST so any CNIC/phone lookup value travels in the body, never the URL.
+        const res = await fetch('/api/registry/admin/records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildBody(p)),
+          cache: 'no-store',
+        });
         const data = await res.json().catch(() => ({}));
         if (data?.ok) {
           setRows(data.items as Row[]);
@@ -86,7 +91,7 @@ export function AdminRecordsBrowser({ queue = false }: { queue?: boolean }) {
         setLoading(false);
       }
     },
-    [buildParams],
+    [buildBody],
   );
 
   useEffect(() => {
