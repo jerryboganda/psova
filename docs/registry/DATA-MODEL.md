@@ -1,0 +1,373 @@
+# DATA-MODEL — NVAR Prisma Schema
+
+Complete schema for `prisma/schema.prisma`. Provider **mysql** (Hostinger MariaDB).
+Legend: 🔐 = AES-256-GCM encrypted string (format `v1.<iv>.<tag>.<ct>`), stored `@db.Text`.
+`#` = HMAC-SHA256 blind index (hex, 64 chars).
+
+---
+
+## 1. Conventions
+
+- IDs: `String @id @default(cuid())`.
+- Encrypted fields are nullable `String? @db.Text` unless required.
+- **Never** add plaintext columns for PII. **Never** index encrypted columns.
+- Enums below are the single source of truth — mirror them in `lib/registry/constants.ts`
+  for UI options (with bilingual labels in messages files).
+- After editing schema: `npx prisma migrate dev --name <change>` (local),
+  `npx prisma migrate deploy` (production DB).
+
+## 2. Full schema (copy into `prisma/schema.prisma`)
+
+```prisma
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// ---------------- Better Auth (required models) ----------------
+/// Standard Better Auth prisma models + `role` additional field.
+/// If better-auth CLI generates slightly different fields, prefer CLI output
+/// but KEEP model/field casing below and the role field.
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          String    @default("clinician") // 'admin' | 'clinician'
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  clinicianProfile ClinicianProfile?
+  auditLogs     AuditLog[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+/// ---------------- Registry domain ----------------
+
+enum RegistryStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  DUPLICATE
+}
+
+enum RecordSource {
+  SELF        // family self-enrollment
+  CLINICIAN   // submitted by approved clinician
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Province {
+  PUNJAB
+  SINDH
+  KHYBER_PAKHTUNKHWA
+  BALOCHISTAN
+  GILGIT_BALTISTAN
+  AZAD_JAMMU_KASHMIR
+  ISLAMABAD_CAPITAL_TERRITORY
+}
+
+enum Onset {
+  BIRTH
+  INFANCY      // < 1 year
+  CHILDHOOD    // 1–12
+  ADOLESCENCE  // 13–18
+  ADULTHOOD    // > 18
+  UNKNOWN
+}
+
+enum IssvaCategory {
+  BENIGN_TUMOR
+  BORDERLINE_TUMOR
+  MALIGNANT_TUMOR
+  SIMPLE_MALFORMATION
+  COMBINED_MALFORMATION
+  MAJOR_VESSEL_ANOMALY
+  SYNDROMIC
+  UNCLASSIFIED
+}
+
+enum Severity {
+  MILD
+  MODERATE
+  SEVERE
+  UNKNOWN
+}
+
+enum DiagnosisBasis {
+  CLINICAL
+  IMAGING
+  HISTOLOGY
+  UNKNOWN
+}
+
+enum TreatmentType {
+  OBSERVATION
+  PROPRANOLOL
+  OTHER_MEDICATION
+  LASER
+  SCLEROTHERAPY
+  EMBOLIZATION
+  SURGERY
+  COMBINED
+  OTHER
+}
+
+enum TreatmentOutcome {
+  RESOLVED
+  IMPROVED
+  UNCHANGED
+  WORSENED
+  ONGOING
+  UNKNOWN
+}
+
+model RegistryPatient {
+  id        String  @id @default(cuid())
+  trackingCode String @unique // PSV-XXXX-XXXX
+
+  // --- status & provenance ---
+  status        RegistryStatus @default(PENDING)
+  source        RecordSource
+  clinicianId   String?
+  clinician     ClinicianProfile? @relation(fields: [clinicianId], references: [id], onDelete: SetNull)
+  possibleDuplicate Boolean    @default(false)
+  duplicateOfId String?        // set when status = DUPLICATE
+  publicReason  String?  @db.Text  // shown in status lookup when REJECTED (non-PII)
+  internalNote  String?  @db.Text  // admin-only (non-PII policy; clinical remarks go to Diagnosis.notes 🔐)
+  verifiedAt    DateTime?
+  verifiedById  String?
+
+  // --- PII (🔐 all encrypted) ---
+  fullName      String  @db.Text  // 🔐 required
+  guardianName  String? @db.Text  // 🔐 required when minor
+  cnic          String  @db.Text  // 🔐 patient or guardian CNIC (13 digits)
+  phone         String  @db.Text  // 🔐 required
+  altPhone      String? @db.Text  // 🔐
+  email         String? @db.Text  // 🔐
+  address       String? @db.Text  // 🔐 street address
+  dob           String  @db.Text  // 🔐 ISO date string (full DOB, owner decision)
+
+  // --- blind indexes (#, hex64) ---
+  cnicHash      String  @db.VarChar(64)
+  phoneHash     String  @db.VarChar(64)
+
+  // --- non-PII demographics (plaintext, used for stats) ---
+  gender        Gender
+  province      Province
+  district      String   // city/district name (free text from curated list)
+  birthYear     Int      // derived at write time from dob (for age-band stats)
+  birthMonth    Int      // 1-12, derived
+  isMinor       Boolean  @default(false)
+
+  // --- consent (plaintext booleans + metadata) ---
+  consentRegistry Boolean            // required true
+  consentContact  Boolean @default(false)
+  consentResearch Boolean @default(false)
+  consentGuardian Boolean @default(false) // guardian declaration when minor
+  consentVersion  String  @default("v1")
+  consentAt       DateTime @default(now())
+
+  diagnoses   RegistryDiagnosis[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([province])
+  @@index([cnicHash])
+  @@index([phoneHash])
+  @@index([status, province])
+  @@index([createdAt])
+  @@map("registry_patient")
+}
+
+model RegistryDiagnosis {
+  id           String  @id @default(cuid())
+  patientId    String
+  patient      RegistryPatient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  conditionSlug String  // one of data/conditions.ts slugs or 'other' | 'not-sure'
+  conditionOther String? // free text label when slug = 'other' (non-PII, short)
+  issvaCategory IssvaCategory @default(UNCLASSIFIED)
+  bodySite      String   // affected area (curated list value, e.g. 'head-neck')
+  onset         Onset    @default(UNKNOWN)
+  doctorDiagnosed String @default("unsure") // 'yes' | 'no' | 'unsure' (self-enroll)
+  severity      Severity @default(UNKNOWN)      // clinician submissions
+  basis         DiagnosisBasis @default(UNKNOWN) // clinician submissions
+  facility      String?  // diagnosing facility name (public institution name, non-PII)
+  notes         String?  @db.Text // 🔐 clinical notes / treatment history free text
+
+  treatments   RegistryTreatment[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([conditionSlug])
+  @@map("registry_diagnosis")
+}
+
+model RegistryTreatment {
+  id          String  @id @default(cuid())
+  diagnosisId String
+  diagnosis   RegistryDiagnosis @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+
+  type      TreatmentType
+  facility  String?          // institution name (non-PII)
+  year      Int?
+  outcome   TreatmentOutcome @default(UNKNOWN)
+
+  createdAt DateTime @default(now())
+
+  @@index([diagnosisId])
+  @@map("registry_treatment")
+}
+
+model ClinicianProfile {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  pmcNumber  String  @db.Text // 🔐 PMDC/PMC registration number
+  pmcHash    String  @db.VarChar(64) // # dedup blind index
+  specialty  String
+  facility   String
+  city       String
+  province   Province
+  approved   Boolean @default(false)
+  approvedAt DateTime?
+  approvedById String?
+
+  patients   RegistryPatient[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([approved])
+  @@index([pmcHash])
+  @@map("clinician_profile")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?               // null = anonymous/system
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole String?               // snapshot: 'admin' | 'clinician' | 'public' | 'system'
+  action    String                // AuditAction constant (see §3)
+  entity    String                // 'RegistryPatient' | 'ClinicianProfile' | 'Export' | 'Auth'
+  entityId  String?
+  meta      Json?                 // NON-PII context only (filters, counts, reason codes)
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+```
+
+## 3. AuditAction constants (`lib/registry/constants.ts`)
+
+```
+ENROLL_SUBMIT · CASE_SUBMIT · STATUS_LOOKUP · RECORD_VIEW_PII · RECORD_VERIFY ·
+RECORD_REJECT · RECORD_DUPLICATE · RECORD_UPDATE · EXPORT_CSV ·
+CLINICIAN_REGISTER · CLINICIAN_APPROVE · CLINICIAN_REJECT · ADMIN_SEEDED
+```
+Rule: `meta` may contain counts, enum values, filter params, reason codes — **never names,
+CNIC, phones, emails, addresses, DOBs, or decrypted values**.
+
+## 4. Encryption / blind-index map
+
+| Model.field | Stored as | Blind index | Normalizer |
+|---|---|---|---|
+| Patient.fullName, guardianName, address, email, dob, altPhone | 🔐 | — | trim |
+| Patient.cnic | 🔐 | `cnicHash` | digits-only, must be 13 |
+| Patient.phone | 🔐 | `phoneHash` | digits-only; `0XXXXXXXXXX` → `92XXXXXXXXXX`; strip `+` |
+| Diagnosis.notes | 🔐 | — | — |
+| ClinicianProfile.pmcNumber | 🔐 | `pmcHash` | uppercase alphanumeric |
+
+Derived-at-write plaintext (allowed): `birthYear`, `birthMonth`, `isMinor` from dob;
+`gender`, `province`, `district` collected as non-PII categorical data for statistics.
+**Rationale:** province+year granularity cannot re-identify with k≥5 suppression; exact dob,
+names, contacts remain encrypted.
+
+## 5. Age bands (stats, computed from birthYear at query time)
+
+`<1 · 1–4 · 5–9 · 10–14 · 15–19 · 20–29 · 30–49 · 50+` — `lib/registry/constants.ts`
+exports `AGE_BANDS` with bilingual labels via message keys.
+
+## 6. Status transitions (enforce in `patients.ts`)
+
+```
+PENDING  → VERIFIED | REJECTED | DUPLICATE
+VERIFIED → REJECTED (correction; audit RECORD_REJECT with meta.from='VERIFIED')
+REJECTED → VERIFIED (re-review)
+DUPLICATE → (terminal; canonical record linked via duplicateOfId)
+```
+Any other transition → 409 `invalid-transition`.
+
+## 7. Seeding (`prisma/seed.ts`)
+
+Reads `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`. If a user with that email exists → skip.
+Else `auth.api.signUpEmail(...)` then `prisma.user.update({ role: 'admin' })` +
+audit `ADMIN_SEEDED`. Exit non-zero with clear message if envs missing. Runner: `tsx`.
