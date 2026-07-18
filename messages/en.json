@@ -935,5 +935,29 @@
       "confirm": "Download CSV",
       "cancel": "Cancel"
     }
+  },
+  "RegistryStats": {
+    "eyebrow": "NVAR statistics",
+    "title": "The national picture",
+    "lede": "Anonymised statistics from verified registry cases. Figures under five are hidden to protect privacy.",
+    "cards": {
+      "total": "Verified cases",
+      "provinces": "Provinces covered",
+      "clinicians": "Participating clinicians",
+      "conditions": "Conditions tracked"
+    },
+    "charts": {
+      "province": "Cases by province",
+      "condition": "Cases by condition",
+      "gender": "By gender",
+      "age": "By age band",
+      "trend": "Enrolments over time"
+    },
+    "suppressed": "<5",
+    "suppressedSr": "fewer than five",
+    "notes": "Only verified records are counted. Any figure below five is suppressed to protect privacy (k-anonymity). Data updates hourly.",
+    "inProgress": "Data collection in progress",
+    "inProgressBody": "The public dashboard opens once enough cases have been verified. Please check back soon.",
+    "updated": "Updated"
   }
 }
