@@ -404,5 +404,159 @@
     "title": "Page not found",
     "body": "The page you're looking for has moved or doesn't exist.",
     "cta": "Back to home"
+  },
+  "RegistryCommon": {
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "copy": "Copy",
+    "copied": "Copied",
+    "requiredMark": "required",
+    "optional": "optional",
+    "page": "Page",
+    "of": "of",
+    "select": "Select…",
+    "yes": "Yes",
+    "no": "No",
+    "retry": "Retry",
+    "empty": "Nothing to show yet",
+    "error": "Something went wrong. Please try again.",
+    "provinces": {
+      "PUNJAB": "Punjab",
+      "SINDH": "Sindh",
+      "KHYBER_PAKHTUNKHWA": "Khyber Pakhtunkhwa",
+      "BALOCHISTAN": "Balochistan",
+      "GILGIT_BALTISTAN": "Gilgit-Baltistan",
+      "AZAD_JAMMU_KASHMIR": "Azad Jammu & Kashmir",
+      "ISLAMABAD_CAPITAL_TERRITORY": "Islamabad Capital Territory"
+    },
+    "genders": {
+      "MALE": "Male",
+      "FEMALE": "Female",
+      "OTHER": "Other"
+    },
+    "onsets": {
+      "BIRTH": "At birth",
+      "INFANCY": "Infancy (under 1 year)",
+      "CHILDHOOD": "Childhood (1–12)",
+      "ADOLESCENCE": "Adolescence (13–18)",
+      "ADULTHOOD": "Adulthood (over 18)",
+      "UNKNOWN": "Not sure"
+    },
+    "bodySites": {
+      "head-neck": "Head & neck",
+      "face": "Face",
+      "scalp": "Scalp",
+      "eye-periorbital": "Eye / around the eye",
+      "lip-mouth": "Lip / mouth",
+      "trunk": "Trunk",
+      "back": "Back",
+      "chest": "Chest",
+      "abdomen": "Abdomen",
+      "pelvis-genital": "Pelvis / genital area",
+      "upper-limb": "Arm",
+      "hand": "Hand",
+      "lower-limb": "Leg",
+      "foot": "Foot",
+      "multiple": "Multiple areas",
+      "internal": "Internal / deep",
+      "other": "Other"
+    },
+    "ageBands": {
+      "under1": "Under 1",
+      "age1to4": "1–4",
+      "age5to9": "5–9",
+      "age10to14": "10–14",
+      "age15to19": "15–19",
+      "age20to29": "20–29",
+      "age30to49": "30–49",
+      "age50plus": "50+"
+    },
+    "issva": {
+      "BENIGN_TUMOR": "Benign tumour",
+      "BORDERLINE_TUMOR": "Borderline tumour",
+      "MALIGNANT_TUMOR": "Malignant tumour",
+      "SIMPLE_MALFORMATION": "Simple malformation",
+      "COMBINED_MALFORMATION": "Combined malformation",
+      "MAJOR_VESSEL_ANOMALY": "Major vessel anomaly",
+      "SYNDROMIC": "Syndromic",
+      "UNCLASSIFIED": "Unclassified"
+    },
+    "severity": {
+      "MILD": "Mild",
+      "MODERATE": "Moderate",
+      "SEVERE": "Severe",
+      "UNKNOWN": "Unknown"
+    },
+    "basis": {
+      "CLINICAL": "Clinical examination",
+      "IMAGING": "Imaging (radiology)",
+      "HISTOLOGY": "Histology (biopsy)",
+      "UNKNOWN": "Unknown"
+    },
+    "treatmentTypes": {
+      "OBSERVATION": "Observation / monitoring",
+      "PROPRANOLOL": "Propranolol",
+      "OTHER_MEDICATION": "Other medication",
+      "LASER": "Laser",
+      "SCLEROTHERAPY": "Sclerotherapy",
+      "EMBOLIZATION": "Embolization",
+      "SURGERY": "Surgery",
+      "COMBINED": "Combined",
+      "OTHER": "Other"
+    },
+    "outcomes": {
+      "RESOLVED": "Resolved",
+      "IMPROVED": "Improved",
+      "UNCHANGED": "Unchanged",
+      "WORSENED": "Worsened",
+      "ONGOING": "Ongoing",
+      "UNKNOWN": "Unknown"
+    },
+    "doctorDiagnosed": {
+      "yes": "Yes",
+      "no": "No",
+      "unsure": "Not sure"
+    },
+    "statuses": {
+      "PENDING": "Pending",
+      "VERIFIED": "Verified",
+      "REJECTED": "Rejected",
+      "DUPLICATE": "Duplicate"
+    },
+    "sources": {
+      "SELF": "Self-enrolled",
+      "CLINICIAN": "Clinician"
+    }
+  },
+  "RegistryAuth": {
+    "title": "Registry access",
+    "lede": "Sign in as a clinician, or register a new clinician account. Enrollment for families does not need an account.",
+    "signIn": "Sign in",
+    "register": "Register as a clinician",
+    "email": "Email address",
+    "password": "Password",
+    "passwordHint": "At least 10 characters.",
+    "name": "Full name",
+    "pmc": "PMDC / PMC registration number",
+    "specialty": "Specialty",
+    "facility": "Hospital / facility",
+    "city": "City",
+    "province": "Province",
+    "submitSignIn": "Sign in",
+    "submitRegister": "Create account",
+    "signingIn": "Signing in…",
+    "registering": "Creating account…",
+    "registerSuccessTitle": "Account created",
+    "registerSuccessBody": "Your clinician account has been created and is awaiting PSOVA approval. You will be able to submit cases once approved.",
+    "pendingTitle": "Awaiting approval",
+    "pendingBody": "Your clinician account is pending approval by PSOVA. You will be able to submit and view cases once an administrator approves your registration.",
+    "pendingContact": "Questions? Contact PSOVA.",
+    "errorsGeneric": "We could not complete that. Please check your details and try again.",
+    "toSignIn": "Already have an account? Sign in",
+    "toRegister": "New clinician? Register here",
+    "logout": "Log out"
   }
 }

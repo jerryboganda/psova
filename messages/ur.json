@@ -404,5 +404,159 @@
     "title": "صفحہ نہیں ملا",
     "body": "جو صفحہ آپ تلاش کر رہے ہیں وہ منتقل ہو گیا یا موجود نہیں۔",
     "cta": "ہوم پر واپس"
+  },
+  "RegistryCommon": {
+    "back": "واپس",
+    "next": "آگے",
+    "submit": "جمع کرائیں",
+    "loading": "لوڈ ہو رہا ہے…",
+    "saving": "محفوظ ہو رہا ہے…",
+    "copy": "کاپی",
+    "copied": "کاپی ہو گیا",
+    "requiredMark": "لازمی",
+    "optional": "اختیاری",
+    "page": "صفحہ",
+    "of": "از",
+    "select": "منتخب کریں…",
+    "yes": "جی ہاں",
+    "no": "نہیں",
+    "retry": "دوبارہ کوشش",
+    "empty": "ابھی دکھانے کے لیے کچھ نہیں",
+    "error": "کچھ غلط ہو گیا۔ براہِ کرم دوبارہ کوشش کریں۔",
+    "provinces": {
+      "PUNJAB": "پنجاب",
+      "SINDH": "سندھ",
+      "KHYBER_PAKHTUNKHWA": "خیبر پختونخوا",
+      "BALOCHISTAN": "بلوچستان",
+      "GILGIT_BALTISTAN": "گلگت بلتستان",
+      "AZAD_JAMMU_KASHMIR": "آزاد جموں و کشمیر",
+      "ISLAMABAD_CAPITAL_TERRITORY": "اسلام آباد وفاقی دارالحکومت"
+    },
+    "genders": {
+      "MALE": "مرد",
+      "FEMALE": "عورت",
+      "OTHER": "دیگر"
+    },
+    "onsets": {
+      "BIRTH": "پیدائش کے وقت",
+      "INFANCY": "ابتدائی بچپن (ایک سال سے کم)",
+      "CHILDHOOD": "بچپن (1–12 سال)",
+      "ADOLESCENCE": "نوجوانی (13–18 سال)",
+      "ADULTHOOD": "بلوغت (18 سال سے زائد)",
+      "UNKNOWN": "یقین نہیں"
+    },
+    "bodySites": {
+      "head-neck": "سر و گردن",
+      "face": "چہرہ",
+      "scalp": "سر کی جلد",
+      "eye-periorbital": "آنکھ / گردِ چشم",
+      "lip-mouth": "ہونٹ / منہ",
+      "trunk": "دھڑ",
+      "back": "پیٹھ",
+      "chest": "سینہ",
+      "abdomen": "پیٹ",
+      "pelvis-genital": "پیڑو / زیریں حصہ",
+      "upper-limb": "بازو",
+      "hand": "ہاتھ",
+      "lower-limb": "ٹانگ",
+      "foot": "پاؤں",
+      "multiple": "متعدد مقامات",
+      "internal": "اندرونی / گہرا",
+      "other": "دیگر"
+    },
+    "ageBands": {
+      "under1": "ایک سال سے کم",
+      "age1to4": "1–4 سال",
+      "age5to9": "5–9 سال",
+      "age10to14": "10–14 سال",
+      "age15to19": "15–19 سال",
+      "age20to29": "20–29 سال",
+      "age30to49": "30–49 سال",
+      "age50plus": "50 سال سے زائد"
+    },
+    "issva": {
+      "BENIGN_TUMOR": "سومی رسولی",
+      "BORDERLINE_TUMOR": "درمیانی نوعیت کی رسولی",
+      "MALIGNANT_TUMOR": "خبیث رسولی",
+      "SIMPLE_MALFORMATION": "سادہ خرابی",
+      "COMBINED_MALFORMATION": "مرکب خرابی",
+      "MAJOR_VESSEL_ANOMALY": "بڑی نالی کی خرابی",
+      "SYNDROMIC": "سنڈرومی",
+      "UNCLASSIFIED": "غیر درجہ بند"
+    },
+    "severity": {
+      "MILD": "معمولی",
+      "MODERATE": "درمیانہ",
+      "SEVERE": "شدید",
+      "UNKNOWN": "نامعلوم"
+    },
+    "basis": {
+      "CLINICAL": "طبی معائنہ",
+      "IMAGING": "امیجنگ (ریڈیالوجی)",
+      "HISTOLOGY": "ہسٹولوجی (بایوپسی)",
+      "UNKNOWN": "نامعلوم"
+    },
+    "treatmentTypes": {
+      "OBSERVATION": "نگرانی",
+      "PROPRANOLOL": "پروپرانولول",
+      "OTHER_MEDICATION": "دیگر دوا",
+      "LASER": "لیزر",
+      "SCLEROTHERAPY": "اسکلیروتھراپی",
+      "EMBOLIZATION": "ایمبولائزیشن",
+      "SURGERY": "سرجری",
+      "COMBINED": "مشترکہ",
+      "OTHER": "دیگر"
+    },
+    "outcomes": {
+      "RESOLVED": "مکمل ٹھیک",
+      "IMPROVED": "بہتری",
+      "UNCHANGED": "بغیر تبدیلی",
+      "WORSENED": "بگاڑ",
+      "ONGOING": "جاری",
+      "UNKNOWN": "نامعلوم"
+    },
+    "doctorDiagnosed": {
+      "yes": "جی ہاں",
+      "no": "نہیں",
+      "unsure": "یقین نہیں"
+    },
+    "statuses": {
+      "PENDING": "زیرِ جائزہ",
+      "VERIFIED": "تصدیق شدہ",
+      "REJECTED": "مسترد",
+      "DUPLICATE": "نقل"
+    },
+    "sources": {
+      "SELF": "خود اندراج",
+      "CLINICIAN": "معالج"
+    }
+  },
+  "RegistryAuth": {
+    "title": "رجسٹری تک رسائی",
+    "lede": "بطور معالج سائن اِن کریں، یا نیا معالج اکاؤنٹ بنائیں۔ خاندانوں کے اندراج کے لیے اکاؤنٹ کی ضرورت نہیں۔",
+    "signIn": "سائن اِن",
+    "register": "بطور معالج رجسٹر کریں",
+    "email": "ای میل ایڈریس",
+    "password": "پاس ورڈ",
+    "passwordHint": "کم از کم 10 حروف۔",
+    "name": "پورا نام",
+    "pmc": "PMDC / PMC رجسٹریشن نمبر",
+    "specialty": "تخصص",
+    "facility": "ہسپتال / ادارہ",
+    "city": "شہر",
+    "province": "صوبہ",
+    "submitSignIn": "سائن اِن",
+    "submitRegister": "اکاؤنٹ بنائیں",
+    "signingIn": "سائن اِن ہو رہا ہے…",
+    "registering": "اکاؤنٹ بن رہا ہے…",
+    "registerSuccessTitle": "اکاؤنٹ بن گیا",
+    "registerSuccessBody": "آپ کا معالج اکاؤنٹ بن گیا ہے اور PSOVA کی منظوری کا منتظر ہے۔ منظوری کے بعد آپ کیس جمع کروا سکیں گے۔",
+    "pendingTitle": "منظوری کا انتظار",
+    "pendingBody": "آپ کا معالج اکاؤنٹ PSOVA کی منظوری کے مرحلے میں ہے۔ کسی منتظم کی منظوری کے بعد آپ کیس جمع کروا اور دیکھ سکیں گے۔",
+    "pendingContact": "سوالات؟ PSOVA سے رابطہ کریں۔",
+    "errorsGeneric": "ہم یہ مکمل نہ کر سکے۔ براہِ کرم اپنی تفصیلات دیکھ کر دوبارہ کوشش کریں۔",
+    "toSignIn": "پہلے سے اکاؤنٹ ہے؟ سائن اِن کریں",
+    "toRegister": "نئے معالج؟ یہاں رجسٹر کریں",
+    "logout": "لاگ آؤٹ"
   }
 }
