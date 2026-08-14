@@ -11,8 +11,8 @@
 | Remote push | FCM/APNs adapters and token security are implemented; platform configuration/secrets and device tests remain. | Firebase/Apple owners block live push. |
 | Universal links | Custom `psova://` links work; verified HTTPS links are deferred. | Domain/signing ownership is required. |
 | Child record | Locked and disabled; no note/photo capture is reachable. | Privacy and clinical gate in `JOURNAL_SECURITY.md` blocks activation. |
-| Native artifact evidence | Local Vite/web verification is green; native clean builds run in GitHub Actions. | CI must pass and artifacts must be installed before release-candidate status. |
+| Native artifact evidence | Clean quality, Android arm64 debug APK, and iOS aarch64 simulator builds passed at commit `6c51e76566f5a5ceab8ae78f015b544ad8b0b22f`; retained artifacts were produced. | Signed physical-device/AAB/IPA evidence still requires owner signing credentials and the manual device matrix. |
 | Store publication | Workflows prepare signed files but never upload or publish. | Explicit user/owner confirmation is required at the external action boundary. |
 | Crash analytics | No third-party crash/analytics SDK is bundled, minimizing data collection. | If added later, privacy disclosures and redaction tests must be updated. |
 
-No known website, mobile-web, shared-contract, content-validation, or production dependency-audit blocker remains in the source tree. The table above is the canonical list of external approval/configuration evidence still required for a public release.
+No known website, mobile-web, Android compile, iOS simulator compile, shared-contract, content-validation, or production dependency-audit blocker remains in the source tree. The table above is the canonical list of external approval/configuration evidence still required for a public release.

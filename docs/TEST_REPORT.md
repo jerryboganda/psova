@@ -2,6 +2,7 @@
 
 **Engineering verification date:** 2026-08-14
 **Branch:** `feature/psova-tauri-mobile`
+**Verified commit:** `6c51e76566f5a5ceab8ae78f015b544ad8b0b22f`
 
 ## Completed local evidence
 
@@ -19,9 +20,17 @@
 | Visual QA | English and Urdu Home/Library/Directory captured at a true 430×932 CSS viewport; capture rejects `scrollWidth > 430`. |
 | Existing website | Original 45 localized/static pages preserved; locale middleware migrated to supported Next.js proxy. |
 
-## Native build evidence
+## Clean CI and native build evidence
 
-Windows lacked Microsoft C++ Build Tools, Java, and Android SDK at baseline. Native compilation was therefore moved to reproducible GitHub Actions as requested. `mobile-android.yml` provisions Java 17, API 36, NDK 28.2, Rust targets, initializes Tauri Android, and builds an arm64 debug APK. `mobile-ios.yml` provisions macOS/Xcode, Rust Apple targets, CocoaPods, initializes Tauri iOS, and builds an aarch64 simulator app. A milestone is not a release candidate until those clean workflows pass and their artifacts are installed.
+Windows lacked Microsoft C++ Build Tools, Java, and Android SDK at baseline, so native compilation was moved to reproducible GitHub Actions as requested. All three final workflows passed against the same commit.
+
+| Workflow | Run | Verified result |
+|---|---|---|
+| Quality gates | `31810765236` | Prisma generation, content validation, lint, strict typecheck, all tests/coverage, Next.js build, mobile Vite build, and production audit passed. |
+| Android mobile build | `31810765272` | Java 17, API 36, NDK 28.2, Rust Android target, Tauri Android init, arm64 debug APK build, and artifact upload passed. |
+| iOS mobile build | `31810765265` | macOS/Xcode 26, Rust aarch64 simulator target, CocoaPods, Firebase Swift package, focused push plugin, Tauri iOS init, simulator app build, and artifact upload passed. |
+
+The retained artifacts are named `psova-android-debug-6c51e76566f5a5ceab8ae78f015b544ad8b0b22f` and `psova-ios-simulator-6c51e76566f5a5ceab8ae78f015b544ad8b0b22f`. Android and iOS clean compilation is no longer a release blocker; signed physical-device/store builds still require owner-controlled credentials and the manual matrix below.
 
 ## Required physical/simulator matrix
 
