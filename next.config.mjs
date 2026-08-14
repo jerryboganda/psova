@@ -4,12 +4,11 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Hostinger's managed Node.js pipeline uses `next start`, so `standalone`
-  // output is enabled only for the Docker/VPS build path (DOCKER_BUILD=1).
+  // Hostinger managed Node.js uses next start; Docker/VPS can request standalone output.
   output: process.env.DOCKER_BUILD ? 'standalone' : undefined,
   reactStrictMode: true,
-  transpilePackages: ['three'],
-  // Keep Prisma out of the server bundle tracing (native engine binaries).
+  transpilePackages: ['three', '@psova/domain', '@psova/content', '@psova/ui'],
+  // Keep Prisma native engine binaries out of Next.js server bundle tracing.
   serverExternalPackages: ['@prisma/client', 'prisma'],
 };
 

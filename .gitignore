@@ -1,5 +1,5 @@
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 
@@ -29,6 +29,25 @@ next-env.d.ts
 
 # vercel
 .vercel
+
+# mobile and Rust build products
+/apps/mobile/dist/
+/apps/mobile/src-tauri/target/
+/apps/mobile/src-tauri/gen/
+
+# quality reports
+/coverage/
+.eslint-report.json
+.vitest-report.json
+
+# local signing material
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+AuthKey_*.p8
+google-services.json
+GoogleService-Info.plist
 
 # local agent / tooling artifacts
 /.claude/

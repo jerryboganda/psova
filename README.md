@@ -1,92 +1,87 @@
-# PSOVA — Pakistan Society Of Vascular Anomaly
+# PSOVA — Website, NVAR Registry, and Tauri 2 Mobile App
 
-A world-class, bilingual (English / اردو), heavily 3D-animated website for Pakistan's first
-society for vascular anomalies. Built to raise awareness, help families **find specialist care
-across Pakistan**, and educate with a plain-language, clinician-grounded condition library.
+PSOVA is a bilingual English/Urdu platform for the Pakistan Society Of Vascular Anomaly. This repository contains the Next.js public website, the privacy-hardened National Vascular Anomaly Registry (NVAR), a mobile-first Tauri 2 application for Android and iOS, shared validated content contracts, production APIs, offline persistence, and protected GitHub Actions release pipelines.
 
-> **Tagline:** Common. Treatable. You are not alone.
+The public/mobile information product does not diagnose a condition, interpret a photograph, replace a clinician, collect payments, or create a patient record. NVAR is a separate consented registry with its own security model. The optional local child-record concept remains disabled until PSOVA completes a separate clinical and privacy approval gate.
 
-## Tech stack
+## Repository layout
 
-- **Next.js 16** (App Router, React 19, TypeScript) — SSG, deployable to Vercel
-- **Tailwind CSS v4** — CSS-variable design tokens, dark-first, glassmorphism + neon glow
-- **React Three Fiber + drei + postprocessing** — three signature WebGL scenes
-- **GSAP + Lenis** — smooth scroll; **Framer Motion** — reveals, page transitions, micro-interactions
-- **next-intl** — full EN/UR routing with right-to-left support and Urdu (Nastaliq) typography
-- **React Hook Form + Zod** — accessible, validated forms
+| Path | Purpose |
+|---|---|
+| `app`, `components`, `i18n`, `messages` | Next.js website, NVAR routes, and versioned public/mobile APIs. |
+| `prisma`, `lib/registry`, `docs/registry` | NVAR schema, field-level crypto, auth/operations, and deployment documentation. |
+| `apps/mobile` | Vite/React mobile shell and Tauri 2 native configuration. |
+| `apps/mobile/plugins/tauri-plugin-psova-push` | Focused Kotlin/Swift FCM/APNs registration bridge. |
+| `packages/domain` | Versioned Zod contracts, local search, sync, and URL safety rules. |
+| `packages/content` | Canonical bilingual conditions, directory, news, glossary, site, navigation, and donation data. |
+| `tooling` | Content validation/export and validated store screenshot capture. |
+| `.github/workflows` | Linux quality, Android, iOS simulator, and protected signed-release jobs. |
+| `docs` | Architecture, operations, security, QA, release, registry, and store handover. |
 
-## Signature 3D / motion
+## Local setup
 
-- **Hero vessel network** — instanced glowing vessels with flowing particle "cells" (`components/three/VesselNetwork.tsx`)
-- **Interactive anatomy explorer** — holographic figure with clickable condition hotspots (`components/three/AnatomyFigure.tsx`)
-- **Pakistan particle map** — particles assemble into the country with glowing care-centre nodes that filter the directory (`components/three/PakistanMap.tsx`)
-- Plus animated gradients, magnetic buttons, scroll reveals, a scroll-progress bar, and route transitions.
-
-All 3D is quality-tiered (GPU detection), lazy-mounted, DPR-clamped, and **suppressed for
-`prefers-reduced-motion`** users, who get a static gradient poster instead.
-
-## Getting started
+Use Node.js 22 and the committed npm lockfile. Configure a MySQL/MariaDB database and the registry keys in `.env` when running NVAR. Rust 1.77.2 or newer is required for Tauri; Android compilation uses Java 17, API 36, and NDK 28.2; iOS compilation requires macOS/Xcode and CocoaPods. CPU-intensive clean/native builds run in GitHub Actions.
 
 ```bash
-npm install
-npm run dev      # http://localhost:3000  → redirects to /en
-npm run build    # production build (static)
-npm start        # serve the production build
+npm ci
+npm run db:deploy       # when a configured registry database is available
+npm run content:validate
+npm run typecheck
+npm run lint
+npm run test
+npm run test:mobile
+npm run build
+npm run mobile:build
 ```
 
-## Project structure
-
-```
-app/[locale]/            Localised routes (home, about, conditions, find-a-specialist, …)
-app/api/contact/         Form intake endpoint (validates; wire an email provider to deliver)
-components/three/         WebGL scenes + SceneCanvas (lazy, tiered, reduced-motion aware)
-components/ui/            Design-system primitives (Button, GlassCard, Section, Reveal, …)
-components/sections/home/ Home page sections
-components/{conditions,directory,news,forms,layout}/
-data/                     Bilingual content: conditions, centers, news, glossary, site, nav
-i18n/                     next-intl routing/request/navigation
-messages/{en,ur}.json     UI strings
+```bash
+npm run dev          # Website/NVAR at http://localhost:3000
+npm run mobile:dev   # Mobile Tauri/Vite development shell
 ```
 
-## Before going live (placeholders to replace)
+The mobile app includes a validated bundled snapshot, so its condition library, directory, glossary, and news open on first launch offline. Run `npm run content:build` after canonical content changes; CI rejects stale snapshots.
 
-This build ships with **representative placeholder content**. Replace/verify:
+## NVAR registry
 
-1. **Org details** — logo, real board/team, contacts (`data/site.ts`), social links, registration status.
-2. **Care directory** — every entry in `data/centers.ts` is marked representative and **must be
-   verified with the institution** before publication (phone numbers are placeholders).
-3. **Medical content** — `data/conditions.ts` is grounded in the ISSVA classification but must be
-   **reviewed by a clinician**; a disclaimer is shown site-wide.
-4. **Urdu** — translations are a strong first pass and should be **reviewed by a native speaker**.
-5. **Forms** — `app/api/contact/route.ts` validates and logs submissions; connect an email
-   provider (e.g. Resend) to actually deliver them.
-6. **Donations** — the Donate/Get-Involved CTAs link to Contact; wire a real donation channel.
+NVAR allows families and clinicians to enroll cases without patient accounts, issues a tracking code, supports PSOVA verification, and exposes a k-anonymized public statistics dashboard. Patient PII is AES-256-GCM encrypted at rest with separate HMAC blind indexes for lookup/deduplication, and decrypt-for-display actions are audit logged.
 
-## NVAR — National Vascular Anomaly Registry
+| Audience | Routes |
+|---|---|
+| Public | `/[locale]/registry`, `/registry/enroll`, `/registry/status`, `/registry/statistics` |
+| Clinician | `/registry/login`, `/registry/clinician` |
+| Admin | `/registry/admin` and its queue, record, clinician, audit, and export views |
 
-The site now includes **NVAR**, Pakistan's first national registry of vascular anomaly cases.
-Families and clinicians enrol cases (no patient accounts — a tracking code is issued), PSOVA
-verifies them, and a **k-anonymised public dashboard** shows the national picture. All patient
-PII is **AES-256-GCM encrypted at rest** with HMAC blind indexes for dedup/lookup; every
-decrypt-for-display is audit-logged.
+NVAR adds Prisma/MySQL, Better Auth, Nodemailer, field-level crypto, and operational safeguards. Begin with `docs/registry/README.md`, then use `docs/registry/TASKS.md`, `docs/registry/SECURITY.md`, and `docs/registry/DEPLOYMENT-HOSTINGER.md`.
 
-- **Public:** `/[locale]/registry` (landing), `/registry/enroll` (5-step wizard),
-  `/registry/status` (code + phone lookup), `/registry/statistics` (dashboard).
-- **Clinician:** `/registry/login` (Better Auth), `/registry/clinician` (own cases + new case).
-- **Admin:** `/registry/admin` (overview, queue, records, clinicians, audit, CSV export).
-- **Stack additions:** Prisma (MySQL/MariaDB), Better Auth, Nodemailer, field-level crypto.
-- **Env:** copy `.env.example` → `.env`; generate keys per `docs/registry/SECURITY.md §2.2`.
-- **DB:** `npm run db:migrate` (local) / `npm run db:deploy` (prod) then `npm run db:seed`.
+## Public/mobile backend configuration
 
-Full specification lives in [`docs/registry/`](docs/registry/) — read `README.md` there first,
-then `TASKS.md` for the build order and `DEPLOYMENT-HOSTINGER.md` for the production runbook.
+Copy `.env.example` and provide real values through the deployment platform. Production contact delivery requires Resend plus durable Upstash-compatible storage. Push publication requires Firebase service-account credentials, durable encrypted token storage, and a protected publication secret. The contact API returns a retryable error when durable idempotency or provider acceptance is unavailable; it never claims delivery merely because validation passed.
 
-## Deployment
+## Mobile native configuration
 
-Deploy to **Vercel** (zero-config for Next.js) or **Hostinger Business** (managed Node.js — see
-`docs/registry/DEPLOYMENT-HOSTINGER.md`). Set the production domain in
-`app/[locale]/layout.tsx` (`metadataBase`), `app/sitemap.ts`, and `app/robots.ts`.
+The bundle identifier is `pk.org.psova.mobile`. Android FCM builds require `google-services.json`; iOS FCM/APNs builds require `GoogleService-Info.plist` and Apple push entitlements. These files are ignored by Git and can be supplied to CI with `GOOGLE_SERVICES_JSON_BASE64` and `GOOGLE_SERVICE_INFO_PLIST_BASE64`.
 
----
+Tauri capabilities are deny-by-default. SQLite holds content snapshots, favorites, news state, contact outbox records, disabled journal blobs, and reminders. Tauri Store holds lightweight preferences. The custom native push bridge exposes only consented platform-token acquisition.
 
-*A non-profit initiative. General information only — not a substitute for professional medical advice.*
+## CI and release
+
+| Workflow | Result |
+|---|---|
+| `quality.yml` | Prisma generation, content validation, lint, strict typecheck, tests/coverage, website/mobile builds, and production dependency audit. |
+| `mobile-android.yml` | Clean Android SDK/NDK provisioning, Tauri initialization, debug APK build, retained artifact. |
+| `mobile-ios.yml` | macOS/Xcode Tauri initialization, simulator build, retained artifact. |
+| `mobile-release.yml` | Protected signed Android AAB and iOS IPA preparation; never store publication. |
+
+Store submission, staged rollout, production push sends, credential/account changes, and public publication remain explicit owner-confirmed actions.
+
+## Content and safety status
+
+Directory records preserve verification status. Placeholder phones and unverified payment channels are removed from the mobile snapshot. Medical copy and Urdu require PSOVA clinician/native-language sign-off before public release. Draft news cannot be used for a live push. NVAR production additionally requires the registry security/deployment checklist and offline backup of both crypto keys.
+
+## Documentation
+
+Start with [Mobile Architecture](docs/ARCHITECTURE.md), [Mobile Operations](docs/OPERATIONS.md), [Mobile Release](docs/RELEASE.md), [Store Package](docs/STORE_PACKAGE.md), [Known Limitations](docs/KNOWN_LIMITATIONS.md), [Test Report](docs/TEST_REPORT.md), [Journal Security Gate](docs/JOURNAL_SECURITY.md), and [NVAR Documentation](docs/registry/README.md).
+
+Deploy the managed Node.js application to Hostinger using `docs/registry/DEPLOYMENT-HOSTINGER.md`; set `DOCKER_BUILD=1` only for the Docker/VPS standalone path.
+
+General information only — not a substitute for professional medical advice.

@@ -1,0 +1,9 @@
+{
+  "name": "@psova/test-utils",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc --noEmit" },
+  "devDependencies": { "typescript": "^6.0.3" }
+}

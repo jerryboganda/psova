@@ -1,0 +1,19 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "mobile-core",
+  "description": "Least-privilege permissions for the PSOVA mobile shell.",
+  "windows": ["main"],
+  "platforms": ["iOS", "android"],
+  "permissions": [
+    "core:default",
+    "store:default",
+    "sql:default",
+    "sql:allow-execute",
+    "deep-link:default",
+    "notification:default",
+    "haptics:default",
+    "biometric:allow-status",
+    "opener:allow-open-url",
+    "psova-push:default"
+  ]
+}

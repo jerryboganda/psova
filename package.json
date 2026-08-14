@@ -1,17 +1,35 @@
 {
   "name": "psova",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "apps/mobile",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
     "postinstall": "prisma generate",
+    "lint": "eslint app apps/mobile/src apps/mobile/tests components data i18n lib packages tooling --max-warnings=0",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspaces --if-present",
+    "test": "vitest run --coverage",
+    "test:mobile": "npm run test -w @psova/mobile",
+    "test:watch": "vitest",
+    "content:validate": "tsx tooling/build-content-snapshot.ts --check",
+    "content:build": "tsx tooling/build-content-snapshot.ts",
+    "quality": "npm run content:validate && npm run lint && npm run typecheck && npm run test && npm run test:mobile && npm run build && npm run mobile:build",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "mobile:dev": "npm run tauri:dev -w @psova/mobile",
+    "mobile:build": "npm run build -w @psova/mobile",
+    "mobile:android:init": "npm run tauri --workspace @psova/mobile -- android init",
+    "mobile:android:dev": "npm run tauri --workspace @psova/mobile -- android dev",
+    "mobile:android:build": "npm run tauri --workspace @psova/mobile -- android build",
+    "mobile:ios:init": "npm run tauri --workspace @psova/mobile -- ios init",
+    "mobile:ios:build": "npm run tauri --workspace @psova/mobile -- ios build"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -19,6 +37,8 @@
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
     "@prisma/client": "^6.19.3",
+    "@psova/content": "*",
+    "@psova/domain": "*",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@react-three/postprocessing": "^3.0.4",
@@ -30,27 +50,36 @@
     "lenis": "^1.3.23",
     "lottie-react": "^2.4.1",
     "lucide-react": "^1.21.0",
-    "next": "^16.2.9",
+    "next": "16.3.1",
     "next-intl": "^4.13.0",
     "nodemailer": "^9.0.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.79.0",
+    "server-only": "0.0.1",
+    "svix": "1.99.1",
     "tailwind-merge": "^3.6.0",
     "three": "^0.184.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.1",
+    "@tailwindcss/postcss": "4.3.3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^25.9.3",
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.184.1",
-    "postcss": "^8.5.15",
+    "@vitest/coverage-v8": "^4.0.17",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "16.3.1",
+    "jsdom": "^28.1.0",
+    "postcss": "8.5.26",
     "prisma": "^6.19.3",
-    "tailwindcss": "^4.3.1",
+    "tailwindcss": "4.3.3",
     "tsx": "^4.23.1",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.0.17"
   }
 }

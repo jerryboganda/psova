@@ -1,0 +1,90 @@
+name: Signed mobile release artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version already set in project files
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  android-aab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    environment: mobile-release
+    env:
+      NDK_VERSION: 28.2.13676358
+      ANDROID_API: '36'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17', cache: gradle }
+      - uses: android-actions/setup-android@v3
+      - run: yes | sdkmanager "platform-tools" "platforms;android-${ANDROID_API}" "build-tools;36.0.0" "ndk;${NDK_VERSION}"
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: apps/mobile/src-tauri }
+      - run: npm ci
+      - env: { NDK_HOME: "${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}", CI: 'true' }
+        run: npm run tauri -w @psova/mobile -- android init --ci
+      - env: { NDK_HOME: "${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}", CI: 'true' }
+        run: npm run tauri -w @psova/mobile -- android build --aab
+      - name: Sign AAB
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/psova.jks"
+          AAB=$(find apps/mobile/src-tauri/gen/android -name '*.aab' | head -1)
+          test -n "$AAB"
+          jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore "$RUNNER_TEMP/psova.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" -keypass "$ANDROID_KEY_PASSWORD" "$AAB" "$ANDROID_KEY_ALIAS"
+          jarsigner -verify -verbose -certs "$AAB"
+      - uses: actions/upload-artifact@v4
+        with: { name: "psova-android-${{ inputs.version }}", path: "apps/mobile/src-tauri/gen/android/**/*.aab", if-no-files-found: error, retention-days: 30 }
+
+  ios-ipa:
+    runs-on: macos-26
+    timeout-minutes: 90
+    environment: mobile-release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: apps/mobile/src-tauri }
+      - uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+      - uses: apple-actions/download-provisioning-profiles@v4
+        with:
+          bundle-id: pk.org.psova.mobile
+          profile-type: IOS_APP_STORE
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+      - run: sudo gem install cocoapods --no-document
+      - run: npm ci
+      - env: { CI: 'true' }
+        run: npm run tauri -w @psova/mobile -- ios init --ci
+      - env:
+          CI: 'true'
+          APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPLE_API_KEY: ${{ secrets.APPSTORE_KEY_ID }}
+          APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+        run: |
+          printf '%s' '${{ secrets.APPSTORE_PRIVATE_KEY }}' > "$APPLE_API_KEY_PATH"
+          npm run tauri -w @psova/mobile -- ios build --export-method app-store-connect --ci
+      - uses: actions/upload-artifact@v4
+        with: { name: "psova-ios-${{ inputs.version }}", path: "apps/mobile/src-tauri/gen/apple/build/**/*.ipa", if-no-files-found: error, retention-days: 30 }

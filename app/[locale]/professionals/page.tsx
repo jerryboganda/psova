@@ -8,7 +8,7 @@ import {
   Megaphone,
   Stethoscope,
 } from 'lucide-react';
-import { Section, SectionHeading } from '@/components/ui/Section';
+import { Section } from '@/components/ui/Section';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Reveal, Stagger, StaggerItem } from '@/components/ui/Reveal';
 import { GlassCard } from '@/components/ui/GlassCard';

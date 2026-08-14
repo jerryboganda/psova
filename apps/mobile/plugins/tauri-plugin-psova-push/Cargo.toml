@@ -1,0 +1,18 @@
+[package]
+name = "tauri-plugin-psova-push"
+version = "0.2.0"
+authors = ["PSOVA"]
+description = "Focused FCM/APNs registration bridge for the PSOVA Tauri mobile app"
+edition = "2021"
+rust-version = "1.77.2"
+links = "tauri-plugin-psova-push"
+license = "UNLICENSED"
+publish = false
+
+[dependencies]
+tauri = { version = "2" }
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }

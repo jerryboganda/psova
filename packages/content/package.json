@@ -1,0 +1,30 @@
+{
+  "name": "@psova/content",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./conditions": "./src/conditions.ts",
+    "./centers": "./src/centers.ts",
+    "./news": "./src/news.ts",
+    "./glossary": "./src/glossary.ts",
+    "./site": "./src/site.ts",
+    "./donation": "./src/donation.ts",
+    "./navigation": "./src/navigation.ts",
+    "./messages/en": "./src/en.json",
+    "./messages/ur": "./src/ur.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@psova/domain": "*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vitest": "^4.0.17"
+  }
+}
