@@ -36,12 +36,14 @@ export function EventRegistration({ event, title }: { event: EventDetails; title
   const t = useTranslations('News');
   const locale = useLocale();
   const past = useEventPast(event.end);
+  const { contact } = event;
+  if (!contact) return null;
 
   if (past) {
     return <p className="text-sm leading-relaxed text-[var(--color-muted)]">{t('eventEnded')}</p>;
   }
 
-  const digits = event.contact.phone.replace(/\D/g, '');
+  const digits = contact.phone.replace(/\D/g, '');
   const calendar = `https://calendar.google.com/calendar/render?${new URLSearchParams({
     action: 'TEMPLATE',
     text: title,
@@ -62,13 +64,13 @@ export function EventRegistration({ event, title }: { event: EventDetails; title
         {t('registerContact')}
       </p>
       <p className="mt-1 font-medium">
-        {localized(event.contact.name, locale)}{' '}
+        {localized(contact.name, locale)}{' '}
         <bdi dir="ltr" className="text-[var(--color-muted)]">
-          {event.contact.phone.replace(/^\+92(\d{3})(\d{7})$/, '+92 $1 $2')}
+          {contact.phone.replace(/^\+92(\d{3})(\d{7})$/, '+92 $1 $2')}
         </bdi>
       </p>
       <div className="mt-5 flex flex-wrap gap-3">
-        <a href={`tel:${event.contact.phone}`} className={`${btn} bg-brand text-white`}>
+        <a href={`tel:${contact.phone}`} className={`${btn} bg-brand text-white`}>
           <Phone className="size-4" />
           {t('call')}
         </a>
