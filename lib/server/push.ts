@@ -8,7 +8,8 @@ const INSTALLATIONS_KEY = 'push:installations:v1';
 let oauthCache: { token: string; expiresAt: number } | undefined;
 
 function keyMaterial(): Buffer {
-  const secret = serverEnv().PUSH_TOKEN_ENCRYPTION_KEY;
+  const env = serverEnv();
+  const secret = env.PUSH_TOKEN_ENCRYPTION_KEY ?? (env.BETTER_AUTH_SECRET && `psova-push-v1:${env.BETTER_AUTH_SECRET}`);
   if (!secret) throw new Error('Push token encryption is not configured');
   return createHash('sha256').update(secret).digest();
 }

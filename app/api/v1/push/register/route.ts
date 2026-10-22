@@ -1,5 +1,5 @@
 import { pushRegistrationSchema } from '@psova/domain';
-import { hasDatabase } from '@/lib/server/env';
+import { hasDatabase, serverEnv } from '@/lib/server/env';
 import { registerInstallation, unregisterInstallation } from '@/lib/server/push';
 import { clientIdentity, rateLimit } from '@/lib/server/rate-limit';
 
@@ -7,7 +7,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-  if (!hasDatabase()) return Response.json({ ok: false, error: 'Push storage is not configured.' }, { status: 503 });
+  const env = serverEnv();
+  if (!hasDatabase() || !(env.PUSH_TOKEN_ENCRYPTION_KEY ?? env.BETTER_AUTH_SECRET)) return Response.json({ ok: false, error: 'Push storage is not configured.' }, { status: 503 });
   const limit = await rateLimit({ scope: 'push-register', identity: clientIdentity(request), limit: 20, windowSeconds: 3600 });
   if (!limit.allowed) return Response.json({ ok: false, error: 'Too many requests.' }, { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } });
   const parsed = pushRegistrationSchema.safeParse(await request.json().catch(() => null));
@@ -17,6 +18,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const env = serverEnv();
+  if (!hasDatabase() || !(env.PUSH_TOKEN_ENCRYPTION_KEY ?? env.BETTER_AUTH_SECRET)) return Response.json({ ok: false, error: 'Push storage is not configured.' }, { status: 503 });
   const body = await request.json().catch(() => null) as { token?: unknown } | null;
   if (!body || typeof body.token !== 'string' || body.token.length < 16) return Response.json({ ok: false }, { status: 400 });
   await unregisterInstallation(body.token);

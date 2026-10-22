@@ -4,7 +4,8 @@ import { kvGet, kvSet } from './kv';
 import { serverEnv } from './env';
 
 function fingerprint(value: string): string {
-  const key = serverEnv().RATE_LIMIT_HMAC_KEY ?? 'development-only-rate-limit-key';
+  const env = serverEnv();
+  const key = env.RATE_LIMIT_HMAC_KEY ?? env.BETTER_AUTH_SECRET ?? 'development-only-rate-limit-key';
   return createHmac('sha256', key).update(value).digest('hex').slice(0, 24);
 }
 

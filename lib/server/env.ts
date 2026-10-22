@@ -16,6 +16,8 @@ const serverEnvSchema = z.object({
   PUSH_PUBLISH_SECRET: z.string().min(24).optional(),
   PUSH_TOKEN_ENCRYPTION_KEY: z.string().min(40).optional(),
   RATE_LIMIT_HMAC_KEY: z.string().min(24).optional(),
+  // Already set for the registry; used as the fallback secret for push-token encryption and rate-limit hashing.
+  BETTER_AUTH_SECRET: z.string().min(16).optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
