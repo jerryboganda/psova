@@ -105,6 +105,7 @@ docs/registry/               ★ NVAR specification documents — READ BEFORE RE
 | `docs/registry/UI-SPEC.md` | Every page/component, message keys, design mandate, RTL |
 | `docs/registry/TASKS.md` | ★ Phase-by-phase implementation checklist (P1→P8) |
 | `docs/registry/DEPLOYMENT-HOSTINGER.md` | Exact Hostinger hPanel deployment runbook |
+| `docs/DEPLOY-HOSTINGER-MANUAL.md` | ★ HOW PRODUCTION ACTUALLY DEPLOYS (push to main does NOT deploy; CI build + SSH upload via `scripts/hostinger-deploy.sh`) |
 
 Work phase-by-phase per `TASKS.md`; commit at the end of each phase with a
 `registry(pN): description` message. Push to `https://github.com/jerryboganda/psova` when done.
