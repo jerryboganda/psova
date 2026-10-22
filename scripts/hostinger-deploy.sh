@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Deploy the latest hostinger-build artifact to psova.org.pk. See docs/DEPLOY-HOSTINGER-MANUAL.md.
-# Usage: scripts/hostinger-deploy.sh [run-id]     (default: latest successful run)
+# Usage: scripts/hostinger-deploy.sh [--with-modules] [run-id]   (default: latest successful run)
+#        --with-modules also replaces the server runtime packages (next, react, sharp, ...) from the build;
+#        use it only after a dependency change. @prisma/.prisma stay as generated on the server.
 #        scripts/hostinger-deploy.sh rollback     (restore the most recent backup)
 set -euo pipefail
 REPO=jerryboganda/psova
@@ -21,6 +23,7 @@ TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 gh run download "$RUN" --repo $REPO -n hostinger-build -D "$TMP"
 STAMP=$(date +%Y%m%d-%H%M%S)
 scp "${SSH_OPTS[@]}" -P 65002 "$TMP/hostinger-build.tgz" "$HOST:~/hostinger-build-$STAMP.tgz"
+[ "$MODULES" = 1 ] && scp "${SSH_OPTS[@]}" -P 65002 "$TMP/hostinger-node_modules.tgz" "$HOST:~/hostinger-nm-$STAMP.tgz"
 # Extract on the server: the tarball holds a symlink Windows can't create.
 rssh "set -e; cd $APP; B=~/backups/psova-$STAMP; mkdir -p \$B/new
   cp -a .next public \$B/                      # backup of what is live now
