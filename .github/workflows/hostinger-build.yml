@@ -28,7 +28,7 @@ jobs:
           cp -r apps/mobile/dist out/public/app
           tar -czf hostinger-build.tgz -C out .
           # Runtime packages (next, react, sharp, ...) traced by the standalone build; only needed when dependencies change.
-          tar -czf hostinger-node_modules.tgz -C .next/standalone node_modules
+          tar -czf hostinger-node_modules.tgz -C .next/standalone node_modules server.js
       - uses: actions/upload-artifact@v4
         with:
           name: hostinger-build
