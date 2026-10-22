@@ -31,6 +31,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 const card = 'rounded-[var(--radius-2xl)] border border-white/10 bg-white/[0.03] p-6 md:p-8';
+const POSTER = { width: 989, height: 1280 };
 
 export default async function NewsDetailPage({ params }: { params: Params }) {
   const { locale, id } = await params;
@@ -42,6 +43,14 @@ export default async function NewsDetailPage({ params }: { params: Params }) {
   const format = await getFormatter();
   const title = localized(item.title, locale);
   const { event } = item;
+  const dayFmt = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' } as const;
+  const timeFmt = { hour: 'numeric', minute: '2-digit' } as const;
+  const people = event
+    ? [
+        event.speaker && { label: t('speaker'), person: event.speaker },
+        event.patron && { label: t('patron'), person: event.patron },
+      ].filter((x): x is NonNullable<typeof x> => !!x)
+    : [];
 
   return (
     <>
@@ -68,96 +77,272 @@ export default async function NewsDetailPage({ params }: { params: Params }) {
           <p className="mt-4 max-w-3xl text-lg text-[var(--color-muted)]">
             {localized(item.excerpt, locale)}
           </p>
+          {event?.theme && (
+            <p className="mt-4 max-w-3xl text-lg font-medium text-[var(--color-cyan)]">
+              <span className="text-xs uppercase tracking-widest text-[var(--color-faint)]">
+                {t('theme')}
+                {' · '}
+              </span>
+              {localized(event.theme, locale)}
+            </p>
+          )}
         </div>
       </header>
 
       <Section>
         <div className="mx-auto max-w-5xl">
           {event ? (
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-              <Reveal>
-                <a
-                  href={event.poster}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block overflow-hidden rounded-[var(--radius-2xl)] border border-white/10 bg-white shadow-[0_30px_80px_-30px_rgba(31,224,212,0.35)] lg:sticky lg:top-28"
-                >
-                  <Image
-                    src={event.poster}
-                    alt={t('posterAlt', { title })}
-                    width={1131}
-                    height={1599}
-                    sizes="(min-width: 1024px) 45vw, 100vw"
-                    className="h-auto w-full"
-                    priority
-                  />
-                </a>
-              </Reveal>
+            <>
+              <div className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+                <Reveal>
+                  <a
+                    href={event.poster}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block overflow-hidden rounded-[var(--radius-2xl)] border border-white/10 bg-white shadow-[0_30px_80px_-30px_rgba(31,224,212,0.35)] lg:sticky lg:top-28"
+                  >
+                    <Image
+                      src={event.poster}
+                      alt={t('posterAlt', { title })}
+                      {...(event.poster.includes('psova-2025')
+                        ? POSTER
+                        : { width: 1131, height: 1599 })}
+                      sizes="(min-width: 1024px) 45vw, 100vw"
+                      className="h-auto w-full"
+                      priority
+                    />
+                  </a>
+                </Reveal>
 
-              <div className="flex flex-col gap-6">
-                <div className={`${card} grid gap-5`}>
-                  <Fact Icon={CalendarDays} label={t('when')}>
-                    {format.dateTime(new Date(event.start), {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                    <br />
-                    {format.dateTimeRange(new Date(event.start), new Date(event.end), {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
-                  </Fact>
-                  <Fact Icon={MapPin} label={t('where')}>
-                    {localized(event.venue, locale)}
-                  </Fact>
-                </div>
+                <div className="flex flex-col gap-6">
+                  <div className={`${card} grid gap-5`}>
+                    <Fact Icon={CalendarDays} label={t('when')}>
+                      {format.dateTime(new Date(event.start), dayFmt)}
+                      <br />
+                      {format.dateTimeRange(new Date(event.start), new Date(event.end), timeFmt)}
+                    </Fact>
+                    <Fact Icon={MapPin} label={t('where')}>
+                      {localized(event.venue, locale)}
+                    </Fact>
+                  </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {[
-                    { label: t('speaker'), person: event.speaker },
-                    { label: t('patron'), person: event.patron },
-                  ].map(({ label, person }) => (
-                    <div key={label} className={card}>
+                  {people.length > 0 && (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {people.map(({ label, person }) => (
+                        <div key={label} className={card}>
+                          <p className="text-xs uppercase tracking-widest text-[var(--color-cyan)]">
+                            {label}
+                          </p>
+                          <p className="mt-2 font-semibold">{localized(person.name, locale)}</p>
+                          <p className="mt-1 text-sm leading-relaxed text-[var(--color-muted)]">
+                            {localized(person.role, locale)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {event.sessions?.map((s) => (
+                    <div key={s.start} className={card}>
                       <p className="text-xs uppercase tracking-widest text-[var(--color-cyan)]">
-                        {label}
+                        {localized(s.label, locale)}
                       </p>
-                      <p className="mt-2 font-semibold">{localized(person.name, locale)}</p>
-                      <p className="mt-1 text-sm leading-relaxed text-[var(--color-muted)]">
-                        {localized(person.role, locale)}
+                      <p className="mt-2 font-semibold">{localized(s.topic, locale)}</p>
+                      <p className="mt-2 text-sm text-[var(--color-muted)]">
+                        {format.dateTime(new Date(s.start), dayFmt)} ·{' '}
+                        <span suppressHydrationWarning>
+                          {format.dateTimeRange(new Date(s.start), new Date(s.end), timeFmt)}
+                        </span>
+                      </p>
+                      <p className="mt-2 text-sm">
+                        <span className="font-medium">{s.speaker.name}</span>
+                        <span className="text-[var(--color-muted)]">
+                          {' — '}
+                          {localized(s.speaker.role, locale)}
+                        </span>
                       </p>
                     </div>
                   ))}
-                </div>
 
-                <div className={card}>
-                  <h2 className="text-lg font-semibold">{t('focus')}</h2>
-                  <ul className="mt-4 flex flex-wrap gap-2">
-                    {event.focus.map((f) => (
-                      <li
-                        key={f.en}
-                        className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm"
-                      >
-                        {localized(f, locale)}
+                  {(event.focus || event.audience) && (
+                    <div className={card}>
+                      {event.focus && (
+                        <>
+                          <h2 className="text-lg font-semibold">{t('focus')}</h2>
+                          <ul className="mt-4 flex flex-wrap gap-2">
+                            {event.focus.map((f) => (
+                              <li
+                                key={f.en}
+                                className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm"
+                              >
+                                {localized(f, locale)}
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      {event.audience && (
+                        <>
+                          <h2 className="mt-6 flex items-center gap-2 text-lg font-semibold first:mt-0">
+                            <Users className="size-5 text-[var(--color-cyan)]" />
+                            {t('audience')}
+                          </h2>
+                          <p className="mt-2 leading-relaxed text-[var(--color-muted)]">
+                            {localized(event.audience, locale)}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {event.about && (
+                    <div className={card}>
+                      <h2 className="text-lg font-semibold">{t('aboutPsova')}</h2>
+                      <p className="mt-3 leading-relaxed text-[var(--color-muted)]">
+                        {localized(event.about, locale)}
+                      </p>
+                      {event.stats && (
+                        <dl className="mt-6 grid grid-cols-3 gap-3 text-center">
+                          {event.stats.map((s) => (
+                            <div key={s.label} className="flex flex-col-reverse rounded-2xl bg-white/5 px-2 py-4">
+                              <dt className="text-xs text-[var(--color-faint)]">{t(s.label)}</dt>
+                              <dd className="text-gradient text-2xl font-bold">{s.value}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      )}
+                    </div>
+                  )}
+
+                  {event.contact && (
+                    <div className={`${card} glass`}>
+                      <h2 className="mb-4 text-lg font-semibold">{t('register')}</h2>
+                      <EventRegistration event={event} title={title} />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {event.schedule && (
+                <div className="mt-16">
+                  <h2 className="text-2xl font-semibold md:text-3xl">{t('programme')}</h2>
+                  <div className="mt-6 grid gap-6">
+                    {event.schedule.map((block, i) => (
+                      <div key={i} className={`${card} !p-0 overflow-hidden`}>
+                        {(block.title || block.chairs) && (
+                          <div className="border-b border-white/10 bg-white/[0.04] px-6 py-4 md:px-8">
+                            {block.title && (
+                              <h3 className="font-semibold text-[var(--color-cyan)]">
+                                {localized(block.title, locale)}
+                              </h3>
+                            )}
+                            {block.chairs && (
+                              <p className="mt-1 text-sm text-[var(--color-muted)]">
+                                <span className="font-medium text-white">{t('chairs')}:</span>{' '}
+                                {block.chairs}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        <ul className="divide-y divide-white/10">
+                          {block.rows.map((r) => (
+                            <li
+                              key={r.time + r.topic.en}
+                              className={`grid gap-1 px-6 py-4 md:grid-cols-[9rem_minmax(0,1fr)] md:gap-6 md:px-8 ${r.highlight ? 'bg-white/[0.04]' : ''}`}
+                            >
+                              <bdi dir="ltr" className="text-sm font-medium text-[var(--color-cyan)] md:text-start">
+                                {r.time}
+                              </bdi>
+                              <div>
+                                <p className={r.highlight ? 'font-semibold' : 'font-medium'}>
+                                  {localized(r.topic, locale)}
+                                </p>
+                                {r.speaker && (
+                                  <p className="mt-1 text-sm text-[var(--color-muted)]">
+                                    <span className="text-white">{r.speaker}</span>
+                                    {r.role && ` — ${localized(r.role, locale)}`}
+                                  </p>
+                                )}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {event.featuredSpeakers && (
+                <div className="mt-16">
+                  <h2 className="text-2xl font-semibold md:text-3xl">{t('featuredSpeakers')}</h2>
+                  <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {event.featuredSpeakers.map((s) => (
+                      <li key={s.name} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                        <p className="font-semibold">{s.name}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-[var(--color-muted)]">
+                          {localized(s.role, locale)}
+                        </p>
                       </li>
                     ))}
                   </ul>
-                  <h2 className="mt-6 flex items-center gap-2 text-lg font-semibold">
-                    <Users className="size-5 text-[var(--color-cyan)]" />
-                    {t('audience')}
-                  </h2>
-                  <p className="mt-2 leading-relaxed text-[var(--color-muted)]">
-                    {localized(event.audience, locale)}
-                  </p>
                 </div>
+              )}
 
-                <div className={`${card} glass`}>
-                  <h2 className="mb-4 text-lg font-semibold">{t('register')}</h2>
-                  <EventRegistration event={event} title={title} />
+              {event.committees?.map((c) => (
+                <div key={c.title.en} className="mt-16">
+                  <h2 className="text-2xl font-semibold md:text-3xl">{localized(c.title, locale)}</h2>
+                  <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+                    {c.members.map((m) => (
+                      <li key={m.name} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                        <p className="font-semibold">{m.name}</p>
+                        <p className="mt-1 text-sm text-[var(--color-muted)]">{localized(m.role, locale)}</p>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-            </div>
+              ))}
+
+              {event.partners && (
+                <div className="mt-16">
+                  <h2 className="text-2xl font-semibold md:text-3xl">{t('partners')}</h2>
+                  <ul className="mt-6 flex flex-wrap gap-2">
+                    {event.partners.map((p) => (
+                      <li key={p} className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm">
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {event.gallery && (
+                <div className="mt-16">
+                  <h2 className="text-2xl font-semibold md:text-3xl">{t('gallery')}</h2>
+                  <p className="mt-2 text-sm text-[var(--color-muted)]">{t('galleryHint')}</p>
+                  <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {[{ src: event.poster, alt: item.title }, ...event.gallery].map((g) => (
+                      <li key={g.src}>
+                        <a
+                          href={g.src}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block overflow-hidden rounded-2xl border border-white/10 bg-white transition-transform duration-300 hover:-translate-y-1"
+                        >
+                          <Image
+                            src={g.src}
+                            alt={localized(g.alt, locale)}
+                            {...POSTER}
+                            sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
+                            className="h-auto w-full"
+                          />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
           ) : (
             item.body && (
               <p className="text-lg leading-relaxed text-[var(--color-muted)]">
@@ -185,11 +370,11 @@ export default async function NewsDetailPage({ params }: { params: Params }) {
               location: {
                 '@type': 'Place',
                 name: localized(event.venue, locale),
-                address: 'Multan, Pakistan',
+                address: event.venue.en.match(/Gujranwala|Multan/)?.[0] + ', Pakistan',
               },
-              performer: { '@type': 'Person', name: event.speaker.name.en },
+              ...(event.speaker && { performer: { '@type': 'Person', name: event.speaker.name.en } }),
               organizer: { '@type': 'Organization', name: 'Pakistan Society Of Vascular Anomaly' },
-              isAccessibleForFree: event.free,
+              ...(event.free !== undefined && { isAccessibleForFree: event.free }),
             }),
           }}
         />

@@ -1,5 +1,8 @@
 # DEPLOYMENT — Hostinger Business (hPanel) Runbook
 
+> **Production note (2026-10-22):** the live psova.org.pk app is NOT linked to Git, so pushes to `main` do not
+> auto-deploy. See [../DEPLOY-HOSTINGER-MANUAL.md](../DEPLOY-HOSTINGER-MANUAL.md) for the real procedure.
+
 Deploying PSOVA + NVAR to **Hostinger Business Web Hosting** (shared, hPanel).
 Verified capabilities (Dec 2025 rollout): managed Node.js apps on Business plan (up to 5),
 Node 18/20/22/24, GitHub auto-deploy, env vars UI, SSH, cron, MariaDB (MySQL-compatible),

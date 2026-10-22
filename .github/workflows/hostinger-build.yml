@@ -1,0 +1,29 @@
+name: hostinger-build
+# Manual: builds the Linux standalone artifact that scripts/hostinger-deploy.sh uploads.
+# Run: gh workflow run hostinger-build --ref main   (see docs/DEPLOY-HOSTINGER-MANUAL.md)
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          DOCKER_BUILD: '1' # makes next.config.mjs emit output: 'standalone', same as Hostinger's pipeline
+      - run: |
+          mkdir out
+          cp -r .next/standalone/.next out/.next
+          cp -r .next/static out/.next/static
+          cp -r public out/public
+          tar -czf hostinger-build.tgz -C out .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hostinger-build
+          path: hostinger-build.tgz
+          retention-days: 3

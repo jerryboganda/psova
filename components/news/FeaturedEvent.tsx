@@ -19,7 +19,7 @@ export function FeaturedEvent({ item }: { item: NewsItem & { event: EventDetails
   const facts = [
     { Icon: CalendarDays, value: when },
     { Icon: MapPin, value: localized(event.venue, locale) },
-    { Icon: Mic, value: localized(event.speaker.name, locale) },
+    ...(event.speaker ? [{ Icon: Mic, value: localized(event.speaker.name, locale) }] : []),
   ];
 
   return (

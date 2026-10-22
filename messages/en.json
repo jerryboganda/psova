@@ -246,7 +246,22 @@
     "whatsapp": "WhatsApp",
     "addToCalendar": "Add to Google Calendar",
     "posterAlt": "Event poster: {title}",
-    "eventEnded": "This event has ended. Thank you to everyone who took part."
+    "eventEnded": "This event has ended. Thank you to everyone who took part.",
+    "theme": "Theme",
+    "aboutPsova": "About PSOVA",
+    "founded": "Founded",
+    "members": "Members",
+    "cities": "Cities",
+    "programme": "Scientific programme",
+    "chairs": "Chairpersons",
+    "colTime": "Time",
+    "colSpeaker": "Speaker",
+    "colTopic": "Topic",
+    "featuredSpeakers": "Featured speakers",
+    "partners": "Supporting societies",
+    "gallery": "Conference posters",
+    "galleryHint": "Tap a poster to view it full size.",
+    "sessionsTitle": "Pre-conference workshop"
   },
   "GetInvolved": {
     "eyebrow": "Get involved",

@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "revision": "fdbf1e524a24e9b6",
+  "revision": "c30121c0b41f9808",
   "publishedAt": "2026-08-14T12:32:58.262Z",
-  "checksum": "fdbf1e524a24e9b6275a57368bb7002495763b42231144913f8b837682025099",
+  "checksum": "c30121c0b41f98087e060a4a3b64bc68f6466b1a58c290954a47b176bcaec4b2",
   "review": {
     "clinical": "pending",
     "urdu": "pending",
@@ -966,6 +966,46 @@
       "body": {
         "en": "Vascular anomalies are often misdiagnosed and mismanaged. This workshop gives clinicians a practical, imaging-led approach to telling hemangiomas and vascular malformations apart, choosing the right investigations, and knowing when to refer for multidisciplinary care. Wednesday 28 October 2026, 11:00 AM – 2:00 PM, Auditorium, The Children's Hospital & Institute of Child Health, Multan. Registration is free — contact Dr. Obaidullah, +92 331 8702344.",
         "ur": "ویسکولر ایناملیز کی اکثر غلط تشخیص اور غلط علاج ہوتا ہے۔ یہ ورکشاپ معالجین کو ہیمانجیوما اور ویسکولر مالفارمیشن میں فرق کرنے، درست ٹیسٹ منتخب کرنے اور کثیر الشعبہ علاج کے لیے بروقت ریفر کرنے کا عملی، امیجنگ پر مبنی طریقہ سکھائے گی۔ بدھ 28 اکتوبر 2026، صبح 11 بجے تا دوپہر 2 بجے، آڈیٹوریم، دی چلڈرن ہسپتال اینڈ انسٹی ٹیوٹ آف چائلڈ ہیلتھ، ملتان۔ رجسٹریشن مفت ہے — ڈاکٹر عبید اللہ سے رابطہ کریں: 8702344 331 92+۔"
+      },
+      "publicationStatus": "draft"
+    },
+    {
+      "id": "2nd-international-vascular-anomaly-conference-2025",
+      "kind": "event",
+      "date": "2025-09-27",
+      "title": {
+        "en": "2nd International Vascular Anomaly Conference — Vascular Horizons",
+        "ur": "دوسری بین الاقوامی ویسکولر ایناملی کانفرنس — ویسکولر ہورائزنز"
+      },
+      "excerpt": {
+        "en": "PSOVA’s second international conference at Gujranwala Medical College Teaching Hospital: a full scientific programme with national and international faculty, a residents’ forum, and a pre-conference workshop on varicose vein treatment.",
+        "ur": "گوجرانوالہ میڈیکل کالج ٹیچنگ ہسپتال میں پی ایس او وی اے کی دوسری بین الاقوامی کانفرنس: ملکی اور غیر ملکی ماہرین پر مشتمل مکمل سائنسی پروگرام، ریزیڈنٹس فورم اور وریدوں کے پھولنے (ویریکوز وینز) کے علاج پر پری کانفرنس ورکشاپ۔"
+      },
+      "tag": {
+        "en": "Conference",
+        "ur": "کانفرنس"
+      },
+      "publicationStatus": "draft"
+    },
+    {
+      "id": "first-international-vascular-anomaly-seminar-2023",
+      "kind": "event",
+      "date": "2023-12-16",
+      "title": {
+        "en": "1st International Vascular Anomaly Seminar",
+        "ur": "پہلا بین الاقوامی ویسکولر ایناملی سیمینار"
+      },
+      "excerpt": {
+        "en": "PSOVA’s first international vascular anomaly seminar, held at Gujranwala Medical College Teaching Hospital on 16 December 2023.",
+        "ur": "پی ایس او وی اے کا پہلا بین الاقوامی ویسکولر ایناملی سیمینار، جو 16 دسمبر 2023 کو گوجرانوالہ میڈیکل کالج ٹیچنگ ہسپتال میں منعقد ہوا۔"
+      },
+      "tag": {
+        "en": "Seminar",
+        "ur": "سیمینار"
+      },
+      "body": {
+        "en": "Held on Saturday 16 December 2023 at Gujranwala Medical College Teaching Hospital, Gujranwala, the seminar was PSOVA’s first international gathering on vascular anomalies, bringing clinicians together to advance knowledge and collaboration in the field. It was followed by the 2nd International Vascular Anomaly Conference on 27 September 2025.",
+        "ur": "ہفتہ 16 دسمبر 2023 کو گوجرانوالہ میڈیکل کالج ٹیچنگ ہسپتال، گوجرانوالہ میں منعقد ہونے والا یہ سیمینار ویسکولر ایناملیز پر پی ایس او وی اے کا پہلا بین الاقوامی اجتماع تھا، جس میں معالجین نے اس شعبے میں علم اور باہمی تعاون کو آگے بڑھانے کے لیے شرکت کی۔ اس کے بعد 27 ستمبر 2025 کو دوسری بین الاقوامی ویسکولر ایناملی کانفرنس منعقد ہوئی۔"
       },
       "publicationStatus": "draft"
     }
