@@ -37,7 +37,6 @@ fn validate_external_url(raw: String) -> Result<String, String> {
                     || host == "maps.google.com"
                     || host == "psova.org.pk"
                     || host == "www.psova.org.pk"
-                    || host == "psova.polytronx.com"
                     || host == "hospitals.aku.edu"
                     || host.ends_with(".edu.pk")
                     || host.ends_with(".org.pk")

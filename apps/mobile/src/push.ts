@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { pushRegistrationSchema, type Locale } from '@psova/domain';
 import { isNative } from './native';
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, '') ?? 'https://psova.polytronx.com';
+const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, '') ?? 'https://psova.org.pk';
 
 export interface NativePushTokenProvider {
   getRegistration(): Promise<{ token: string; platform: 'android' | 'ios' }>;

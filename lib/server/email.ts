@@ -1,6 +1,14 @@
 import 'server-only';
+import nodemailer, { type Transporter } from 'nodemailer';
 import type { ContactRequest } from '@psova/domain';
-import { hasEmailDelivery, serverEnv } from './env';
+import { hasEmailDelivery, serverEnv, type ServerEnv } from './env';
+
+let cachedTransport: Transporter | undefined;
+function transport(env: ServerEnv): Transporter {
+  const port = env.SMTP_PORT ?? 465;
+  cachedTransport ??= nodemailer.createTransport({ host: env.SMTP_HOST, port, secure: port === 465, auth: { user: env.SMTP_USER, pass: env.SMTP_PASS } });
+  return cachedTransport;
+}
 
 export type EmailAcceptance = { providerId: string; acceptedAt: string };
 
@@ -20,17 +28,21 @@ export async function deliverContactEmail(request: ContactRequest): Promise<Emai
   ];
   const text = `${fields.map(([key, value]) => `${key}: ${value}`).join('\n')}\n\nMessage:\n${payload.message || 'No message supplied.'}`;
   const html = `<h1>${escapeHtml(subject)}</h1><dl>${fields.map(([key, value]) => `<dt><strong>${escapeHtml(key)}</strong></dt><dd>${escapeHtml(value)}</dd>`).join('')}</dl><h2>Message</h2><p>${escapeHtml(payload.message || 'No message supplied.').replace(/\n/g, '<br>')}</p>`;
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json', 'Idempotency-Key': `contact/${request.clientSubmissionId}/v1` },
-    body: JSON.stringify({ from: env.RESEND_FROM, to: [env.PSOVA_CONTACT_TO], reply_to: payload.email || undefined, subject, text, html }),
-    cache: 'no-store',
-  });
-  if (!response.ok) {
-    const retryable = response.status === 408 || response.status === 429 || response.status >= 500;
-    throw Object.assign(new Error(retryable ? 'Email provider temporarily unavailable' : 'Email provider rejected the request'), { retryable, status: response.status });
+  try {
+    const info = await transport(env).sendMail({
+      from: env.SMTP_FROM ?? env.SMTP_USER,
+      to: env.PSOVA_CONTACT_TO ?? env.SMTP_USER,
+      replyTo: payload.email || undefined,
+      subject, text, html,
+      messageId: `<contact-${request.clientSubmissionId}@psova.org.pk>`,
+    });
+    if (!info.accepted?.length) throw Object.assign(new Error('Mailbox accepted no recipient'), { retryable: true });
+    return { providerId: info.messageId, acceptedAt: new Date().toISOString() };
+  } catch (error) {
+    if ((error as { retryable?: boolean }).retryable !== undefined) throw error;
+    // 5xx SMTP replies (bad recipient, policy) will not succeed on retry; connection/4xx errors will.
+    const code = (error as { responseCode?: number }).responseCode;
+    const retryable = !(typeof code === 'number' && code >= 500);
+    throw Object.assign(new Error(retryable ? 'Mail server temporarily unavailable' : 'Mail server rejected the message'), { retryable });
   }
-  const result = await response.json() as { id?: string };
-  if (!result.id) throw Object.assign(new Error('Email provider returned no acceptance identifier'), { retryable: true });
-  return { providerId: result.id, acceptedAt: new Date().toISOString() };
 }

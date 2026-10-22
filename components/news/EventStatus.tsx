@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { CalendarPlus, MessageCircle, Phone } from 'lucide-react';
 import type { EventDetails } from '@/data/news';
 import { localized } from '@/lib/utils';
 
 // Pages are statically built, so "past" is decided in the browser, not at build time.
+const noSubscribe = () => () => {};
 export function useEventPast(end: string) {
-  const [past, setPast] = useState(false);
-  useEffect(() => setPast(Date.now() > new Date(end).getTime()), [end]);
-  return past;
+  return useSyncExternalStore(noSubscribe, () => Date.now() > new Date(end).getTime(), () => false);
 }
 
 export function EventBadge({ end }: { end: string }) {

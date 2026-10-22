@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react';
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
+  // Tauri loads from the app root; the hosted web build sets VITE_BASE=/app/ (served by the website from public/app).
+  base: process.env.VITE_BASE ?? '/',
   plugins: [react()],
   clearScreen: false,
   server: {

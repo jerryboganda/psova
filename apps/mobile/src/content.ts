@@ -1,7 +1,7 @@
 import { contentSnapshotSchema, shouldReplaceSnapshot, type ContentSnapshot } from '@psova/domain';
 import { loadSnapshot, saveSnapshot } from './storage';
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, '') ?? 'https://psova.polytronx.com';
+const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, '') ?? 'https://psova.org.pk';
 
 async function digestContent(snapshot: ContentSnapshot): Promise<string> {
   const content = {
@@ -24,7 +24,7 @@ export async function verifySnapshot(value: unknown): Promise<ContentSnapshot> {
 }
 
 async function bundledSnapshot(): Promise<ContentSnapshot> {
-  const response = await fetch('/content-snapshot.json', { cache: 'no-store' });
+  const response = await fetch(`${import.meta.env.BASE_URL}content-snapshot.json`, { cache: 'no-store' });
   if (!response.ok) throw new Error('Bundled content snapshot is unavailable');
   return verifySnapshot(await response.json());
 }

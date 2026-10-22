@@ -16,11 +16,16 @@ jobs:
       - run: npm run build
         env:
           DOCKER_BUILD: '1' # makes next.config.mjs emit output: 'standalone', same as Hostinger's pipeline
+      - name: Build the mobile app as a web app (served at /app/)
+        run: npm run mobile:build
+        env:
+          VITE_BASE: /app/
       - run: |
           mkdir out
           cp -r .next/standalone/.next out/.next
           cp -r .next/static out/.next/static
           cp -r public out/public
+          cp -r apps/mobile/dist out/public/app
           tar -czf hostinger-build.tgz -C out .
       - uses: actions/upload-artifact@v4
         with:

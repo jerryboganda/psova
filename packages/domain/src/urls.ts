@@ -5,7 +5,6 @@ const ALLOWED_HTTPS_HOSTS = new Set([
   'maps.google.com',
   'psova.org.pk',
   'www.psova.org.pk',
-  'psova.polytronx.com',
   'hospitals.aku.edu',
 ]);
 

@@ -25,7 +25,7 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Meta' });
   return {
-    metadataBase: new URL('https://psova.polytronx.com'),
+    metadataBase: new URL('https://psova.org.pk'),
     title: { default: t('titleDefault'), template: t('titleTemplate') },
     description: t('description'),
     openGraph: {

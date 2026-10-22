@@ -1,7 +1,7 @@
 import 'server-only';
 import { contactPayloadSchema, contactRequestSchema, type ContactRequest, type ContactResponse } from '@psova/domain';
 import { deliverContactEmail } from './email';
-import { hasDurableKv, serverEnv } from './env';
+import { hasDatabase } from './env';
 import { kvGet, kvSet } from './kv';
 import { clientIdentity, rateLimit } from './rate-limit';
 
@@ -29,7 +29,7 @@ export async function handleContact(request: Request, options: { acceptLegacyPay
   const limiter = await rateLimit({ scope: 'contact', identity: clientIdentity(request), limit: 8, windowSeconds: 600 });
   if (!limiter.allowed) return json({ ok: false, status: 'retryable', submissionId: submission.clientSubmissionId, message: 'Too many requests.', retryAfterSeconds: limiter.retryAfterSeconds }, 429, { 'Retry-After': String(limiter.retryAfterSeconds) });
 
-  if (process.env.NODE_ENV === 'production' && !hasDurableKv(serverEnv())) {
+  if (process.env.NODE_ENV === 'production' && !hasDatabase()) {
     return json({ ok: false, status: 'retryable', submissionId: submission.clientSubmissionId, message: 'Delivery storage is not configured.', retryAfterSeconds: 900 }, 503, { 'Retry-After': '900' });
   }
   const ledgerKey = `contact:submission:${submission.clientSubmissionId}`;

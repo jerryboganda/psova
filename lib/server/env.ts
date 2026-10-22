@@ -1,14 +1,15 @@
 import 'server-only';
 import { z } from 'zod';
 
-const optionalUrl = z.string().url().optional();
 const serverEnvSchema = z.object({
-  RESEND_API_KEY: z.string().min(10).optional(),
-  RESEND_WEBHOOK_SECRET: z.string().min(10).optional(),
-  RESEND_FROM: z.string().email().optional(),
+  // Contact email goes out through the Hostinger mailbox (same SMTP_* as the registry mailer).
+  SMTP_HOST: z.string().min(3).optional(),
+  SMTP_PORT: z.coerce.number().int().positive().optional(),
+  SMTP_USER: z.string().min(3).optional(),
+  SMTP_PASS: z.string().min(1).optional(),
+  SMTP_FROM: z.string().min(3).optional(),
   PSOVA_CONTACT_TO: z.string().email().optional(),
-  UPSTASH_REDIS_REST_URL: optionalUrl,
-  UPSTASH_REDIS_REST_TOKEN: z.string().min(10).optional(),
+  // Optional remote push (Google FCM is the only way to wake an Android/iOS app).
   FIREBASE_PROJECT_ID: z.string().min(2).optional(),
   FIREBASE_CLIENT_EMAIL: z.string().email().optional(),
   FIREBASE_PRIVATE_KEY: z.string().min(20).optional(),
@@ -25,10 +26,11 @@ export function serverEnv(): ServerEnv {
   return cached;
 }
 
-export function hasEmailDelivery(env = serverEnv()): env is ServerEnv & Required<Pick<ServerEnv, 'RESEND_API_KEY' | 'RESEND_FROM' | 'PSOVA_CONTACT_TO'>> {
-  return Boolean(env.RESEND_API_KEY && env.RESEND_FROM && env.PSOVA_CONTACT_TO);
+export function hasEmailDelivery(env = serverEnv()): env is ServerEnv & Required<Pick<ServerEnv, 'SMTP_HOST' | 'SMTP_USER' | 'SMTP_PASS'>> {
+  return Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
 }
 
-export function hasDurableKv(env = serverEnv()): env is ServerEnv & Required<Pick<ServerEnv, 'UPSTASH_REDIS_REST_URL' | 'UPSTASH_REDIS_REST_TOKEN'>> {
-  return Boolean(env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN);
+/** Durable storage is the Hostinger MariaDB behind the registry. */
+export function hasDatabase(): boolean {
+  return Boolean(process.env.DATABASE_URL);
 }

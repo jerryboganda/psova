@@ -1,5 +1,5 @@
 import { pushRegistrationSchema } from '@psova/domain';
-import { hasDurableKv, serverEnv } from '@/lib/server/env';
+import { hasDatabase } from '@/lib/server/env';
 import { registerInstallation, unregisterInstallation } from '@/lib/server/push';
 import { clientIdentity, rateLimit } from '@/lib/server/rate-limit';
 
@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-  if (!hasDurableKv(serverEnv())) return Response.json({ ok: false, error: 'Push storage is not configured.' }, { status: 503 });
+  if (!hasDatabase()) return Response.json({ ok: false, error: 'Push storage is not configured.' }, { status: 503 });
   const limit = await rateLimit({ scope: 'push-register', identity: clientIdentity(request), limit: 20, windowSeconds: 3600 });
   if (!limit.allowed) return Response.json({ ok: false, error: 'Too many requests.' }, { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } });
   const parsed = pushRegistrationSchema.safeParse(await request.json().catch(() => null));

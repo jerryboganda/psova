@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
 import { CONDITIONS } from '@/data/conditions';
 
-const BASE = 'https://psova.polytronx.com';
+const BASE = 'https://psova.org.pk';
 
 const PATHS = [
   '',

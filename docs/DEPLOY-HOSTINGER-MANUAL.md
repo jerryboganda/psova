@@ -59,10 +59,16 @@ Then check `https://psova.org.pk/en/<page>` and the `/ur/` version.
 8. **Mobile app branch** (`feature/psova-tauri-mobile`) is not on `main`/production. Event content exists in both:
    `data/news.ts` on main, `packages/content/src/news.ts` (plus regenerated `public/content-snapshot.json`
    and `apps/mobile/public/content-snapshot.json`) on the mobile branch. Keep them in sync when adding content.
-9. `psova.polytronx.com` currently 502s (nothing running behind the VPS proxy). Ignore or remove the proxy host.
+9. `psova.polytronx.com` is dead (VPS proxy, 502). Everything, including the mobile app's API calls, uses `https://psova.org.pk`.
 10. The local `node_modules/@psova/*` links pointed at the old `E:` drive; fixed with junctions to `D:\Projects\PSOVA`.
     If `tsc` says `Cannot find module '@psova/domain'` on the mobile branch, re-point them.
 11. Turbopack refuses a `node_modules` junction pointing outside the project root; in a git worktree do a real `npm ci`.
+
+## Mobile app as a web app
+
+`hostinger-build` also builds `apps/mobile` with `VITE_BASE=/app/` and ships it in `public/app/`, so the deploy publishes it at
+`https://psova.org.pk/app/index.html` (the path has a dot, so the locale proxy leaves it alone). The same app on phones
+calls `https://psova.org.pk/api/v1/*`. Contact email and the key-value tables use the Hostinger SMTP mailbox and MariaDB.
 
 ## Manual steps (what the script does)
 

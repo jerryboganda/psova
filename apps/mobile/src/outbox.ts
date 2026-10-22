@@ -8,7 +8,7 @@ import {
 } from '@psova/domain';
 import { loadOutbox, saveOutboxRecord } from './storage';
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, '') ?? 'https://psova.polytronx.com';
+const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, '') ?? 'https://psova.org.pk';
 
 export async function enqueueContact(payload: ContactPayload): Promise<OutboxRecord> {
   const now = new Date().toISOString();

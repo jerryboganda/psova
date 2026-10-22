@@ -8,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       // Registry admin/clinician areas and APIs are not for crawlers.
       disallow: ['/api/', '/en/registry/admin', '/ur/registry/admin', '/en/registry/clinician', '/ur/registry/clinician', '/en/registry/login', '/ur/registry/login'],
     },
-    sitemap: 'https://psova.polytronx.com/sitemap.xml',
+    sitemap: 'https://psova.org.pk/sitemap.xml',
   };
 }

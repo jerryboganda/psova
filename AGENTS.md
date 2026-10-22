@@ -4,7 +4,7 @@ Guidance for AI coding agents (Codex) working in this repository.
 
 ## What this project is
 
-**PSOVA — Pakistan Society Of Vascular Anomaly** (`psova.polytronx.com`, target production
+**PSOVA — Pakistan Society Of Vascular Anomaly** (`psova.org.pk`, target production
 host: **Hostinger Business shared hosting**). A bilingual (English / اردو Urdu, full RTL),
 heavily animated Next.js website for Pakistan's first vascular-anomaly society, now being
 extended with the **NVAR — National Vascular Anomaly Registry** (Pakistan's first national
