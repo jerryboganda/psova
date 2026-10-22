@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "revision": "f61cd9c40a10163f",
+  "revision": "fdbf1e524a24e9b6",
   "publishedAt": "2026-08-14T12:32:58.262Z",
-  "checksum": "f61cd9c40a10163fe475355cf878f43a85fa136e07fd26273b7a96163ad46969",
+  "checksum": "fdbf1e524a24e9b6275a57368bb7002495763b42231144913f8b837682025099",
   "review": {
     "clinical": "pending",
     "urdu": "pending",
@@ -948,110 +948,24 @@
   ],
   "news": [
     {
-      "id": "launch",
-      "kind": "news",
-      "date": "2026-06-01",
-      "title": {
-        "en": "PSOVA launches Pakistan’s first vascular anomaly society",
-        "ur": "پی ایس او وی اے نے پاکستان کی پہلی ویسکولر ایناملی سوسائٹی کا آغاز کر دیا"
-      },
-      "excerpt": {
-        "en": "A national network connecting families, specialists, and centres to make expert vascular anomaly care reachable across Pakistan.",
-        "ur": "ایک قومی نیٹ ورک جو خاندانوں، ماہرین اور مراکز کو جوڑتا ہے تاکہ ماہرانہ ویسکولر ایناملی علاج پاکستان بھر میں قابلِ رسائی ہو۔"
-      },
-      "tag": {
-        "en": "Announcement",
-        "ur": "اعلان"
-      },
-      "publicationStatus": "draft"
-    },
-    {
-      "id": "awareness-week",
+      "id": "vascular-anomalies-dilemma-workshop-2026",
       "kind": "event",
-      "date": "2026-09-15",
+      "date": "2026-10-28",
       "title": {
-        "en": "National Vascular Birthmark Awareness Week",
-        "ur": "قومی ویسکولر برتھ مارک آگاہی ہفتہ"
+        "en": "Vascular Anomalies Dilemma Workshop — Approach for Diagnosis and Management",
+        "ur": "ویسکولر ایناملیز ڈائلیما ورکشاپ — تشخیص اور علاج کا طریقۂ کار"
       },
       "excerpt": {
-        "en": "Free awareness sessions in Karachi, Lahore, and Islamabad — “birthmarks are common, treatable, and not anyone’s fault.”",
-        "ur": "کراچی، لاہور اور اسلام آباد میں مفت آگاہی نشستیں — \"پیدائشی نشان عام، قابلِ علاج اور کسی کی غلطی نہیں۔\""
+        "en": "A free half-day workshop in Multan on recognising, diagnosing, and managing vascular anomalies, led by Prof. Dr. Iqbal Hussain Dogar.",
+        "ur": "ملتان میں ویسکولر ایناملیز کی شناخت، تشخیص اور علاج پر ایک مفت نصف روزہ ورکشاپ، جس کی قیادت پروفیسر ڈاکٹر اقبال حسین ڈوگر کریں گے۔"
       },
       "tag": {
-        "en": "Event",
-        "ur": "تقریب"
+        "en": "Workshop",
+        "ur": "ورکشاپ"
       },
-      "publicationStatus": "draft"
-    },
-    {
-      "id": "story-ayaan",
-      "kind": "story",
-      "date": "2026-05-10",
-      "title": {
-        "en": "“We finally found the right team” — Ayaan’s story",
-        "ur": "\"بالآخر ہمیں صحیح ٹیم مل گئی\" — ایان کی کہانی"
-      },
-      "excerpt": {
-        "en": "A family’s journey from a worrying birthmark to early, coordinated treatment — and the relief of a clear diagnosis.",
-        "ur": "ایک پریشان کن پیدائشی نشان سے جلد، مربوط علاج تک ایک خاندان کا سفر — اور واضح تشخیص کا سکون۔"
-      },
-      "tag": {
-        "en": "Patient Story",
-        "ur": "مریض کی کہانی"
-      },
-      "publicationStatus": "draft"
-    },
-    {
-      "id": "webinar",
-      "kind": "event",
-      "date": "2026-07-20",
-      "title": {
-        "en": "Webinar: Propranolol for infantile hemangioma",
-        "ur": "ویبینار: بچپن کے ہیمانجیوما کے لیے پروپرانولول"
-      },
-      "excerpt": {
-        "en": "A session for parents and primary-care doctors on when treatment helps and what to expect.",
-        "ur": "والدین اور بنیادی نگہداشت کے ڈاکٹروں کے لیے ایک نشست کہ علاج کب مددگار ہے اور کیا توقع رکھیں۔"
-      },
-      "tag": {
-        "en": "Webinar",
-        "ur": "ویبینار"
-      },
-      "publicationStatus": "draft"
-    },
-    {
-      "id": "registry",
-      "kind": "news",
-      "date": "2026-06-12",
-      "title": {
-        "en": "Building a national vascular anomaly registry",
-        "ur": "قومی ویسکولر ایناملی رجسٹری کی تعمیر"
-      },
-      "excerpt": {
-        "en": "PSOVA is planning a patient registry to map need, guide research, and improve care pathways nationwide.",
-        "ur": "پی ایس او وی اے ضرورت کا نقشہ بنانے، تحقیق کی رہنمائی اور ملک گیر علاج کے راستے بہتر کرنے کے لیے مریض رجسٹری کی منصوبہ بندی کر رہا ہے۔"
-      },
-      "tag": {
-        "en": "Research",
-        "ur": "تحقیق"
-      },
-      "publicationStatus": "draft"
-    },
-    {
-      "id": "story-hira",
-      "kind": "story",
-      "date": "2026-04-02",
-      "title": {
-        "en": "“She is not alone anymore” — Hira’s mother",
-        "ur": "\"وہ اب اکیلی نہیں\" — حرا کی والدہ"
-      },
-      "excerpt": {
-        "en": "Connecting with other families changed everything — from isolation to a community that understands.",
-        "ur": "دوسرے خاندانوں سے رابطے نے سب کچھ بدل دیا — تنہائی سے ایک سمجھنے والی برادری تک۔"
-      },
-      "tag": {
-        "en": "Patient Story",
-        "ur": "مریض کی کہانی"
+      "body": {
+        "en": "Vascular anomalies are often misdiagnosed and mismanaged. This workshop gives clinicians a practical, imaging-led approach to telling hemangiomas and vascular malformations apart, choosing the right investigations, and knowing when to refer for multidisciplinary care. Wednesday 28 October 2026, 11:00 AM – 2:00 PM, Auditorium, The Children's Hospital & Institute of Child Health, Multan. Registration is free — contact Dr. Obaidullah, +92 331 8702344.",
+        "ur": "ویسکولر ایناملیز کی اکثر غلط تشخیص اور غلط علاج ہوتا ہے۔ یہ ورکشاپ معالجین کو ہیمانجیوما اور ویسکولر مالفارمیشن میں فرق کرنے، درست ٹیسٹ منتخب کرنے اور کثیر الشعبہ علاج کے لیے بروقت ریفر کرنے کا عملی، امیجنگ پر مبنی طریقہ سکھائے گی۔ بدھ 28 اکتوبر 2026، صبح 11 بجے تا دوپہر 2 بجے، آڈیٹوریم، دی چلڈرن ہسپتال اینڈ انسٹی ٹیوٹ آف چائلڈ ہیلتھ، ملتان۔ رجسٹریشن مفت ہے — ڈاکٹر عبید اللہ سے رابطہ کریں: 8702344 331 92+۔"
       },
       "publicationStatus": "draft"
     }

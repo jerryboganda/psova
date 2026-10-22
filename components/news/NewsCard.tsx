@@ -24,7 +24,7 @@ export function NewsCard({ item }: { item: NewsItem }) {
 
   return (
     <Link
-      href="/news"
+      href={`/news/${item.id}`}
       className="group relative flex h-full flex-col overflow-hidden rounded-[var(--radius-2xl)] border border-white/10 bg-white/[0.03] p-6 transition-all duration-500 hover:-translate-y-1.5 hover:border-white/25"
     >
       <div className="mb-4 flex items-center justify-between">
