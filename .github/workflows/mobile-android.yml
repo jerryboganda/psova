@@ -34,7 +34,11 @@ jobs:
           echo "/usr/local/lib/android/sdk/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
           yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null || true
       - name: Install Android API and NDK
-        run: yes | sdkmanager "platform-tools" "platforms;android-${ANDROID_API}" "build-tools;36.0.0" "ndk;${NDK_VERSION}"
+        run: |
+          for attempt in 1 2 3; do
+            yes | sdkmanager "platform-tools" "platforms;android-${ANDROID_API}" "build-tools;36.0.0" "ndk;${NDK_VERSION}" && exit 0
+            echo "sdkmanager attempt $attempt failed"; rm -rf "$ANDROID_HOME/ndk" "$ANDROID_HOME/.temp"; sleep 10
+          done; exit 1
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
