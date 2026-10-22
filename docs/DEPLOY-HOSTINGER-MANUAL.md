@@ -70,6 +70,20 @@ Then check `https://psova.org.pk/en/<page>` and the `/ur/` version.
 `https://psova.org.pk/app/index.html` (the path has a dot, so the locale proxy leaves it alone). The same app on phones
 calls `https://psova.org.pk/api/v1/*`. Contact email and the key-value tables use the Hostinger SMTP mailbox and MariaDB.
 
+## When dependencies change (Next upgrade etc.)
+
+The deployed `.next` must match the server's `node_modules/next`, and Hostinger's `server.js` embeds the Next config for that version
+(a mismatch crashes with `Cannot read properties of undefined (reading 'validationLevel')`). After a dependency change run:
+
+```bash
+scripts/hostinger-deploy.sh --with-modules      # swaps .next, public, runtime packages and the config line in server.js
+scripts/hostinger-deploy.sh rollback            # restores all of it, including node_modules and server.js
+```
+
+First done 2026-10-23 for Next 16.2.9 -> 16.4.2 (sharp 0.35.5). `@prisma/client` and `.prisma` on the server are never replaced.
+If `npm install --package-lock-only` crashes with `edgesOut` on npm 10 after touching vite/vitest, generate the lock with npm 11 and
+verify it with `npx npm@10 ci --dry-run`.
+
 ## Manual steps (what the script does)
 
 ```bash
