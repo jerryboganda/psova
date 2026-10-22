@@ -43,8 +43,7 @@ Then check `https://psova.org.pk/en/<page>` and the `/ur/` version.
 
 ## Caveats (each one cost time — don't relearn them)
 
-1. **`npm ci` fails on npm 10** (runner default): *"Missing: @swc/helpers@0.5.23 from lock file"*. The workflow installs
-   `npm@11` first. Real fix: regenerate `package-lock.json` with npm 11 and commit it (not done yet).
+1. **Lockfile must be generated with npm 10** (`npx npm@10 install --package-lock-only`): a lockfile written by npm 11 only works on npm 11, and the CI runner / Hostinger use npm 10. Fixed 2026-10-22; if CI ever says *"Missing: … from lock file"* regenerate it this way.
 2. **Dependencies must match the server's `node_modules`.** Deploy only swaps `.next/`+`public/`. If `package.json`
    dependencies change (new/updated package, Prisma version, Next version), `node_modules/` on the server is stale and
    the app can crash. In that case do a full upload (see "Dependency changes").
