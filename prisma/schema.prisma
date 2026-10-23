@@ -20,13 +20,14 @@ model User {
   email         String   @unique
   emailVerified Boolean  @default(false)
   image         String?
-  role          String   @default("clinician") // 'admin' | 'clinician'
+  role          String   @default("clinician") // 'admin' | 'clinician' | 'center'
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   sessions         Session[]
   accounts         Account[]
   clinicianProfile ClinicianProfile?
+  centerMember     CenterMember?
   auditLogs        AuditLog[]
 
   @@map("user")
@@ -304,4 +305,127 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("audit_log")
+}
+
+/// ---------------- Centres network (docs/centres/PLAN.md) ----------------
+
+enum CenterType {
+  PUBLIC
+  PRIVATE
+  TRUST
+}
+
+enum CenterStatus {
+  APPLIED
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum CenterTier {
+  MEMBER
+  ACCREDITED
+  EXCELLENCE
+}
+
+enum CenterRole {
+  OWNER
+  DOCTOR
+  NURSE
+  RECEPTION
+}
+
+enum PaymentMethod {
+  BANK
+  JAZZCASH
+  EASYPAISA
+  RAAST
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model Center {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  nameEn String
+  nameUr String?
+  type   CenterType
+
+  city     String
+  province Province
+  address  String   @db.Text
+  phone    String
+  email    String
+  website  String?
+  lat      Float?
+  lng      Float?
+
+  services   Json // string[] of CENTER_SERVICES keys
+  conditions Json // string[] of condition slugs
+
+  licenceNumber  String
+  headDoctorName String
+  headDoctorPmc  String @db.Text // 🔐 PMDC/PMC registration number
+  headDoctorHash String @db.VarChar(64) // # dedup blind index
+
+  status         CenterStatus @default(APPLIED)
+  tier           CenterTier   @default(MEMBER)
+  statusReason   String?      @db.Text // public-safe reason shown to the owner on reject/suspend
+  approvedAt     DateTime?
+  approvedById   String?
+  membershipExpiresAt DateTime? // null until the first payment is verified
+  lastReminderAt      DateTime?
+
+  members   CenterMember[]
+  payments  CenterPayment[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([status])
+  @@index([province])
+  @@index([headDoctorHash])
+  @@map("center")
+}
+
+model CenterMember {
+  id       String     @id @default(cuid())
+  centerId String
+  center   Center     @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  userId   String     @unique
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     CenterRole
+  active   Boolean    @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@index([centerId])
+  @@map("center_member")
+}
+
+model CenterPayment {
+  id       String        @id @default(cuid())
+  centerId String
+  center   Center        @relation(fields: [centerId], references: [id], onDelete: Cascade)
+  amount   Int           @default(12000) // PKR
+  method   PaymentMethod
+  txnRef   String // transaction / reference id typed by the centre
+  paidOn   DateTime
+
+  status       PaymentStatus @default(PENDING)
+  rejectReason String?       @db.Text
+  verifiedAt   DateTime?
+  verifiedById String?
+  periodStart  DateTime? // set on VERIFY
+  periodEnd    DateTime? // set on VERIFY
+
+  createdAt DateTime @default(now())
+
+  @@index([centerId])
+  @@index([status])
+  @@map("center_payment")
 }

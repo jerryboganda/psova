@@ -3,11 +3,12 @@
 // these guards (401/403 JSON), service functions re-assert for decrypt/export.
 
 import { NextResponse } from 'next/server';
-import type { ClinicianProfile } from '@prisma/client';
+import type { Center, CenterMember, ClinicianProfile } from '@prisma/client';
 import { auth } from './auth';
 import { prisma } from './db';
 import { RegistryCryptoError } from './crypto';
-import type { ActorRole } from './constants';
+import type { ActorRole, CenterRoleValue } from './constants';
+import { membershipAllowsWrites, membershipState, type MembershipState } from './membership';
 
 /* -------------------------------------------------------------------------- */
 /*  Typed API error + envelope helpers                                        */
@@ -20,6 +21,7 @@ export type ApiErrorCode =
   | 'not-found'
   | 'conflict'
   | 'invalid-transition'
+  | 'membership-expired'
   | 'payload-too-large'
   | 'rate-limited'
   | 'server-error';
@@ -115,7 +117,8 @@ export async function getSession(headers: Headers): Promise<FullSession> {
 }
 
 export function roleOf(user: SessionUser): ActorRole {
-  return user.role === 'admin' ? 'admin' : 'clinician';
+  if (user.role === 'admin') return 'admin';
+  return user.role === 'center' ? 'center' : 'clinician';
 }
 
 /** Any signed-in user, else 401. */
@@ -151,4 +154,40 @@ export async function requireApprovedClinician(headers: Headers): Promise<Clinic
   const profile = await prisma.clinicianProfile.findUnique({ where: { userId: user.id } });
   if (!profile || !profile.approved) throw new RegistryApiError(403, 'forbidden');
   return { user, profile };
+}
+
+export type CenterContext = {
+  user: SessionUser;
+  member: CenterMember;
+  center: Center;
+  state: MembershipState;
+};
+
+/**
+ * Active staff member of an APPROVED centre. `roles` narrows by staff role;
+ * `write` additionally requires a live (or in-grace) membership — expired
+ * centres keep read access so they can renew (docs/centres/PLAN.md).
+ */
+export async function requireCenterMember(
+  headers: Headers,
+  opts: { roles?: readonly CenterRoleValue[]; write?: boolean } = {},
+): Promise<CenterContext> {
+  const user = await requireSession(headers);
+  if (user.role !== 'center') throw new RegistryApiError(403, 'forbidden');
+  const member = await prisma.centerMember.findUnique({
+    where: { userId: user.id },
+    include: { center: true },
+  });
+  if (!member || !member.active || member.center.status !== 'APPROVED') {
+    throw new RegistryApiError(403, 'forbidden');
+  }
+  if (opts.roles && !opts.roles.includes(member.role)) {
+    throw new RegistryApiError(403, 'forbidden');
+  }
+  const { center, ...memberOnly } = member;
+  const state = membershipState(center.membershipExpiresAt);
+  if (opts.write && !membershipAllowsWrites(state)) {
+    throw new RegistryApiError(403, 'membership-expired');
+  }
+  return { user, member: memberOnly, center, state };
 }

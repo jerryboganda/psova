@@ -16,6 +16,13 @@ import {
   CONDITION_SLUG_OPTIONS,
   REGISTRY_STATUSES,
   RECORD_SOURCES,
+  CONDITION_SLUGS,
+  CENTER_TYPES,
+  CENTER_STATUSES,
+  CENTER_TIERS,
+  CENTER_SERVICES,
+  CENTER_PAYMENT_METHODS,
+  CENTER_PAYMENT_STATUSES,
 } from './constants';
 import { isValidCnic, isValidPkMobile, isPlausibleDob, deriveDobParts } from './normalize';
 
@@ -288,3 +295,90 @@ export const casesQuerySchema = z.object({
   status: z.enum(REGISTRY_STATUSES).optional(),
 });
 export type CasesQuery = z.infer<typeof casesQuerySchema>;
+
+/* -------------------------------------------------------------------------- */
+/*  Centres network (docs/centres/PLAN.md)                                    */
+/* -------------------------------------------------------------------------- */
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Manual-payment proof typed by the centre; an admin checks it against the bank/wallet. */
+export const centerPaymentProofSchema = z
+  .object({
+    method: z.enum(CENTER_PAYMENT_METHODS),
+    txnRef: z.string().trim().min(4).max(60),
+    paidOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })
+  .superRefine((data, ctx) => {
+    const t = Date.parse(data.paidOn);
+    const now = Date.now();
+    if (Number.isNaN(t) || t > now + DAY_MS || t < now - 400 * DAY_MS) {
+      ctx.addIssue({ code: 'custom', path: ['paidOn'], message: 'Enter the payment date.' });
+    }
+  });
+export type CenterPaymentProofInput = z.infer<typeof centerPaymentProofSchema>;
+
+export const centerApplySchema = z.object({
+  // owner account
+  ownerName: z.string().trim().min(2).max(120),
+  email: z.string().email(),
+  password: z.string().min(10).max(128),
+  // centre
+  nameEn: z.string().trim().min(3).max(160),
+  nameUr: z.string().trim().max(160).optional(),
+  type: z.enum(CENTER_TYPES),
+  city: z.string().trim().min(2).max(80),
+  province: z.enum(PROVINCES),
+  address: z.string().trim().min(5).max(300),
+  phone: z.string().trim().regex(/^[0-9+\-\s()]{7,20}$/),
+  contactEmail: z.string().email(),
+  websiteUrl: z.string().url().max(200).optional().or(z.literal('')),
+  services: z.array(z.enum(CENTER_SERVICES)).min(1).max(CENTER_SERVICES.length),
+  conditions: z.array(z.enum(CONDITION_SLUGS)).min(1).max(CONDITION_SLUGS.length),
+  // credentials
+  licenceNumber: z.string().trim().min(3).max(60),
+  headDoctorName: z.string().trim().min(3).max(120),
+  headDoctorPmc: z.string().trim().min(4).max(30),
+  // optional first-year payment proof (can also be submitted later from the dashboard)
+  payment: centerPaymentProofSchema.optional(),
+  consentTerms: z.literal(true),
+  // anti-bot
+  website: z.string().max(0).optional(),
+});
+export type CenterApplyInput = z.infer<typeof centerApplySchema>;
+
+const PK_LAT = z.number().min(23).max(37.5);
+const PK_LNG = z.number().min(60).max(77.5);
+
+export const centerActionSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('APPROVE'),
+    tier: z.enum(CENTER_TIERS).optional(),
+    lat: PK_LAT.optional(),
+    lng: PK_LNG.optional(),
+  }),
+  z.object({ action: z.literal('REJECT'), reason: z.string().trim().min(5).max(500) }),
+  z.object({ action: z.literal('SUSPEND'), reason: z.string().trim().min(5).max(500) }),
+  z.object({ action: z.literal('REINSTATE') }),
+  z.object({ action: z.literal('SET_TIER'), tier: z.enum(CENTER_TIERS) }),
+  z.object({ action: z.literal('EXTEND'), days: z.number().int().min(1).max(366) }),
+]);
+export type CenterActionInput = z.infer<typeof centerActionSchema>;
+
+export const centerPaymentActionSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('VERIFY') }),
+  z.object({ action: z.literal('REJECT'), reason: z.string().trim().min(5).max(300) }),
+]);
+export type CenterPaymentActionInput = z.infer<typeof centerPaymentActionSchema>;
+
+export const adminCentersQuerySchema = z.object({
+  status: z.enum(CENTER_STATUSES).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+});
+export type AdminCentersQuery = z.infer<typeof adminCentersQuerySchema>;
+
+export const adminCenterPaymentsQuerySchema = z.object({
+  status: z.enum(CENTER_PAYMENT_STATUSES).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+});
+export type AdminCenterPaymentsQuery = z.infer<typeof adminCenterPaymentsQuerySchema>;

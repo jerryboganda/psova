@@ -96,7 +96,7 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
     // Route by role.
     const session = await authClient.getSession();
     const role = (session.data?.user as { role?: string } | undefined)?.role;
-    router.push(role === 'admin' ? '/registry/admin' : '/registry/clinician');
+    router.push(role === 'admin' ? '/registry/admin' : role === 'center' ? '/centre' : '/registry/clinician');
   }
 
   return (

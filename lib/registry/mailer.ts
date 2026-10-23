@@ -103,3 +103,81 @@ export async function sendClinicianApproval(to: string, name: string): Promise<v
   ].join('\n');
   await send(to, subject, text);
 }
+
+/** Centre application received. Bilingual plain text. */
+export async function sendCenterApplicationReceived(to: string, centerName: string): Promise<void> {
+  const subject = 'PSOVA Centres Network — Application received / درخواست موصول';
+  const text = [
+    `Thank you for applying to join the PSOVA centres network with "${centerName}".`,
+    '',
+    'PSOVA will review your application and verify your membership payment. You will',
+    'receive an email when your centre is approved.',
+    '',
+    '— — —',
+    '',
+    `PSOVA مراکز کے نیٹ ورک میں شمولیت کی درخواست ("${centerName}") کا شکریہ۔`,
+    '',
+    'PSOVA آپ کی درخواست اور رکنیت کی ادائیگی کی تصدیق کرے گا۔ منظوری پر آپ کو ای میل',
+    'موصول ہوگی۔',
+    '',
+    '— PSOVA',
+  ].join('\n');
+  await send(to, subject, text);
+}
+
+/** Centre approved. Bilingual plain text. */
+export async function sendCenterApproved(to: string, centerName: string): Promise<void> {
+  const subject = 'PSOVA Centres Network — Centre approved / مرکز منظور';
+  const text = [
+    `"${centerName}" has been approved as a PSOVA registered centre.`,
+    '',
+    'Sign in on the PSOVA website under the Registry section to open your centre',
+    'dashboard. If your membership payment is not yet verified, the dashboard will',
+    'show what is pending.',
+    '',
+    '— — —',
+    '',
+    `"${centerName}" کو PSOVA کے رجسٹرڈ مرکز کے طور پر منظور کر لیا گیا ہے۔`,
+    '',
+    'اپنا ڈیش بورڈ کھولنے کے لیے PSOVA ویب سائٹ پر رجسٹری سیکشن میں سائن اِن کریں۔',
+    '',
+    '— PSOVA',
+  ].join('\n');
+  await send(to, subject, text);
+}
+
+/** Membership payment verified / rejected. Bilingual plain text. */
+export async function sendCenterPaymentResult(
+  to: string,
+  centerName: string,
+  verified: boolean,
+  expiresOn?: string,
+): Promise<void> {
+  const subject = verified
+    ? 'PSOVA Centres Network — Payment verified / ادائیگی کی تصدیق'
+    : 'PSOVA Centres Network — Payment could not be verified / ادائیگی کی تصدیق نہ ہو سکی';
+  const text = verified
+    ? [
+        `Your membership payment for "${centerName}" has been verified.`,
+        `Your membership is active until ${expiresOn}.`,
+        '',
+        '— — —',
+        '',
+        `"${centerName}" کی رکنیت کی ادائیگی کی تصدیق ہو گئی ہے۔`,
+        `آپ کی رکنیت ${expiresOn} تک فعال ہے۔`,
+        '',
+        '— PSOVA',
+      ].join('\n')
+    : [
+        `We could not verify the membership payment submitted for "${centerName}".`,
+        'Please sign in to your dashboard to see the reason and submit the details again.',
+        '',
+        '— — —',
+        '',
+        `"${centerName}" کے لیے جمع کروائی گئی ادائیگی کی تصدیق نہیں ہو سکی۔`,
+        'وجہ دیکھنے اور تفصیلات دوبارہ جمع کروانے کے لیے ڈیش بورڈ میں سائن اِن کریں۔',
+        '',
+        '— PSOVA',
+      ].join('\n');
+  await send(to, subject, text);
+}

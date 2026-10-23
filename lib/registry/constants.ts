@@ -162,13 +162,54 @@ export const AuditAction = {
   CLINICIAN_APPROVE: 'CLINICIAN_APPROVE',
   CLINICIAN_REJECT: 'CLINICIAN_REJECT',
   ADMIN_SEEDED: 'ADMIN_SEEDED',
+  CENTER_APPLY: 'CENTER_APPLY',
+  CENTER_APPROVE: 'CENTER_APPROVE',
+  CENTER_REJECT: 'CENTER_REJECT',
+  CENTER_SUSPEND: 'CENTER_SUSPEND',
+  CENTER_REINSTATE: 'CENTER_REINSTATE',
+  CENTER_TIER: 'CENTER_TIER',
+  CENTER_EXTEND: 'CENTER_EXTEND',
+  CENTER_PAYMENT_SUBMIT: 'CENTER_PAYMENT_SUBMIT',
+  CENTER_PAYMENT_VERIFY: 'CENTER_PAYMENT_VERIFY',
+  CENTER_PAYMENT_REJECT: 'CENTER_PAYMENT_REJECT',
 } as const;
 
 export type AuditActionType = (typeof AuditAction)[keyof typeof AuditAction];
 
 /** Actor role snapshot stored on each audit row. */
-export const ACTOR_ROLES = ['admin', 'clinician', 'public', 'system'] as const;
+export const ACTOR_ROLES = ['admin', 'clinician', 'center', 'public', 'system'] as const;
 export type ActorRole = (typeof ACTOR_ROLES)[number];
+
+/* -------------------------------------------------------------------------- */
+/*  Centres network (docs/centres/PLAN.md)                                    */
+/* -------------------------------------------------------------------------- */
+
+export const CENTER_TYPES = ['PUBLIC', 'PRIVATE', 'TRUST'] as const;
+export const CENTER_STATUSES = ['APPLIED', 'APPROVED', 'REJECTED', 'SUSPENDED'] as const;
+export const CENTER_TIERS = ['MEMBER', 'ACCREDITED', 'EXCELLENCE'] as const;
+export const CENTER_ROLES = ['OWNER', 'DOCTOR', 'NURSE', 'RECEPTION'] as const;
+export const CENTER_PAYMENT_METHODS = ['BANK', 'JAZZCASH', 'EASYPAISA', 'RAAST'] as const;
+export const CENTER_PAYMENT_STATUSES = ['PENDING', 'VERIFIED', 'REJECTED'] as const;
+
+/** Services a centre can list. Labels: Centres.services.<key>. */
+export const CENTER_SERVICES = [
+  'consultation',
+  'imaging',
+  'sclerotherapy',
+  'laser',
+  'embolization',
+  'surgery',
+  'medical-therapy',
+  'pediatric',
+  'mdt',
+  'genetic-testing',
+] as const;
+
+/** Yearly membership: PKR 1,000/month billed annually. */
+export const MEMBERSHIP_FEE_PKR = 12000;
+/** Reminder window before expiry, and read-only/hidden grace after it. */
+export const MEMBERSHIP_REMINDER_DAYS = 30;
+export const MEMBERSHIP_GRACE_DAYS = 30;
 
 /* -------------------------------------------------------------------------- */
 /*  Handy inferred union types                                                */
@@ -185,3 +226,8 @@ export type TreatmentOutcomeValue = (typeof TREATMENT_OUTCOMES)[number];
 export type RegistryStatusValue = (typeof REGISTRY_STATUSES)[number];
 export type RecordSourceValue = (typeof RECORD_SOURCES)[number];
 export type BodySiteValue = (typeof BODY_SITES)[number];
+export type CenterTypeValue = (typeof CENTER_TYPES)[number];
+export type CenterStatusValue = (typeof CENTER_STATUSES)[number];
+export type CenterTierValue = (typeof CENTER_TIERS)[number];
+export type CenterRoleValue = (typeof CENTER_ROLES)[number];
+export type CenterPaymentMethodValue = (typeof CENTER_PAYMENT_METHODS)[number];

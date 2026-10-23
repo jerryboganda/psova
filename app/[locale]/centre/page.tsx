@@ -1,0 +1,85 @@
+import { headers } from 'next/headers';
+import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
+import { BadgeCheck } from 'lucide-react';
+import { Section } from '@/components/ui/Section';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { requireCenterMember } from '@/lib/registry/guards';
+import { prisma } from '@/lib/registry/db';
+
+export const dynamic = 'force-dynamic';
+
+export default async function CentreHomePage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations('Centres');
+  const tm = await getTranslations('RegistryAdmin.centres');
+  const tp = await getTranslations('Centres.apply.payment');
+  const format = await getFormatter();
+
+  const { user, center, state } = await requireCenterMember(await headers());
+  const payments = await prisma.centerPayment.findMany({
+    where: { centerId: center.id },
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+  });
+  const date = (d: Date) => format.dateTime(d, { dateStyle: 'medium' });
+
+  return (
+    <Section>
+      <h1 className="mb-1 text-2xl font-bold md:text-3xl">{t('dash.welcome', { name: user.name })}</h1>
+      <p className="mb-8 text-[var(--color-muted)]">{center.nameEn}</p>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <GlassCard interactive={false}>
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+            <BadgeCheck className="size-5 text-[var(--color-cyan)]" />
+            {t('dash.membership.title')}
+          </h2>
+          <dl className="mb-4 grid grid-cols-2 gap-3 text-sm">
+            <dt className="text-[var(--color-muted)]">{t('dash.membership.tier')}</dt>
+            <dd className="font-medium">{t(`tiers.${center.tier}`)}</dd>
+            <dt className="text-[var(--color-muted)]">{t('dash.membership.expires')}</dt>
+            <dd className="font-medium">
+              {center.membershipExpiresAt ? date(center.membershipExpiresAt) : tm('noMembership')}
+            </dd>
+          </dl>
+          <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-[var(--color-muted)]">
+            {t(`dash.membership.state.${state}`)}
+          </p>
+        </GlassCard>
+
+        <GlassCard interactive={false}>
+          <h2 className="mb-4 text-lg font-semibold">{t('dash.payments.title')}</h2>
+          {payments.length === 0 ? (
+            <p className="text-sm text-[var(--color-muted)]">{t('dash.payments.empty')}</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {payments.map((p) => (
+                <li key={p.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-medium">
+                      {tp(`methods.${p.method}`)} · <span dir="ltr">{p.txnRef}</span>
+                    </span>
+                    <span className="text-xs text-[var(--color-muted)]">{t(`dash.payments.${p.status}`)}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-[var(--color-faint)]">
+                    {t('dash.payments.date')}: {date(p.paidOn)}
+                  </p>
+                  {p.status === 'REJECTED' && p.rejectReason && (
+                    <p className="mt-2 text-xs text-[var(--color-rose)]">
+                      {t('dash.reason')}: {p.rejectReason}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </GlassCard>
+      </div>
+    </Section>
+  );
+}

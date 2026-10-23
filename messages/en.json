@@ -866,7 +866,8 @@
       "queue": "Queue",
       "records": "Records",
       "clinicians": "Clinicians",
-      "audit": "Audit"
+      "audit": "Audit",
+      "centres": "Centres"
     },
     "overview": {
       "title": "Overview",
@@ -973,6 +974,88 @@
       "confirmBody": "This exports decrypted records for the medical board. The export is audit-logged.",
       "confirm": "Download CSV",
       "cancel": "Cancel"
+    },
+    "centres": {
+      "title": "Centres network",
+      "tabCentres": "Centres",
+      "tabPayments": "Payments",
+      "empty": "No centres yet.",
+      "filterAll": "All",
+      "filterApplied": "Applied",
+      "filterApproved": "Approved",
+      "filterRejected": "Rejected",
+      "filterSuspended": "Suspended",
+      "name": "Centre",
+      "city": "City",
+      "type": "Type",
+      "owner": "Owner",
+      "licence": "Licence no.",
+      "doctor": "Head doctor",
+      "pmc": "PMC no.",
+      "status": "Status",
+      "membership": "Membership",
+      "tier": "Tier",
+      "date": "Applied",
+      "pendingPayments": "{count} payment(s) to verify",
+      "noMembership": "Not active",
+      "statuses": {
+        "APPLIED": "Applied",
+        "APPROVED": "Approved",
+        "REJECTED": "Rejected",
+        "SUSPENDED": "Suspended"
+      },
+      "states": {
+        "NONE": "Not active",
+        "ACTIVE": "Active",
+        "EXPIRING": "Expiring",
+        "GRACE": "Grace period",
+        "EXPIRED": "Expired"
+      },
+      "approve": "Approve",
+      "reject": "Reject",
+      "suspend": "Suspend",
+      "reinstate": "Reinstate",
+      "setTier": "Set tier",
+      "extend": "Extend",
+      "reason": "Reason (shown to the centre owner)",
+      "tierLabel": "Tier",
+      "latitude": "Latitude (optional)",
+      "longitude": "Longitude (optional)",
+      "extendDays": "Days to add",
+      "approveTitle": "Approve centre",
+      "approveBody": "The centre will be able to sign in. It appears in the public directory once its membership payment is verified.",
+      "rejectTitle": "Reject application",
+      "suspendTitle": "Suspend centre",
+      "reinstateTitle": "Reinstate centre",
+      "tierTitle": "Set centre tier",
+      "extendTitle": "Extend membership",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "error": "That action could not be completed."
+    },
+    "payments": {
+      "empty": "No payments in this view.",
+      "filterPending": "To verify",
+      "filterVerified": "Verified",
+      "filterRejected": "Rejected",
+      "centre": "Centre",
+      "amount": "Amount",
+      "method": "Method",
+      "txn": "Reference",
+      "paidOn": "Paid on",
+      "submitted": "Submitted",
+      "status": "Status",
+      "verify": "Verify",
+      "reject": "Reject",
+      "reason": "Reason (shown to the centre owner)",
+      "verifyTitle": "Verify payment",
+      "verifyBody": "Confirm this payment is in the PSOVA account. Membership is extended by one year.",
+      "rejectTitle": "Reject payment",
+      "statuses": {
+        "PENDING": "To verify",
+        "VERIFIED": "Verified",
+        "REJECTED": "Rejected"
+      }
     }
   },
   "RegistryStats": {
@@ -998,5 +1081,150 @@
     "inProgress": "Data collection in progress",
     "inProgressBody": "The public dashboard opens once enough cases have been verified. Please check back soon.",
     "updated": "Updated"
+  },
+  "Centres": {
+    "eyebrow": "PSOVA Centres Network",
+    "apply": {
+      "title": "Join the PSOVA centres network",
+      "lede": "Register your clinic or hospital as a PSOVA vascular anomaly care centre. Get listed on the national map, and get a ready-made dashboard to manage patients, appointments and treatments — no development or hosting cost for you.",
+      "feeTitle": "Annual membership",
+      "feeAmount": "PKR 12,000 per year",
+      "feeNote": "That is PKR 1,000 per month, paid once a year.",
+      "benefitsTitle": "What your centre gets",
+      "benefits": {
+        "listing": "A place as a PSOVA Registered Centre on the website, the map and the mobile app",
+        "dashboard": "Your own secure dashboard for patients, appointments, follow-ups and treatments",
+        "qr": "A QR code and link that patients scan to register with your centre",
+        "share": "Choose which cases to share with the national registry (NVAR) or with other centres",
+        "mdt": "A case discussion board with PSOVA experts and other centres"
+      },
+      "stepsLabel": "Application steps",
+      "steps": {
+        "details": "Centre",
+        "location": "Location",
+        "care": "Care",
+        "account": "Account"
+      },
+      "stepTitles": {
+        "details": "About your centre",
+        "location": "Location and contact",
+        "care": "Services and conditions you care for",
+        "account": "Your account and payment"
+      },
+      "f": {
+        "nameEn": "Centre name (English)",
+        "nameUr": "Centre name (Urdu)",
+        "type": "Type of centre",
+        "licenceNumber": "Licence / registration number",
+        "licenceHint": "Healthcare commission, trust or hospital registration number.",
+        "headDoctorName": "Head doctor / lead specialist",
+        "headDoctorPmc": "Head doctor PMDC / PMC number",
+        "city": "City",
+        "province": "Province",
+        "address": "Full address",
+        "phone": "Centre phone",
+        "contactEmail": "Centre email (shown publicly)",
+        "websiteUrl": "Website",
+        "services": "Services offered",
+        "conditions": "Conditions you treat",
+        "ownerName": "Your full name (account owner)",
+        "email": "Your sign-in email",
+        "password": "Password",
+        "passwordHint": "At least 10 characters."
+      },
+      "types": {
+        "PUBLIC": "Public hospital",
+        "PRIVATE": "Private clinic / hospital",
+        "TRUST": "Trust / charitable hospital"
+      },
+      "payment": {
+        "title": "Membership payment (PKR 12,000)",
+        "note": "Pay PKR 12,000 to a PSOVA account listed on the Donate page, then enter the details below. You can also add them later from your dashboard — your centre is activated once PSOVA verifies the payment.",
+        "payNow": "I have already paid — add payment details",
+        "method": "Payment method",
+        "txnRef": "Transaction / reference ID",
+        "paidOn": "Date paid",
+        "donateLink": "View PSOVA payment accounts",
+        "methods": {
+          "BANK": "Bank transfer",
+          "JAZZCASH": "JazzCash",
+          "EASYPAISA": "Easypaisa",
+          "RAAST": "Raast"
+        }
+      },
+      "consent": "I confirm the information is accurate and I am authorised to register this centre. I agree to PSOVA's membership terms and will handle patient data lawfully and with patient consent.",
+      "errors": {
+        "invalid": "Please check this field.",
+        "choose": "Please choose at least one.",
+        "consent": "You must agree to continue."
+      },
+      "submit": "Submit application",
+      "submitting": "Submitting…",
+      "error": "We could not submit your application. Please check your details and try again. If this email is already registered, sign in instead.",
+      "successTitle": "Application received",
+      "successBody": "Thank you. PSOVA will review your application and verify your payment. We will email you when your centre is approved. You can sign in at any time to see the status.",
+      "signIn": "Sign in to your centre account",
+      "already": "Already applied? Sign in"
+    },
+    "services": {
+      "consultation": "Specialist consultation",
+      "imaging": "Imaging (Doppler / MRI)",
+      "sclerotherapy": "Sclerotherapy",
+      "laser": "Laser therapy",
+      "embolization": "Embolization",
+      "surgery": "Surgery",
+      "medical-therapy": "Medical therapy (e.g. sirolimus, propranolol)",
+      "pediatric": "Paediatric care",
+      "mdt": "Multidisciplinary team",
+      "genetic-testing": "Genetic testing"
+    },
+    "tiers": {
+      "MEMBER": "Member Centre",
+      "ACCREDITED": "Accredited Centre",
+      "EXCELLENCE": "Centre of Excellence"
+    },
+    "dash": {
+      "title": "Centre dashboard",
+      "welcome": "Welcome, {name}",
+      "status": {
+        "APPLIED": {
+          "title": "Application under review",
+          "body": "PSOVA is reviewing your application. You will receive an email once your centre is approved."
+        },
+        "REJECTED": {
+          "title": "Application not approved",
+          "body": "PSOVA could not approve this application."
+        },
+        "SUSPENDED": {
+          "title": "Centre suspended",
+          "body": "This centre is currently suspended. Please contact PSOVA."
+        }
+      },
+      "reason": "Reason",
+      "contact": "Questions? Contact PSOVA.",
+      "membership": {
+        "title": "Membership",
+        "tier": "Tier",
+        "expires": "Valid until",
+        "state": {
+          "NONE": "Not active yet — PSOVA activates your membership once your PKR 12,000 payment is verified.",
+          "ACTIVE": "Active",
+          "EXPIRING": "Expires soon — please renew to stay listed.",
+          "GRACE": "Expired — grace period. Renew now to avoid your centre being hidden and the dashboard going read-only.",
+          "EXPIRED": "Expired — your centre is hidden from the directory and the dashboard is read-only. Renew to restore access."
+        }
+      },
+      "payments": {
+        "title": "Payments",
+        "empty": "No payments submitted yet.",
+        "date": "Paid on",
+        "method": "Method",
+        "txn": "Reference",
+        "status": "Status",
+        "PENDING": "Awaiting verification",
+        "VERIFIED": "Verified",
+        "REJECTED": "Rejected"
+      }
+    }
   }
 }
