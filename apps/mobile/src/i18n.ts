@@ -29,6 +29,7 @@ const en = {
     placeholder: 'Search hospital, city, or service…', province: 'Province', type: 'Type', services: 'Services',
     verify: 'Confirm details with the institution before travelling. Placeholder phone numbers are never shown in this app.',
     favorite: 'Save centre', unfavorite: 'Remove saved centre', public: 'Public', private: 'Private', trust: 'Trust / charity', centres: 'centres', filters: 'Filters', reset: 'Reset', show: 'Show results', saved: 'Saved',
+    registered: 'PSOVA registered', profile: 'View profile', tiers: { MEMBER: 'Member Centre', ACCREDITED: 'Accredited Centre', EXCELLENCE: 'Centre of Excellence' },
   },
   news: {
     title: 'News and events', body: 'Announcements, awareness activities, and family stories.',
@@ -102,6 +103,7 @@ const ur: typeof en = {
     placeholder: 'ہسپتال، شہر یا سروس تلاش کریں…', province: 'صوبہ', type: 'قسم', services: 'سروسز',
     verify: 'سفر سے پہلے ادارے سے تفصیلات کی تصدیق کریں۔ عارضی فون نمبر ایپ میں کبھی نہیں دکھائے جاتے۔',
     favorite: 'مرکز محفوظ کریں', unfavorite: 'محفوظ مرکز ہٹائیں', public: 'سرکاری', private: 'نجی', trust: 'ٹرسٹ / خیراتی', centres: 'مراکز', filters: 'فلٹرز', reset: 'ری سیٹ', show: 'نتائج دیکھیں', saved: 'محفوظ',
+    registered: 'PSOVA رجسٹرڈ', profile: 'پروفائل دیکھیں', tiers: { MEMBER: 'رکن مرکز', ACCREDITED: 'منظور شدہ مرکز', EXCELLENCE: 'مرکزِ امتیاز' },
   },
   news: {
     title: 'خبریں و تقریبات', body: 'اعلانات، آگاہی سرگرمیاں اور خاندانی کہانیاں۔',

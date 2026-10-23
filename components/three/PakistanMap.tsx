@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
-import { CARE_CENTERS } from '@/data/centers';
+import { CARE_CENTERS, type CareCenter } from '@/data/centers';
 import { useQuality } from './SceneCanvas';
 
 // Rough normalised outline of Pakistan (x: left→right, y: top→bottom).
@@ -98,10 +98,12 @@ export default function PakistanMap({
   selectedCity,
   onSelectCity,
   locale,
+  centers = CARE_CENTERS,
 }: {
   selectedCity: string | null;
   onSelectCity: (city: string) => void;
   locale: string;
+  centers?: CareCenter[];
 }) {
   const tier = useQuality();
   const group = useRef<THREE.Group>(null);
@@ -186,7 +188,7 @@ export default function PakistanMap({
           />
         </points>
 
-        {CARE_CENTERS.map((c) => (
+        {centers.map((c) => (
           <CityNode
             key={c.id}
             position={project(c.pos.x, c.pos.y, 0.3)}

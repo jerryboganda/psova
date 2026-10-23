@@ -52,6 +52,9 @@ export const careCenterSchema = z.object({
   geo: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }),
   pos: normalizedPointSchema,
   flagship: z.boolean().optional(),
+  registered: z
+    .object({ slug: z.string(), tier: z.enum(['MEMBER', 'ACCREDITED', 'EXCELLENCE']) })
+    .optional(),
   verification: centerVerificationSchema.default({
     status: 'unverified',
     verifiedAt: null,

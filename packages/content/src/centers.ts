@@ -15,6 +15,8 @@ export type CareCenter = {
   // Normalised position (0..1) within the stylised Pakistan map viewport.
   pos: { x: number; y: number };
   flagship?: boolean;
+  // Set only for centres in the PSOVA registered network (served from the database).
+  registered?: { slug: string; tier: 'MEMBER' | 'ACCREDITED' | 'EXCELLENCE' };
 };
 
 // NOTE: Representative directory compiled from public research.
@@ -173,4 +175,6 @@ export const PROVINCES: LocalizedString[] = [
   { en: 'Khyber Pakhtunkhwa', ur: 'خیبر پختونخوا' },
   { en: 'Balochistan', ur: 'بلوچستان' },
   { en: 'Federal Capital', ur: 'وفاقی دارالحکومت' },
+  { en: 'Gilgit-Baltistan', ur: 'گلگت بلتستان' },
+  { en: 'Azad Jammu & Kashmir', ur: 'آزاد جموں و کشمیر' },
 ];

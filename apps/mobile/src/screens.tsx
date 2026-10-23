@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, type CSSProperties, type PointerEvent as Rea
 import { Link, useParams } from 'react-router-dom';
 import { AnimatePresence, motion, useScroll, useSpring, useTransform } from 'motion/react';
 import {
-  ArrowRight, BookOpen, Check, ChevronDown, ChevronRight, CircleHelp, Clock3, Database,
+  ArrowRight, BadgeCheck, BookOpen, Check, ChevronDown, ChevronRight, CircleHelp, Clock3, Database,
   ExternalLink, FlaskConical, Globe2, Heart, HeartHandshake, Info, Languages, LockKeyhole,
   MapPin, MessageCircle, Navigation, Newspaper, Phone, RefreshCw, ScanSearch, Settings, Share2, ShieldCheck,
   SlidersHorizontal, Sparkles, Stethoscope, Trash2, TriangleAlert, UserRound, Users, X,
@@ -285,7 +285,7 @@ export function DirectoryScreen() {
     <motion.div layout className="card-list" transition={SPRING}>
       <AnimatePresence initial={false} mode="popLayout">{centers.map((center) => { const saved = favorites.has(center.id); return <motion.div layout key={center.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.12 } }} transition={SPRING}>
         <Card id={`center-${center.id}`} className={`center-card ${focused === center.id ? 'focused' : ''}`}>
-          <div className="center-head"><ReviewBadge status={center.verification.status} />
+          <div className="center-head">{center.registered ? <span className="review-badge ok"><BadgeCheck aria-hidden="true" />{messages.directory.registered} · {messages.directory.tiers[center.registered.tier]}</span> : <ReviewBadge status={center.verification.status} />}
             <button className={`favorite ${saved ? 'active' : ''}`} aria-pressed={saved} aria-label={saved ? messages.directory.unfavorite : messages.directory.favorite} onClick={() => { tap(); void toggleFavorite(center.id); }}>
               <motion.span key={saved ? 'on' : 'off'} className="heart" initial={saved ? { scale: 0.4 } : false} animate={{ scale: 1 }} transition={{ type: 'spring', bounce: 0.6, duration: 0.5 }}><Heart /></motion.span>
               {saved && <span className="burst" />}
@@ -298,6 +298,7 @@ export function DirectoryScreen() {
             <Button variant="secondary" onClick={() => void safeAction(() => openExternal(directionsHref(center.geo.lat, center.geo.lng)))}><Navigation />{messages.common.directions}</Button>
             <span className="action-spacer" />
             <Button variant="ghost" aria-label={messages.common.share} onClick={() => void safeAction(() => shareContent({ title: l(center.name), text: `${l(center.city)}, ${l(center.province)}`, url: center.website }))}><Share2 /></Button>
+            {center.registered && <Button variant="secondary" onClick={() => void safeAction(() => openExternal(`https://psova.org.pk/${settings.locale}/centres/${center.registered!.slug}`))}>{messages.directory.profile}</Button>}
             {center.website && <Button variant="ghost" aria-label={messages.common.website} onClick={() => void safeAction(() => openExternal(center.website!))}><ExternalLink /></Button>}
           </div>
         </Card>

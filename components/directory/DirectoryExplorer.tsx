@@ -7,7 +7,7 @@ import { Search, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { SceneCanvas } from '@/components/three/SceneCanvas';
 import { CenterCard } from './CenterCard';
-import { CARE_CENTERS, PROVINCES } from '@/data/centers';
+import { CARE_CENTERS, PROVINCES, type CareCenter } from '@/data/centers';
 import { CONDITIONS } from '@/data/conditions';
 import { localized } from '@/lib/utils';
 
@@ -18,9 +18,11 @@ const PakistanMap = dynamic(() => import('@/components/three/PakistanMap'), {
 const selectClass =
   'rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-[var(--color-fg)] focus:border-[var(--color-cyan)]/60 focus:outline-none [&>option]:bg-[var(--color-base-900)]';
 
-export function DirectoryExplorer() {
+export function DirectoryExplorer({ registered = [] }: { registered?: CareCenter[] }) {
   const t = useTranslations('Directory');
   const locale = useLocale();
+  // Registered (paying, approved) centres first, then the researched static list.
+  const allCenters = useMemo(() => [...registered, ...CARE_CENTERS], [registered]);
   const [query, setQuery] = useState('');
   const [province, setProvince] = useState('all');
   const [condition, setCondition] = useState('all');
@@ -29,7 +31,7 @@ export function DirectoryExplorer() {
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return CARE_CENTERS.filter((c) => {
+    return allCenters.filter((c) => {
       if (city && c.city.en !== city) return false;
       if (province !== 'all' && c.province.en !== province) return false;
       if (condition !== 'all' && !c.conditions.includes(condition)) return false;
@@ -40,7 +42,7 @@ export function DirectoryExplorer() {
       }
       return true;
     });
-  }, [query, province, condition, type, city]);
+  }, [allCenters, query, province, condition, type, city]);
 
   return (
     <div className="flex flex-col gap-10">
@@ -51,6 +53,7 @@ export function DirectoryExplorer() {
             selectedCity={city}
             onSelectCity={(c) => setCity((prev) => (prev === c ? null : c))}
             locale={locale}
+            centers={allCenters}
           />
         </SceneCanvas>
         <span className="pointer-events-none absolute inset-x-0 bottom-4 text-center text-xs uppercase tracking-widest text-[var(--color-faint)]">
@@ -103,7 +106,7 @@ export function DirectoryExplorer() {
               className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-cyan)]/15 px-3 py-1 text-xs font-medium text-[var(--color-cyan)]"
             >
               {localized(
-                CARE_CENTERS.find((c) => c.city.en === city)?.city ?? { en: city, ur: city },
+                allCenters.find((c) => c.city.en === city)?.city ?? { en: city, ur: city },
                 locale,
               )}
               <X className="size-3" />

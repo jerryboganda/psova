@@ -1,10 +1,12 @@
 import { headers } from 'next/headers';
 import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
-import { BadgeCheck } from 'lucide-react';
+import { BadgeCheck, Eye, FileBadge } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { requireCenterMember } from '@/lib/registry/guards';
 import { prisma } from '@/lib/registry/db';
+import { Link } from '@/i18n/navigation';
+import { isPubliclyListed } from '@/lib/registry/membership';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +34,19 @@ export default async function CentreHomePage({
     <Section>
       <h1 className="mb-1 text-2xl font-bold md:text-3xl">{t('dash.welcome', { name: user.name })}</h1>
       <p className="mb-8 text-[var(--color-muted)]">{center.nameEn}</p>
+
+      {isPubliclyListed(center.status, state) && (
+        <div className="mb-6 flex flex-wrap gap-3">
+          <Link href="/centre/certificate" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10">
+            <FileBadge className="size-4" />
+            {t('dash.certificate')}
+          </Link>
+          <Link href={`/centres/${center.slug}`} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10">
+            <Eye className="size-4" />
+            {t('dash.publicProfile')}
+          </Link>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <GlassCard interactive={false}>

@@ -3,6 +3,8 @@
 import { MapPin, Phone, ExternalLink, Star } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import type { CareCenter } from '@/data/centers';
+import { Link } from '@/i18n/navigation';
+import { TierBadge } from '@/components/centres/TierBadge';
 import { localized } from '@/lib/utils';
 
 const TYPE_KEY: Record<CareCenter['type'], 'typePublic' | 'typePrivate' | 'typeTrust'> = {
@@ -17,11 +19,15 @@ export function CenterCard({ center }: { center: CareCenter }) {
 
   return (
     <div className="group relative flex h-full flex-col overflow-hidden rounded-[var(--radius-2xl)] border border-white/10 bg-white/[0.03] p-6 transition-all duration-500 hover:-translate-y-1 hover:border-white/25">
-      {center.flagship && (
+      {center.registered ? (
+        <TierBadge tier={center.registered.tier} className="mb-3" />
+      ) : (
+        center.flagship && (
         <span className="mb-3 inline-flex w-fit items-center gap-1 rounded-full bg-[var(--color-cyan)]/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-cyan)]">
           <Star className="size-3" />
           {t('flagship')}
         </span>
+        )
       )}
       <h3 className="text-lg font-semibold leading-snug">
         {localized(center.name, locale)}
@@ -46,7 +52,15 @@ export function CenterCard({ center }: { center: CareCenter }) {
         ))}
       </div>
 
-      <div className="mt-6 flex items-center gap-2">
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        {center.registered && (
+          <Link
+            href={`/centres/${center.registered.slug}`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
+          >
+            {t('viewProfile')}
+          </Link>
+        )}
         <a
           href={`tel:${center.phone}`}
           className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10"

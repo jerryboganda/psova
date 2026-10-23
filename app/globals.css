@@ -295,3 +295,11 @@ html.lenis body {
     transform: none;
   }
 }
+
+/* Printable pages (centre certificate): drop site chrome. */
+@media print {
+  header,
+  footer {
+    display: none !important;
+  }
+}

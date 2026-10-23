@@ -206,7 +206,11 @@
     "websiteCta": "Website",
     "flagship": "Multidisciplinary clinic",
     "mapHint": "Tap a city to filter the list",
-    "verifyNotice": "This directory is representative and being verified. Always confirm details with the institution before travelling."
+    "verifyNotice": "This directory is representative and being verified. Always confirm details with the institution before travelling.",
+    "viewProfile": "View profile",
+    "joinTitle": "Run a clinic or hospital that treats vascular anomalies?",
+    "joinBody": "Join the PSOVA centres network: get listed here, and manage your patients on a ready-made dashboard.",
+    "joinCta": "Register your centre"
   },
   "Research": {
     "eyebrow": "Research",
@@ -1224,7 +1228,36 @@
         "PENDING": "Awaiting verification",
         "VERIFIED": "Verified",
         "REJECTED": "Rejected"
-      }
+      },
+      "certificate": "Registration certificate",
+      "publicProfile": "View public profile"
+    },
+    "profile": {
+      "eyebrow": "PSOVA Registered Centre",
+      "services": "Services",
+      "conditions": "Conditions treated",
+      "contact": "Contact",
+      "registered": "PSOVA Registered Centre",
+      "since": "Registered since {date}",
+      "verifyLink": "Verify this centre"
+    },
+    "verify": {
+      "validTitle": "Registered PSOVA centre",
+      "invalidTitle": "Not currently registered",
+      "invalidBody": "We could not find a currently valid PSOVA registration for this centre. Please contact PSOVA if you believe this is a mistake.",
+      "validUntil": "Registration valid until {date}",
+      "viewProfile": "View centre profile"
+    },
+    "certificate": {
+      "society": "Pakistan Society of Vascular Anomaly",
+      "title": "Certificate of Registration",
+      "certifies": "This certifies that",
+      "body": "is registered as a vascular anomaly care centre in the PSOVA centres network.",
+      "validUntil": "Valid until {date}",
+      "scan": "Scan to verify this registration",
+      "print": "Print / save as PDF",
+      "unavailableTitle": "Certificate not available",
+      "unavailableBody": "A certificate is available while your membership is active. Renew your membership to restore it."
     }
   }
 }
