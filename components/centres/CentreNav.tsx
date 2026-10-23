@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { ArrowLeftRight, BadgeCheck, Building2, CalendarClock, CreditCard, FileBadge, LayoutDashboard, MessagesSquare, QrCode, Stethoscope, Users } from 'lucide-react';
+import { ArrowLeftRight, BadgeCheck, BarChart3, HandHeart, Building2, CalendarClock, CreditCard, FileBadge, LayoutDashboard, MessagesSquare, QrCode, Stethoscope, Users } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { LogoutButton } from '@/components/registry/LogoutButton';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,8 @@ const LINKS = [
   { href: '/centre/appointments', key: 'appointments', Icon: CalendarClock, exact: false, access: 'all' },
   { href: '/centre/shares', key: 'shares', Icon: ArrowLeftRight, exact: false, access: 'lead' },
   { href: '/centre/mdt', key: 'mdt', Icon: MessagesSquare, exact: false, access: 'lead' },
+  { href: '/centre/support', key: 'support', Icon: HandHeart, exact: false, access: 'lead' },
+  { href: '/centre/reports', key: 'reports', Icon: BarChart3, exact: false, access: 'lead' },
   { href: '/centre/staff', key: 'staff', Icon: Users, exact: false, access: 'owner' },
   { href: '/centre/profile', key: 'profile', Icon: Building2, exact: false, access: 'owner' },
   { href: '/centre/membership', key: 'membership', Icon: CreditCard, exact: false, access: 'owner' },

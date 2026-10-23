@@ -207,10 +207,15 @@ export default async function CentrePatientPage({
                     )}
                   </div>
 
-                  <div className="border-t border-white/10 pt-5">
+                  <div className="flex flex-col gap-3 border-t border-white/10 pt-5">
                     <Link href={`/centre/mdt/new?patient=${id}`} className="text-sm text-[var(--color-cyan)] hover:underline">
                       {ts('postToMdt')}
                     </Link>
+                    {canWrite && (
+                      <Link href={`/centre/support/new?patient=${id}`} className="text-sm text-[var(--color-cyan)] hover:underline">
+                        {ts('requestSupport')}
+                      </Link>
+                    )}
                   </div>
                 </div>
               </GlassCard>

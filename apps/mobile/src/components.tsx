@@ -182,6 +182,10 @@ export function BottomTabs() {
   </>}</NavLink>; })}</div></nav>;
 }
 
+export function LinkRow({ icon, title, href, tone = 'cyan' }: { icon: ReactNode; title: string; href: string; tone?: 'cyan' | 'violet' | 'rose' | 'amber' | 'slate' }) {
+  return <a className="forward-row" href={href} onClick={tap}><span className={`row-icon tone-${tone}`}>{icon}</span><span className="row-text"><strong>{title}</strong></span><ChevronRight className="rtl-flip row-chevron" /></a>;
+}
+
 export function ForwardRow({ icon, title, subtitle, to, disabled = false, tone = 'cyan' }: { icon: ReactNode; title: string; subtitle?: string; to: string; disabled?: boolean; tone?: 'cyan' | 'violet' | 'rose' | 'amber' | 'slate' }) {
   const navigate = useNavigate();
   return <button className="forward-row" disabled={disabled} onClick={() => { tap(); navigate(to); }}><span className={`row-icon tone-${tone}`}>{icon}</span><span className="row-text"><strong>{title}</strong>{subtitle && <small>{subtitle}</small>}</span>{!disabled && <ChevronRight className="rtl-flip row-chevron" />}</button>;

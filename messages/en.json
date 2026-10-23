@@ -24,7 +24,9 @@
     "skipToContent": "Skip to content",
     "language": "Language",
     "openMenu": "Open menu",
-    "registry": "National Registry"
+    "registry": "National Registry",
+    "supportFund": "Patient Support Fund",
+    "joinCentre": "Join as a Centre"
   },
   "Common": {
     "learnMore": "Learn more",
@@ -877,7 +879,8 @@
       "clinicians": "Clinicians",
       "audit": "Audit",
       "centres": "Centres",
-      "mdt": "Case board"
+      "mdt": "Case board",
+      "support": "Support fund"
     },
     "overview": {
       "title": "Overview",
@@ -1079,6 +1082,39 @@
         "RESOLVED": "Resolved",
         "HIDDEN": "Hidden"
       }
+    },
+    "support": {
+      "title": "Patient support fund",
+      "lede": "Review requests from centres, publish an anonymised description, and record donations as they arrive.",
+      "empty": "No requests in this view.",
+      "status": {
+        "SUBMITTED": "To review",
+        "APPROVED": "Open for funding",
+        "FUNDED": "Funded",
+        "CLOSED": "Closed",
+        "REJECTED": "Rejected"
+      },
+      "approve": "Approve",
+      "reject": "Reject",
+      "recordFunding": "Record a donation",
+      "close": "Close",
+      "approveTitle": "Approve and publish",
+      "rejectTitle": "Reject request",
+      "fundingTitle": "Record a donation",
+      "closeTitle": "Close request",
+      "approveBody": "Check the public text carefully: it must identify no one. You can edit it before it goes live.",
+      "fundingBody": "Record money that has reached PSOVA's account against this case. The case shows as funded once the goal is reached.",
+      "cost": "Goal (PKR)",
+      "blurbEn": "Public description (English)",
+      "blurbUr": "Public description (Urdu)",
+      "amount": "Amount received (PKR)",
+      "sponsor": "Donor or sponsor name (optional)",
+      "showSponsor": "Show this name publicly on the case",
+      "reasonRequired": "Reason (shown to the centre)",
+      "reasonOptional": "Note (optional, shown to the centre)",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "error": "That action could not be completed."
     }
   },
   "RegistryStats": {
@@ -1297,7 +1333,9 @@
       "patients": "Patients",
       "appointments": "Appointments",
       "shares": "Referrals",
-      "mdt": "Case board"
+      "mdt": "Case board",
+      "support": "Support fund",
+      "reports": "Reports"
     },
     "staff": {
       "title": "Staff",
@@ -1583,7 +1621,8 @@
       "attrSite": "Affected area",
       "attrSeverity": "Severity",
       "attrBasis": "Diagnosis basis",
-      "attrTreatments": "Treatments"
+      "attrTreatments": "Treatments",
+      "requestSupport": "Request help from the patient support fund"
     },
     "mdt": {
       "title": "Case board",
@@ -1624,6 +1663,74 @@
       "attach": "Attach files (only files marked for teaching can be attached)",
       "confirm": "I confirm this post contains nothing that could identify the patient, and any attached files show no identifying features.",
       "publish": "Publish to the board"
+    },
+    "support": {
+      "title": "Patient support fund",
+      "lede": "Ask PSOVA to raise money for a patient who cannot afford treatment. PSOVA reviews every request and shows approved ones publicly without anything that identifies the patient.",
+      "empty": "No requests yet. Open a patient and choose \"Request help from the patient support fund\".",
+      "openPatient": "Open patient",
+      "newTitle": "Request support for a patient",
+      "newLede": "Patient:",
+      "readOnly": "Your membership has lapsed, so new requests are paused.",
+      "renew": "Renew membership",
+      "warning": "The case description is shown publicly once PSOVA approves it. Never include names, phone numbers, CNIC, hospital numbers, the family's exact address or a photo.",
+      "treatment": "Treatment needed",
+      "cost": "Estimated cost (PKR)",
+      "costHint": "The total cost of the treatment the fund is asked to cover.",
+      "blurbEn": "Case description (English)",
+      "blurbUr": "Case description (Urdu, optional)",
+      "blurbHint": "For example: age group, the condition in plain words, why treatment matters, and what the family can and cannot contribute.",
+      "confirm": "The family agreed to ask for support, and this text contains nothing that could identify the patient or family.",
+      "submit": "Submit to PSOVA",
+      "alreadyOpen": "This patient already has an open request.",
+      "error": "That could not be submitted. Please check the details."
+    },
+    "reports": {
+      "title": "Reports",
+      "lede": "Counts for your centre only. They contain no patient details.",
+      "export": {
+        "patients": "Export patients (CSV)",
+        "visits": "Export visits (CSV)"
+      },
+      "stats": {
+        "patients": "Patients",
+        "visits": "Visits recorded",
+        "nvar": "Shared with NVAR",
+        "attendance": "Appointments attended"
+      },
+      "byCondition": "Patients by condition",
+      "visitsByMonth": "Visits, last 12 months",
+      "byResponse": "Response at visits",
+      "appointments": "Appointments",
+      "treatments": "Treatments and outcomes",
+      "treatment": "Treatment",
+      "total": "Total",
+      "outcomes": "Outcomes",
+      "none": "Nothing to show yet.",
+      "conditionOther": "Other",
+      "conditionUnknown": "Not sure"
     }
+  },
+  "SupportFund": {
+    "metaTitle": "Patient Support Fund",
+    "metaDescription": "Help families in Pakistan pay for vascular anomaly treatment. Every case is verified by PSOVA and shown without anything that identifies the patient.",
+    "eyebrow": "Patient Support Fund",
+    "title": "Help a child get the treatment they need",
+    "lead": "Treatment for a vascular anomaly can cost more than a family can afford. Registered PSOVA centres bring us cases, PSOVA verifies each one, and your gift goes to the treatment itself.",
+    "step1": "A PSOVA centre's doctor identifies a patient who cannot afford treatment and submits a request.",
+    "step2": "PSOVA reviews it. Cases are shown here without names or anything that could identify the family.",
+    "step3": "You give by bank or wallet and quote the case code. PSOVA records every gift and pays the treatment.",
+    "raised": "{amount} raised so far, helping {count, plural, =1 {1 patient} other {# patients}}.",
+    "empty": "There are no cases open right now. Please check back soon, or give to PSOVA's general fund.",
+    "status": {
+      "APPROVED": "Needs support",
+      "FUNDED": "Fully funded"
+    },
+    "treatedAt": "Treatment at {centre}, {city}",
+    "goal": "Goal {amount}",
+    "code": "Case code",
+    "fundedBy": "Supported by {name}",
+    "giveTitle": "How to give",
+    "giveBody": "Use any account below and write the case code (for example SF-1A2B3C4D) in the transfer reference, so we can match your gift. Without a code, your gift supports the fund as a whole."
   }
 }

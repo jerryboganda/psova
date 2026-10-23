@@ -29,6 +29,8 @@ import {
   DOCUMENT_KINDS,
   SHARE_TYPES,
   AGE_BANDS,
+  SUPPORT_MIN_COST_PKR,
+  SUPPORT_MAX_COST_PKR,
 } from './constants';
 import { isValidCnic, isValidPkMobile, isPlausibleDob, deriveDobParts } from './normalize';
 
@@ -543,3 +545,41 @@ export type MdtPostCreateInput = z.infer<typeof mdtPostCreateSchema>;
 export const mdtCommentSchema = z.object({ body: z.string().trim().min(2).max(2000) });
 export const mdtUpdateSchema = z.object({ action: z.enum(['RESOLVE', 'REOPEN']) });
 export const adminMdtActionSchema = z.object({ action: z.enum(['HIDE', 'UNHIDE']) });
+
+/* -------------------------------------------------------------------------- */
+/*  Patient support fund + centre reports                                     */
+/* -------------------------------------------------------------------------- */
+
+const pkr = z.number().int().min(SUPPORT_MIN_COST_PKR).max(SUPPORT_MAX_COST_PKR);
+
+export const supportRequestCreateSchema = z.object({
+  patientId: z.string().min(1).max(40),
+  treatment: z.string().trim().min(5).max(160),
+  estimatedCostPkr: pkr,
+  blurbEn: z.string().trim().min(40).max(1200),
+  blurbUr: z.string().trim().max(1200).optional(),
+  // the family agreed to seek support, and the text identifies no one
+  confirmed: z.literal(true),
+});
+export type SupportRequestCreateInput = z.infer<typeof supportRequestCreateSchema>;
+
+export const supportReviewSchema = z.discriminatedUnion('action', [
+  // PSOVA may tighten the public text or the figure when approving.
+  z.object({
+    action: z.literal('APPROVE'),
+    estimatedCostPkr: pkr.optional(),
+    blurbEn: z.string().trim().min(40).max(1200).optional(),
+    blurbUr: z.string().trim().max(1200).optional(),
+  }),
+  z.object({ action: z.literal('REJECT'), reason: z.string().trim().min(5).max(500) }),
+  z.object({
+    action: z.literal('RECORD_FUNDING'),
+    amountPkr: z.number().int().min(1).max(SUPPORT_MAX_COST_PKR),
+    sponsorName: z.string().trim().max(120).optional(),
+    showSponsor: z.boolean(),
+  }),
+  z.object({ action: z.literal('CLOSE'), reason: z.string().trim().max(500).optional() }),
+]);
+export type SupportReviewInput = z.infer<typeof supportReviewSchema>;
+
+export const reportExportQuerySchema = z.object({ kind: z.enum(['patients', 'visits']) });

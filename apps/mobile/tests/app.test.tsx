@@ -67,4 +67,47 @@ describe('PSOVA mobile shell', () => {
     expect(await screen.findByText(/Placeholder phone numbers are never shown/i)).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/XXXXXXX|PLACEHOLDER —/i);
   });
+
+  it('checks a registration by tracking code and phone, and links out to the centres pages', async () => {
+    const statusCalls: unknown[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith('/content-snapshot.json')) return new Response(JSON.stringify(snapshot), { status: 200 });
+      if (String(input).endsWith('/api/registry/status')) {
+        statusCalls.push(JSON.parse(String(init?.body)));
+        return new Response(JSON.stringify({
+          ok: true, status: 'CENTRE', submittedAt: '2026-06-01T10:00:00.000Z', firstName: 'Ayesha',
+          centre: { en: 'City Vascular Clinic', ur: 'سٹی ویسکولر کلینک' },
+          nextAppointment: { startsAt: '2030-07-01T04:00:00.000Z', kind: 'FOLLOW_UP' },
+        }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ ok: false }), { status: 503 });
+    }));
+    render(<App/>);
+    await screen.findByText('Every birthmark has a story — and a path to care.');
+    await userEvent.click(screen.getByRole('link', { name: 'More' }));
+
+    // The three website pages are plain links, so the installed app keeps them in its own window.
+    expect(await screen.findByRole('link', { name: 'Apply as a centre' })).toHaveAttribute('href', 'https://psova.org.pk/en/centres/apply');
+    expect(screen.getByRole('link', { name: 'Centre sign-in' })).toHaveAttribute('href', 'https://psova.org.pk/en/registry/login');
+    expect(screen.getByRole('link', { name: 'Patient support fund' })).toHaveAttribute('href', 'https://psova.org.pk/en/support-fund');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Check registration status' }));
+    expect(await screen.findByRole('heading', { name: 'Check registration status' })).toBeInTheDocument();
+
+    // Both fields are required before anything is sent.
+    await userEvent.click(screen.getByRole('button', { name: 'Check status' }));
+    expect(await screen.findByText('Enter both the tracking code and the phone number.')).toBeInTheDocument();
+    expect(statusCalls).toHaveLength(0);
+
+    await userEvent.type(screen.getByLabelText('Tracking code'), 'psv-a1b2-c3d4');
+    await userEvent.type(screen.getByLabelText('Phone number'), '03001234567');
+    await userEvent.click(screen.getByRole('button', { name: 'Check status' }));
+
+    expect(await screen.findByText('Registered with a centre')).toBeInTheDocument();
+    expect(screen.getByText('City Vascular Clinic')).toBeInTheDocument();
+    expect(screen.getByText(/Follow-up/)).toBeInTheDocument();
+    expect(statusCalls).toEqual([{ trackingCode: 'psv-a1b2-c3d4', phone: '03001234567' }]);
+    // Nothing the person typed is persisted on the device.
+    expect(JSON.stringify([...Array(localStorage.length).keys()].map((i) => localStorage.getItem(localStorage.key(i)!)))).not.toContain('03001234567');
+  });
 });

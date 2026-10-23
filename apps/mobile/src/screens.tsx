@@ -5,12 +5,13 @@ import {
   ArrowRight, BadgeCheck, BookOpen, Check, ChevronDown, ChevronRight, CircleHelp, Clock3, Database,
   ExternalLink, FlaskConical, Globe2, Heart, HeartHandshake, Info, Languages, LockKeyhole,
   MapPin, MessageCircle, Navigation, Newspaper, Phone, RefreshCw, ScanSearch, Settings, Share2, ShieldCheck,
-  SlidersHorizontal, Sparkles, Stethoscope, Trash2, TriangleAlert, UserRound, Users, X,
+  Building2, HandHeart, LogIn, SlidersHorizontal, Sparkles, Stethoscope, Trash2, TriangleAlert, UserRound, Users, X,
 } from 'lucide-react';
 import { contactPayloadSchema, directionsHref, localizedValue, matchesSearch, telHref, whatsappHref, type ContactPayload } from '@psova/domain';
 import { SITE } from '@psova/content/site';
+import { CENTRE_TIME_ZONE, lookupStatus, siteUrl, type RegistrationStatus } from './status';
 import { useApp } from './app-context';
-import { BrandLine, Button, Card, Chip, CountUp, EASE_OUT, EmptyState, ForwardRow, ListGroup, LogoMark, Page, RevealHeading, ReviewBadge, SearchField, SectionHeader, Segmented, Sheet, SPRING } from './components';
+import { BrandLine, Button, Card, Chip, CountUp, EASE_OUT, EmptyState, ForwardRow, ListGroup, LogoMark, Page, RevealHeading, LinkRow, ReviewBadge, SearchField, SectionHeader, Segmented, Sheet, SPRING } from './components';
 import { FlowField } from './flow-field';
 import { MAP_HEIGHT, PAKISTAN_PATH, projectToMap } from './pakistan-map';
 import { enqueueContact, flushOutbox } from './outbox';
@@ -343,6 +344,12 @@ export function MoreScreen() {
       <ForwardRow icon={<MessageCircle />} title={messages.more.contact} to="/contact" tone="cyan" />
       <ForwardRow icon={<HeartHandshake />} title={messages.more.donate} to="/more/donate" tone="rose" />
     </ListGroup>
+    <ListGroup title={messages.more.network}>
+      <ForwardRow icon={<ScanSearch />} title={messages.more.statusCheck} to="/status" tone="cyan" />
+      <LinkRow icon={<Building2 />} title={messages.more.apply} href={siteUrl(settings.locale, '/centres/apply')} tone="violet" />
+      <LinkRow icon={<LogIn />} title={messages.more.centreLogin} href={siteUrl(settings.locale, '/registry/login')} tone="violet" />
+      <LinkRow icon={<HandHeart />} title={messages.more.supportFund} href={siteUrl(settings.locale, '/support-fund')} tone="rose" />
+    </ListGroup>
     <ListGroup title={messages.more.learn}>
       <ForwardRow icon={<Info />} title={messages.more.about} to="/more/about" tone="violet" />
       <ForwardRow icon={<Users />} title={messages.more.patients} to="/more/patients" tone="violet" />
@@ -356,6 +363,41 @@ export function MoreScreen() {
       <ForwardRow icon={<Newspaper />} title={messages.more.terms} to="/more/terms" tone="slate" />
       <ForwardRow icon={<LockKeyhole />} title={messages.more.journal} subtitle={messages.more.journalLocked} to="/more/journal" tone="slate" disabled />
     </ListGroup>
+  </Page>;
+}
+
+export function StatusScreen() {
+  const { settings, messages } = useApp();
+  const m = messages.status;
+  const [code, setCode] = useState(''); const [phone, setPhone] = useState('');
+  const [state, setState] = useState<'idle' | 'checking' | 'invalid' | 'notfound' | 'failed'>('idle');
+  const [result, setResult] = useState<RegistrationStatus | null>(null);
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault(); setResult(null);
+    if (!code.trim() || !phone.trim()) { setState('invalid'); return; }
+    setState('checking');
+    const outcome = await lookupStatus(code.trim(), phone.trim());
+    if (outcome.kind === 'found') { setResult(outcome.result); setState('idle'); } else setState(outcome.kind);
+  };
+  return <Page title={m.title} lead={m.body} back>
+    <form className="form-card" onSubmit={(event) => void submit(event)}>
+      <label>{m.code}<input dir="ltr" value={code} onChange={(e) => setCode(e.target.value)} placeholder="PSV-XXXX-XXXX" autoComplete="off" autoCapitalize="characters" /></label>
+      <label>{m.phone}<input dir="ltr" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03XX XXXXXXX" autoComplete="off" /></label>
+      <Button type="submit" className="block" disabled={state === 'checking'}><ScanSearch />{state === 'checking' ? m.checking : m.check}</Button>
+      <p className="form-hint">{m.privacy}</p>
+      {state !== 'idle' && state !== 'checking' && <p className="form-status failed" role="status">{state === 'invalid' ? m.required : state === 'notfound' ? m.notFound : m.failed}</p>}
+    </form>
+    {result && <Card className="status-result">
+      <div className="center-head"><span className={`review-badge ${result.status === 'VERIFIED' || result.status === 'CENTRE' ? 'ok' : 'pending'}`}>{m.statuses[result.status]}</span></div>
+      <dl className="status-facts">
+        <div><dt>{m.patient}</dt><dd>{result.firstName}</dd></div>
+        {result.centre && <div><dt>{m.centre}</dt><dd>{localizedValue(result.centre, settings.locale)}</dd></div>}
+        <div><dt>{m.submitted}</dt><dd>{dateFormat(settings.locale, { dateStyle: 'medium' }).format(new Date(result.submittedAt))}</dd></div>
+        {result.nextAppointment && <div><dt>{m.nextAppointment}</dt><dd>{dateFormat(settings.locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: CENTRE_TIME_ZONE }).format(new Date(result.nextAppointment.startsAt))} · {m.kinds[result.nextAppointment.kind]}</dd></div>}
+      </dl>
+      <p>{m.help[result.status]}</p>
+      {result.status === 'REJECTED' && result.publicReason && <div className="notice warning"><Info /><span><strong>{m.note}: </strong>{result.publicReason}</span></div>}
+    </Card>}
   </Page>;
 }
 

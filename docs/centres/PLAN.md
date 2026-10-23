@@ -134,3 +134,26 @@ Follow the existing patterns: Zod `safeParse` → `NextResponse.json`, `verifyOr
 - **Placeholder accounts:** the payment account numbers are still placeholders and must be real before launch.
 - **Unverified static list:** the static directory isn't confirmed with the institutions yet. Plan to replace it with DB centres as they join.
 - **Legal:** sharing patient data between centres and to NVAR needs a consent wording that has been reviewed.
+
+---
+
+## Implementation status (C1 → C8 built, 2026-10)
+
+All eight phases are implemented. Differences from the plan above, and what to know before go-live:
+
+- **C4:** the `RegistryPatient` fields (`centerId`, `mrn`, `sharedWithNvar`, `consentCentre`) arrived with the patient work, together with the
+  `NVAR_VISIBLE` rule (`lib/registry/visibility.ts`) that every NVAR-side query ANDs in.
+- **C3:** renewal reminders repeat weekly while a membership is expiring or in grace (the plan said once).
+- **C5:** appointment times are Pakistan time (UTC+5, no DST). Nurses record visits but not the plan or a treatment; reception sees no visits.
+- **C6:** uploads are encrypted on disk under `UPLOAD_DIR` (outside the deploy folder, never `public/`); see `docs/DEPLOY-HOSTINGER-MANUAL.md`.
+- **C7:** a **referral** gives the receiving centre its own *copy* of the record on accept (so every centre keeps scoping by `centerId`);
+  a **second opinion** is de-identified and read-only. Neither moves visits, appointments or files.
+- **C8:** support-fund donations are recorded **by hand** by a PSOVA admin (donors quote the request's `SF-…` code in the transfer reference);
+  there is no gateway. Centre CSV export is owner-only, audited, and stays available after a membership lapses.
+- **Not built:** the lab/pharma partner portal, patient accounts, a payment gateway, a WhatsApp API.
+
+Before go-live: apply the migrations (`20261023…` to `20261028…`), set `UPLOAD_DIR`, replace the placeholder PSOVA payment accounts in
+`packages/content/src/donation.ts`, have the consent wording reviewed (NVAR sharing, referrals, teaching use of files, support-fund publicity),
+and run the isolation checks against a real database: centre A cannot read centre B's patients, unshared centre cases are absent from NVAR
+admin lists/stats/exports, and a membership past its grace period is hidden and read-only.
+

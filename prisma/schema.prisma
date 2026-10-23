@@ -223,13 +223,14 @@ model RegistryPatient {
   consentVersion  String   @default("v1")
   consentAt       DateTime @default(now())
 
-  diagnoses    RegistryDiagnosis[]
-  encounters   Encounter[]
-  appointments Appointment[]
-  documents    PatientDocument[]
-  caseShares   CaseShare[]
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
+  diagnoses       RegistryDiagnosis[]
+  encounters      Encounter[]
+  appointments    Appointment[]
+  documents       PatientDocument[]
+  caseShares      CaseShare[]
+  supportRequests SupportRequest[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 
   @@unique([centerId, mrn])
   @@index([status])
@@ -407,18 +408,19 @@ model Center {
   membershipExpiresAt DateTime? // null until the first payment is verified
   lastReminderAt      DateTime?
 
-  members        CenterMember[]
-  payments       CenterPayment[]
-  patients       RegistryPatient[]
-  appointments   Appointment[]
-  encounters     Encounter[]
-  documents      PatientDocument[]
-  sharesSent     CaseShare[]       @relation("SharesSent")
-  sharesReceived CaseShare[]       @relation("SharesReceived")
-  mdtPosts       MdtPost[]
-  mdtComments    MdtComment[]
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  members         CenterMember[]
+  payments        CenterPayment[]
+  patients        RegistryPatient[]
+  appointments    Appointment[]
+  encounters      Encounter[]
+  documents       PatientDocument[]
+  sharesSent      CaseShare[]       @relation("SharesSent")
+  sharesReceived  CaseShare[]       @relation("SharesReceived")
+  mdtPosts        MdtPost[]
+  mdtComments     MdtComment[]
+  supportRequests SupportRequest[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   @@index([status])
   @@index([province])
@@ -662,4 +664,49 @@ model MdtPostDocument {
 
   @@id([postId, documentId])
   @@map("mdt_post_document")
+}
+
+/// ---------------- Patient support fund (docs/centres/PLAN.md) ----------------
+
+enum SupportStatus {
+  SUBMITTED // from a centre, awaiting PSOVA review
+  APPROVED // public: donors can fund it
+  FUNDED // goal reached
+  CLOSED // treatment done / withdrawn
+  REJECTED
+}
+
+/// A centre asks PSOVA to raise money for one patient's treatment. Only the non-identifying
+/// fields (treatment, cost, blurb) are ever public; the patient link stays between the centre and PSOVA.
+model SupportRequest {
+  id         String @id @default(cuid())
+  publicCode String @unique @db.VarChar(16) // e.g. SF-1A2B3C4D, quoted by donors in their transfer reference
+
+  patientId String
+  patient   RegistryPatient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  centerId  String
+  center    Center          @relation(fields: [centerId], references: [id], onDelete: Restrict)
+
+  treatment        String  @db.VarChar(160)
+  estimatedCostPkr Int
+  blurbEn          String  @db.Text // anonymised, shown publicly after PSOVA approval
+  blurbUr          String? @db.Text
+
+  status       SupportStatus @default(SUBMITTED)
+  fundedPkr    Int           @default(0)
+  sponsorName  String?       @db.VarChar(120)
+  showSponsor  Boolean       @default(false)
+  statusReason String?       @db.Text // shown to the centre on reject/close
+  adminNote    String?       @db.Text // internal
+
+  createdById  String?
+  reviewedById String?
+  approvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status, approvedAt])
+  @@index([centerId])
+  @@index([patientId])
+  @@map("support_request")
 }

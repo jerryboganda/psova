@@ -4,7 +4,7 @@
   "description": "Trusted vascular anomaly information and care navigation for Pakistan.",
   "id": "./index.html",
   "start_url": "./index.html",
-  "scope": "./",
+  "scope": "../",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#05070d",

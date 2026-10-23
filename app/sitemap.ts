@@ -23,6 +23,7 @@ const PATHS = [
   '/registry/enroll',
   '/registry/status',
   '/centres/apply',
+  '/support-fund',
   ...CONDITIONS.map((c) => `/conditions/${c.slug}`),
 ];
 

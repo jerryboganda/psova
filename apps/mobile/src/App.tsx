@@ -7,7 +7,7 @@ import { Onboarding } from './onboarding';
 import { InstallPrompt } from './install-prompt';
 import {
   AnatomyScreen, ConditionScreen, ContactScreen, DirectoryScreen, GlossaryScreen, HomeScreen, LibraryScreen,
-  MoreScreen, NewsDetailScreen, NewsScreen, SettingsScreen, StaticScreen,
+  MoreScreen, NewsDetailScreen, NewsScreen, SettingsScreen, StaticScreen, StatusScreen,
 } from './screens';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -52,7 +52,7 @@ function Main({ dir }: { dir: number }) {
   return <div className="app-shell"><a className="skip-link" href="#main-content">Skip to content</a><StatusBanner/>
     <AnimatePresence mode="wait" initial={false} custom={dir} onExitComplete={() => window.scrollTo(0, 0)}>
       <motion.div key={location.pathname} className="route" custom={dir} variants={routeVariants} initial="enter" animate="center" exit="exit">
-        <Routes location={location}><Route path="/" element={<HomeScreen/>}/><Route path="/library" element={<LibraryScreen/>}/><Route path="/library/:slug" element={<ConditionScreen/>}/><Route path="/anatomy" element={<AnatomyScreen/>}/><Route path="/directory" element={<DirectoryScreen/>}/><Route path="/news" element={<NewsScreen/>}/><Route path="/news/:id" element={<NewsDetailScreen/>}/><Route path="/more" element={<MoreScreen/>}/><Route path="/contact" element={<ContactScreen/>}/><Route path="/settings" element={<SettingsScreen/>}/><Route path="/more/glossary" element={<GlossaryScreen/>}/>{(['about','patients','professionals','research','privacy','terms','donate'] as const).map((kind) => <Route key={kind} path={`/more/${kind}`} element={<StaticScreen kind={kind}/>}/>) }<Route path="*" element={<Navigate to="/" replace/>}/></Routes>
+        <Routes location={location}><Route path="/" element={<HomeScreen/>}/><Route path="/library" element={<LibraryScreen/>}/><Route path="/library/:slug" element={<ConditionScreen/>}/><Route path="/anatomy" element={<AnatomyScreen/>}/><Route path="/directory" element={<DirectoryScreen/>}/><Route path="/news" element={<NewsScreen/>}/><Route path="/news/:id" element={<NewsDetailScreen/>}/><Route path="/more" element={<MoreScreen/>}/><Route path="/contact" element={<ContactScreen/>}/><Route path="/status" element={<StatusScreen/>}/><Route path="/settings" element={<SettingsScreen/>}/><Route path="/more/glossary" element={<GlossaryScreen/>}/>{(['about','patients','professionals','research','privacy','terms','donate'] as const).map((kind) => <Route key={kind} path={`/more/${kind}`} element={<StaticScreen kind={kind}/>}/>) }<Route path="*" element={<Navigate to="/" replace/>}/></Routes>
       </motion.div>
     </AnimatePresence>
     <InstallPrompt/><BottomTabs/></div>;

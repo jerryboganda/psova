@@ -51,6 +51,7 @@ export const FOOTER_LINKS: { titleKey: string; links: NavLink[] }[] = [
       { key: 'patients', href: '/patients' },
       { key: 'professionals', href: '/professionals' },
       { key: 'findCare', href: '/find-a-specialist' },
+      { key: 'joinCentre', href: '/centres/apply' },
     ],
   },
   {
@@ -61,6 +62,7 @@ export const FOOTER_LINKS: { titleKey: string; links: NavLink[] }[] = [
       { key: 'news', href: '/news' },
       { key: 'getInvolved', href: '/get-involved' },
       { key: 'donate', href: '/donate' },
+      { key: 'supportFund', href: '/support-fund' },
       { key: 'contact', href: '/contact' },
     ],
   },
