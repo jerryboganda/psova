@@ -7,7 +7,7 @@ const en = {
     call: 'Call', directions: 'Directions', website: 'Website', retry: 'Retry', close: 'Close', continue: 'Continue',
     offline: 'Offline — showing saved information', stale: 'Saved information may be out of date.', loading: 'Loading…',
     noResults: 'No matching information found.', unverified: 'Not yet institution-verified', draft: 'Representative draft',
-    learnMore: 'Learn more', contact: 'Contact PSOVA', language: 'Language', english: 'English', urdu: 'اردو',
+    learnMore: 'Learn more', verified: 'Verified', contact: 'Contact PSOVA', language: 'Language', english: 'English', urdu: 'اردو',
   },
   home: {
     eyebrow: 'Pakistan Society Of Vascular Anomaly', title: 'Every birthmark has a story — and a path to care.',
@@ -15,6 +15,7 @@ const en = {
     library: 'Understand the conditions', directory: 'Find care in Pakistan', parent: "I'm a parent or carer",
     professional: "I'm a healthcare professional", featured: 'Featured condition', reassurance: 'Common. Treatable. You are not alone.',
     safety: 'This app provides general information and does not replace a medical consultation.',
+    conditions: 'Explore conditions', seeAll: 'See all', latest: 'Latest from PSOVA', paths: 'Choose your path', reach: 'Talk to us', tap: 'Touch the vessels', conditionsCount: 'conditions explained',
   },
   library: {
     title: 'Condition library', body: 'Bilingual guidance available even when you are offline.',
@@ -27,7 +28,7 @@ const en = {
     title: 'Find specialist care', body: 'Representative records are shown transparently while PSOVA completes institutional verification.',
     placeholder: 'Search hospital, city, or service…', province: 'Province', type: 'Type', services: 'Services',
     verify: 'Confirm details with the institution before travelling. Placeholder phone numbers are never shown in this app.',
-    favorite: 'Save centre', unfavorite: 'Remove saved centre', public: 'Public', private: 'Private', trust: 'Trust / charity',
+    favorite: 'Save centre', unfavorite: 'Remove saved centre', public: 'Public', private: 'Private', trust: 'Trust / charity', centres: 'centres', filters: 'Filters', reset: 'Reset', show: 'Show results', saved: 'Saved',
   },
   news: {
     title: 'News and events', body: 'Announcements, awareness activities, and family stories.',
@@ -38,6 +39,7 @@ const en = {
     title: 'More', settings: 'Settings', contact: 'Ask PSOVA', donate: 'Donate / get involved', about: 'About PSOVA',
     patients: 'For patients and families', professionals: 'For professionals', research: 'Research', glossary: 'Glossary',
     privacy: 'Privacy', terms: 'Terms and medical disclaimer', journal: "My child's record", journalLocked: 'Unavailable pending privacy and clinical approval',
+    help: 'Get help', learn: 'Learn', app: 'App and privacy',
   },
   settings: {
     title: 'Settings', appearance: 'Appearance', system: 'Use device setting', light: 'Light', dark: 'Dark',
@@ -63,7 +65,7 @@ const ur: typeof en = {
     call: 'کال', directions: 'راستہ', website: 'ویب سائٹ', retry: 'دوبارہ کوشش', close: 'بند', continue: 'جاری رکھیں',
     offline: 'آف لائن — محفوظ معلومات دکھائی جا رہی ہیں', stale: 'محفوظ معلومات پرانی ہو سکتی ہیں۔', loading: 'لوڈ ہو رہا ہے…',
     noResults: 'مماثل معلومات نہیں ملیں۔', unverified: 'ادارے سے ابھی تصدیق نہیں ہوئی', draft: 'نمائندہ مسودہ',
-    learnMore: 'مزید جانیں', contact: 'پی ایس او وی اے سے رابطہ', language: 'زبان', english: 'English', urdu: 'اردو',
+    learnMore: 'مزید جانیں', verified: 'تصدیق شدہ', contact: 'پی ایس او وی اے سے رابطہ', language: 'زبان', english: 'English', urdu: 'اردو',
   },
   home: {
     eyebrow: 'پاکستان سوسائٹی آف ویسکولر ایناملی', title: 'ہر پیدائشی نشان کی ایک کہانی ہے — اور علاج کا ایک راستہ۔',
@@ -71,6 +73,7 @@ const ur: typeof en = {
     library: 'بیماریوں کو سمجھیں', directory: 'پاکستان میں علاج تلاش کریں', parent: 'میں والدین یا نگہداشت کنندہ ہوں',
     professional: 'میں ماہرِ صحت ہوں', featured: 'نمایاں بیماری', reassurance: 'عام۔ قابلِ علاج۔ آپ اکیلے نہیں۔',
     safety: 'یہ ایپ عمومی معلومات فراہم کرتی ہے اور طبی مشورے کا متبادل نہیں۔',
+    conditions: 'بیماریاں دریافت کریں', seeAll: 'سب دیکھیں', latest: 'پی ایس او وی اے کی تازہ خبریں', paths: 'اپنا راستہ منتخب کریں', reach: 'ہم سے بات کریں', tap: 'رگوں کو چھوئیں', conditionsCount: 'بیماریوں کی وضاحت',
   },
   library: {
     title: 'بیماریوں کی لائبریری', body: 'دو لسانی رہنمائی جو آف لائن بھی دستیاب ہے۔',
@@ -83,7 +86,7 @@ const ur: typeof en = {
     title: 'ماہرانہ علاج تلاش کریں', body: 'اداروں سے تصدیق مکمل ہونے تک نمائندہ اندراجات واضح طور پر دکھائے جاتے ہیں۔',
     placeholder: 'ہسپتال، شہر یا سروس تلاش کریں…', province: 'صوبہ', type: 'قسم', services: 'سروسز',
     verify: 'سفر سے پہلے ادارے سے تفصیلات کی تصدیق کریں۔ عارضی فون نمبر ایپ میں کبھی نہیں دکھائے جاتے۔',
-    favorite: 'مرکز محفوظ کریں', unfavorite: 'محفوظ مرکز ہٹائیں', public: 'سرکاری', private: 'نجی', trust: 'ٹرسٹ / خیراتی',
+    favorite: 'مرکز محفوظ کریں', unfavorite: 'محفوظ مرکز ہٹائیں', public: 'سرکاری', private: 'نجی', trust: 'ٹرسٹ / خیراتی', centres: 'مراکز', filters: 'فلٹرز', reset: 'ری سیٹ', show: 'نتائج دیکھیں', saved: 'محفوظ',
   },
   news: {
     title: 'خبریں و تقریبات', body: 'اعلانات، آگاہی سرگرمیاں اور خاندانی کہانیاں۔',
@@ -94,6 +97,7 @@ const ur: typeof en = {
     title: 'مزید', settings: 'سیٹنگز', contact: 'پی ایس او وی اے سے پوچھیں', donate: 'عطیہ / ساتھ دیں', about: 'پی ایس او وی اے کا تعارف',
     patients: 'مریضوں اور خاندانوں کے لیے', professionals: 'ماہرین کے لیے', research: 'تحقیق', glossary: 'اصطلاحات',
     privacy: 'رازداری', terms: 'شرائط اور طبی وضاحت', journal: 'میرے بچے کا ریکارڈ', journalLocked: 'رازداری و طبی منظوری تک دستیاب نہیں',
+    help: 'مدد', learn: 'سیکھیں', app: 'ایپ اور رازداری',
   },
   settings: {
     title: 'سیٹنگز', appearance: 'ظاہری شکل', system: 'ڈیوائس سیٹنگ استعمال کریں', light: 'روشن', dark: 'گہرا',

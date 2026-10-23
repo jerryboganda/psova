@@ -40,10 +40,11 @@ describe('PSOVA mobile shell', () => {
     render(<App/>);
     await screen.findByText('Every birthmark has a story — and a path to care.');
     await userEvent.click(screen.getByRole('link', { name: 'More' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
-    await userEvent.click(screen.getByRole('button', { name: 'اردو' }));
+    // Screens swap through an animated route transition, so wait for each to mount.
+    await userEvent.click(await screen.findByRole('button', { name: 'Settings' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'اردو' }));
     await waitFor(() => expect(document.documentElement.dir).toBe('rtl'));
-    expect(screen.getByRole('heading', { name: 'سیٹنگز' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'سیٹنگز' })).toBeInTheDocument();
   });
 
   it('never exposes placeholder directory phone numbers', async () => {

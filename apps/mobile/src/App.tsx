@@ -1,7 +1,8 @@
-import { Component, useEffect, type ErrorInfo, type ReactNode } from 'react';
-import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { Component, useEffect, useRef, type ErrorInfo, type ReactNode } from 'react';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
+import { HashRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider, useApp } from './app-context';
-import { BottomTabs, LoadingScreen, LogoMark, StatusBanner } from './components';
+import { BottomTabs, EASE_OUT, LoadingScreen, LogoMark, StatusBanner } from './components';
 import { listenForDeepLinks } from './native';
 import {
   AnatomyScreen, ConditionScreen, ContactScreen, DirectoryScreen, GlossaryScreen, HomeScreen, LibraryScreen,
@@ -18,11 +19,32 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   }
 }
 
+// Deeper routes slide in from the reading direction; sibling tabs (dir 0) only cross-fade, fast, because they are hit constantly.
+const routeVariants = {
+  enter: (dir: number) => (dir ? { opacity: 0, x: dir * 28 } : { opacity: 0 }),
+  center: (dir: number) => ({ opacity: 1, x: 0, transition: { duration: dir ? 0.3 : 0.2, ease: EASE_OUT } }),
+  exit: (dir: number) => ({ opacity: 0, x: dir * -10, transition: { duration: 0.1, ease: EASE_OUT } }),
+};
+
 function Shell() {
   const { loading, snapshot } = useApp(); const navigate = useNavigate();
+  const location = useLocation();
+  const depth = location.pathname.split('/').filter(Boolean).length;
+  const previous = useRef({ path: location.pathname, depth, dir: 0 });
+  if (previous.current.path !== location.pathname) {
+    const rtl = document.documentElement.dir === 'rtl' ? -1 : 1;
+    previous.current = { path: location.pathname, depth, dir: Math.sign(depth - previous.current.depth) * rtl };
+  }
+  const dir = previous.current.dir;
   useEffect(() => { let dispose: () => void = () => {}; void listenForDeepLinks((path) => navigate(path)).then((fn) => { dispose = fn; }); return () => dispose(); }, [navigate]);
   if (loading || !snapshot) return <LoadingScreen/>;
-  return <div className="app-shell"><a className="skip-link" href="#main-content">Skip to content</a><StatusBanner/><Routes><Route path="/" element={<HomeScreen/>}/><Route path="/library" element={<LibraryScreen/>}/><Route path="/library/:slug" element={<ConditionScreen/>}/><Route path="/anatomy" element={<AnatomyScreen/>}/><Route path="/directory" element={<DirectoryScreen/>}/><Route path="/news" element={<NewsScreen/>}/><Route path="/news/:id" element={<NewsDetailScreen/>}/><Route path="/more" element={<MoreScreen/>}/><Route path="/contact" element={<ContactScreen/>}/><Route path="/settings" element={<SettingsScreen/>}/><Route path="/more/glossary" element={<GlossaryScreen/>}/>{(['about','patients','professionals','research','privacy','terms','donate'] as const).map((kind) => <Route key={kind} path={`/more/${kind}`} element={<StaticScreen kind={kind}/>}/>) }<Route path="*" element={<Navigate to="/" replace/>}/></Routes><BottomTabs/></div>;
+  return <div className="app-shell"><a className="skip-link" href="#main-content">Skip to content</a><StatusBanner/>
+    <AnimatePresence mode="wait" initial={false} custom={dir} onExitComplete={() => window.scrollTo(0, 0)}>
+      <motion.div key={location.pathname} className="route" custom={dir} variants={routeVariants} initial="enter" animate="center" exit="exit">
+        <Routes location={location}><Route path="/" element={<HomeScreen/>}/><Route path="/library" element={<LibraryScreen/>}/><Route path="/library/:slug" element={<ConditionScreen/>}/><Route path="/anatomy" element={<AnatomyScreen/>}/><Route path="/directory" element={<DirectoryScreen/>}/><Route path="/news" element={<NewsScreen/>}/><Route path="/news/:id" element={<NewsDetailScreen/>}/><Route path="/more" element={<MoreScreen/>}/><Route path="/contact" element={<ContactScreen/>}/><Route path="/settings" element={<SettingsScreen/>}/><Route path="/more/glossary" element={<GlossaryScreen/>}/>{(['about','patients','professionals','research','privacy','terms','donate'] as const).map((kind) => <Route key={kind} path={`/more/${kind}`} element={<StaticScreen kind={kind}/>}/>) }<Route path="*" element={<Navigate to="/" replace/>}/></Routes>
+      </motion.div>
+    </AnimatePresence>
+    <BottomTabs/></div>;
 }
 
-export default function App() { return <ErrorBoundary><AppProvider><HashRouter><Shell/></HashRouter></AppProvider></ErrorBoundary>; }
+export default function App() { return <ErrorBoundary><MotionConfig reducedMotion="user"><AppProvider><HashRouter><Shell/></HashRouter></AppProvider></MotionConfig></ErrorBoundary>; }
