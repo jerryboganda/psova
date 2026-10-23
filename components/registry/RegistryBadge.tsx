@@ -1,13 +1,14 @@
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 
-type Status = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'DUPLICATE';
+type Status = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'DUPLICATE' | 'CENTRE';
 
 const styles: Record<Status, string> = {
   PENDING: 'border-amber-400/30 bg-amber-400/10 text-amber-200',
   VERIFIED: 'border-[var(--color-cyan)]/40 bg-[var(--color-cyan)]/10 text-[var(--color-cyan)]',
   REJECTED: 'border-[var(--color-rose)]/40 bg-[var(--color-rose)]/10 text-[var(--color-rose)]',
   DUPLICATE: 'border-white/15 bg-white/5 text-[var(--color-faint)]',
+  CENTRE: 'border-[var(--color-cyan)]/40 bg-[var(--color-cyan)]/10 text-[var(--color-cyan)]',
 };
 
 /** Status pill (UI-SPEC §2). Works in server and client components (next-intl). */

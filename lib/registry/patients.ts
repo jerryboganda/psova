@@ -17,6 +17,7 @@ import { writeAudit } from './audit';
 import { AuditAction, type ActorRole } from './constants';
 import { sendEnrollmentConfirmation, sendClinicianApproval } from './mailer';
 import { RegistryApiError } from './guards';
+import { NVAR_VISIBLE, isNvarVisible } from './visibility';
 import type {
   CaseInput,
   CasesQuery,
@@ -28,6 +29,7 @@ import type {
   AdminExportQuery,
   AdminActionInput,
   ClinicianActionInput,
+  CentreIntakeInput,
 } from './schemas';
 
 /** First whitespace-delimited token of a decrypted full name (public/status use). */
@@ -49,9 +51,15 @@ async function trackingCodeExists(code: string): Promise<boolean> {
 /*  Enrollment (self)                                                         */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Self-enrollment. With `centre`, this is a patient registering through a centre's QR
+ * code: the record belongs to that centre and stays private to it (NVAR_VISIBLE), the
+ * duplicate check is scoped to the centre, and NVAR consent is the patient's own choice.
+ */
 export async function createEnrollment(
-  input: EnrollInput,
+  input: EnrollInput | CentreIntakeInput,
   ctx: { ip: string | null },
+  centre?: { id: string },
 ): Promise<{ trackingCode: string; patientId: string }> {
   const cnicHash = blindIndex(input.cnic, 'cnic');
   const phoneHash = blindIndex(input.phone, 'phone');
@@ -61,7 +69,9 @@ export async function createEnrollment(
 
   // Duplicate detection via blind index — flags, never blocks (PRD A2).
   const dup = await prisma.registryPatient.findFirst({
-    where: { OR: [{ cnicHash }, { phoneHash }] },
+    where: {
+      AND: [centre ? { centerId: centre.id } : NVAR_VISIBLE, { OR: [{ cnicHash }, { phoneHash }] }],
+    },
     select: { id: true },
   });
   const possibleDuplicate = dup !== null;
@@ -72,6 +82,7 @@ export async function createEnrollment(
         trackingCode,
         status: 'PENDING',
         source: 'SELF',
+        ...(centre ? { centerId: centre.id, consentCentre: true } : {}),
         possibleDuplicate,
         // PII — encrypted before write
         fullName: encryptField(input.fullName),
@@ -117,11 +128,12 @@ export async function createEnrollment(
 
   await writeAudit({
     actorRole: 'public',
-    action: AuditAction.ENROLL_SUBMIT,
+    action: centre ? AuditAction.CENTER_INTAKE : AuditAction.ENROLL_SUBMIT,
     entity: 'RegistryPatient',
     entityId: patient.id,
     meta: {
       source: 'SELF',
+      ...(centre ? { centerId: centre.id } : {}),
       province: input.province,
       conditionSlug: input.conditionSlug,
       possibleDuplicate,
@@ -141,13 +153,15 @@ export async function createEnrollment(
 /*  Status lookup (code + phone blind index)                                  */
 /* -------------------------------------------------------------------------- */
 
-export type PublicStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+export type PublicStatus = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'CENTRE';
 
 export type StatusResult = {
   status: PublicStatus;
   submittedAt: string;
   firstName: string;
   publicReason?: string;
+  /** Present when the record belongs to a centre and has not been shared with NVAR. */
+  centre?: { en: string; ur: string };
 };
 
 export async function statusLookup(
@@ -160,7 +174,16 @@ export async function statusLookup(
   // Dual factor: both the code AND the phone blind index must match.
   const patient = await prisma.registryPatient.findFirst({
     where: { trackingCode: code, phoneHash },
-    select: { id: true, status: true, fullName: true, createdAt: true, publicReason: true },
+    select: {
+      id: true,
+      status: true,
+      fullName: true,
+      createdAt: true,
+      publicReason: true,
+      centerId: true,
+      sharedWithNvar: true,
+      center: { select: { nameEn: true, nameUr: true } },
+    },
   });
 
   await writeAudit({
@@ -173,6 +196,16 @@ export async function statusLookup(
   });
 
   if (!patient) return null;
+
+  // Registered with a centre and not (yet) shared with NVAR: there is no NVAR review to report.
+  if (!isNvarVisible(patient) && patient.center) {
+    return {
+      status: 'CENTRE',
+      submittedAt: patient.createdAt.toISOString(),
+      firstName: firstToken(decryptField(patient.fullName)),
+      centre: { en: patient.center.nameEn, ur: patient.center.nameUr || patient.center.nameEn },
+    };
+  }
 
   // DUPLICATE presents as VERIFIED to the public (same family, merged record).
   const publicStatus: PublicStatus =
@@ -193,9 +226,15 @@ export async function statusLookup(
 /*  Clinician case submission                                                 */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Clinician case submission. With `centre` it is a centre staff member adding a
+ * patient: the record belongs to the centre (private until shared), carries the
+ * centre's MRN, and NVAR consent is NOT assumed — it is recorded when sharing.
+ */
 export async function createClinicianCase(
   input: CaseInput,
   ctx: { clinicianId: string | null; actorId: string; ip: string | null },
+  centre?: { id: string },
 ): Promise<{ trackingCode: string; patientId: string }> {
   const cnicHash = blindIndex(input.cnic, 'cnic');
   const phoneHash = blindIndex(input.phone, 'phone');
@@ -204,7 +243,9 @@ export async function createClinicianCase(
   const trackingCode = await generateUniqueTrackingCode(trackingCodeExists);
 
   const dup = await prisma.registryPatient.findFirst({
-    where: { OR: [{ cnicHash }, { phoneHash }] },
+    where: {
+      AND: [centre ? { centerId: centre.id } : NVAR_VISIBLE, { OR: [{ cnicHash }, { phoneHash }] }],
+    },
     select: { id: true },
   });
   const possibleDuplicate = dup !== null;
@@ -216,6 +257,7 @@ export async function createClinicianCase(
         status: 'PENDING',
         source: 'CLINICIAN',
         clinicianId: ctx.clinicianId,
+        ...(centre ? { centerId: centre.id, mrn: input.mrn || null, consentCentre: true } : {}),
         possibleDuplicate,
         fullName: encryptField(input.fullName),
         guardianName: encryptNullable(input.guardianName),
@@ -234,11 +276,11 @@ export async function createClinicianCase(
         birthMonth: month,
         isMinor,
         // consent recorded from the clinician's attestation (API-SPEC §3)
-        consentRegistry: true,
+        consentRegistry: !centre,
         consentContact: false,
         consentResearch: false,
         consentGuardian: isMinor,
-        consentVersion: 'v1-clinician',
+        consentVersion: centre ? 'v1-centre' : 'v1-clinician',
         diagnoses: {
           create: {
             conditionSlug: input.conditionSlug,
@@ -269,12 +311,13 @@ export async function createClinicianCase(
 
   await writeAudit({
     actorId: ctx.actorId,
-    actorRole: 'clinician',
+    actorRole: centre ? 'center' : 'clinician',
     action: AuditAction.CASE_SUBMIT,
     entity: 'RegistryPatient',
     entityId: patient.id,
     meta: {
       source: 'CLINICIAN',
+      ...(centre ? { centerId: centre.id } : {}),
       province: input.province,
       conditionSlug: input.conditionSlug,
       issvaCategory: input.issvaCategory,
@@ -385,6 +428,8 @@ export type DecryptedRecord = {
   duplicateOfId: string | null;
   publicReason: string | null;
   internalNote: string | null;
+  mrn: string | null;
+  sharedWithNvar: boolean;
   verifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -427,6 +472,8 @@ function mapDecrypted(rec: RecordWithRelations): DecryptedRecord {
     duplicateOfId: rec.duplicateOfId,
     publicReason: rec.publicReason,
     internalNote: rec.internalNote,
+    mrn: rec.mrn,
+    sharedWithNvar: rec.sharedWithNvar,
     verifiedAt: rec.verifiedAt ? rec.verifiedAt.toISOString() : null,
     createdAt: rec.createdAt.toISOString(),
     updatedAt: rec.updatedAt.toISOString(),
@@ -489,12 +536,14 @@ function mapDecrypted(rec: RecordWithRelations): DecryptedRecord {
 export async function getDecryptedRecord(
   id: string,
   ctx: { actorId: string | null; actorRole: ActorRole; ip: string | null },
-  opts?: { restrictClinicianId?: string },
+  opts?: { restrictClinicianId?: string; restrictCenterId?: string },
 ): Promise<DecryptedRecord | null> {
   const rec = await prisma.registryPatient.findFirst({
     where: {
       id,
       ...(opts?.restrictClinicianId ? { clinicianId: opts.restrictClinicianId } : {}),
+      // A centre reads its own records; every other reader only sees NVAR-visible ones.
+      ...(opts?.restrictCenterId ? { centerId: opts.restrictCenterId } : NVAR_VISIBLE),
     },
     include: {
       diagnoses: { include: { treatments: true } },
@@ -544,7 +593,7 @@ function buildRecordWhere(query: {
   q?: string;
   qType?: 'cnic' | 'phone' | 'code';
 }): Prisma.RegistryPatientWhereInput {
-  const where: Prisma.RegistryPatientWhereInput = {};
+  const where: Prisma.RegistryPatientWhereInput = { AND: [NVAR_VISIBLE] };
   if (query.status) where.status = query.status as Prisma.RegistryPatientWhereInput['status'];
   if (query.province) where.province = query.province as Prisma.RegistryPatientWhereInput['province'];
   if (query.source) where.source = query.source as Prisma.RegistryPatientWhereInput['source'];
@@ -627,7 +676,7 @@ export async function getAdminRecordDetail(
       clinician: { include: { user: { select: { name: true, email: true } } } },
     },
   });
-  if (!rec) return null;
+  if (!rec || !isNvarVisible(rec)) return null;
 
   await writeAudit({
     actorId: ctx.actorId,
@@ -640,8 +689,7 @@ export async function getAdminRecordDetail(
 
   const duplicates = await prisma.registryPatient.findMany({
     where: {
-      id: { not: id },
-      OR: [{ cnicHash: rec.cnicHash }, { phoneHash: rec.phoneHash }],
+      AND: [NVAR_VISIBLE, { id: { not: id }, OR: [{ cnicHash: rec.cnicHash }, { phoneHash: rec.phoneHash }] }],
     },
     select: { id: true, trackingCode: true, status: true },
     take: 10,
@@ -672,9 +720,15 @@ export async function applyAdminAction(
 ): Promise<{ status: string }> {
   const current = await prisma.registryPatient.findUnique({
     where: { id },
-    select: { id: true, status: true, diagnoses: { select: { id: true }, take: 1 } },
+    select: {
+      id: true,
+      status: true,
+      centerId: true,
+      sharedWithNvar: true,
+      diagnoses: { select: { id: true }, take: 1 },
+    },
   });
-  if (!current) throw new RegistryApiError(404, 'not-found');
+  if (!current || !isNvarVisible(current)) throw new RegistryApiError(404, 'not-found');
 
   switch (action.action) {
     case 'VERIFY': {
@@ -720,9 +774,9 @@ export async function applyAdminAction(
       if (action.canonicalId === id) throw new RegistryApiError(409, 'conflict');
       const canonical = await prisma.registryPatient.findUnique({
         where: { id: action.canonicalId },
-        select: { id: true, status: true },
+        select: { id: true, status: true, centerId: true, sharedWithNvar: true },
       });
-      if (!canonical || canonical.status === 'DUPLICATE') {
+      if (!canonical || !isNvarVisible(canonical) || canonical.status === 'DUPLICATE') {
         throw new RegistryApiError(409, 'conflict');
       }
       await prisma.registryPatient.update({
@@ -940,9 +994,9 @@ export async function getAdminOverview(): Promise<{
   cliniciansPending: number;
 }> {
   const [pending, verified, rejected, cliniciansPending] = await Promise.all([
-    prisma.registryPatient.count({ where: { status: 'PENDING' } }),
-    prisma.registryPatient.count({ where: { status: 'VERIFIED' } }),
-    prisma.registryPatient.count({ where: { status: 'REJECTED' } }),
+    prisma.registryPatient.count({ where: { AND: [NVAR_VISIBLE, { status: 'PENDING' }] } }),
+    prisma.registryPatient.count({ where: { AND: [NVAR_VISIBLE, { status: 'VERIFIED' }] } }),
+    prisma.registryPatient.count({ where: { AND: [NVAR_VISIBLE, { status: 'REJECTED' }] } }),
     prisma.clinicianProfile.count({ where: { approved: false } }),
   ]);
   return { pending, verified, rejected, cliniciansPending };

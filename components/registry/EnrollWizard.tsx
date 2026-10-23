@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, type Path } from 'react-hook-form';
+import { useForm, type Path, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations, useLocale } from 'next-intl';
 import { Pencil } from 'lucide-react';
-import { enrollSchema, type EnrollInput } from '@/lib/registry/schemas';
+import { centreIntakeSchema, enrollSchema, type EnrollInput } from '@/lib/registry/schemas';
 import {
   GENDERS,
   PROVINCES,
@@ -25,11 +25,15 @@ const STEP_FIELDS: Path<EnrollInput>[][] = [
   ['fullName', 'gender', 'dob', 'guardianName'],
   ['phone', 'altPhone', 'email', 'cnic', 'province', 'district', 'address'],
   ['conditionSlug', 'conditionOther', 'bodySite', 'onset', 'doctorDiagnosed', 'facility', 'treatmentNotes'],
-  ['consentRegistry', 'consentContact', 'consentResearch', 'consentGuardian'],
+  ['consentRegistry', 'consentCentre', 'consentContact', 'consentResearch', 'consentGuardian'],
 ];
 
-export function EnrollWizard() {
+/** Set when a patient registers through a centre's QR code instead of the national form. */
+export type EnrollCentre = { slug: string; name: string; province: string; city: string };
+
+export function EnrollWizard({ centre }: { centre?: EnrollCentre } = {}) {
   const t = useTranslations('RegistryEnroll');
+  const ti = useTranslations('Centres.intake');
   const tc = useTranslations('RegistryCommon');
   const locale = useLocale();
 
@@ -45,13 +49,16 @@ export function EnrollWizard() {
     handleSubmit,
     formState: { errors },
   } = useForm<EnrollInput>({
-    resolver: zodResolver(enrollSchema),
+    // The centre variant differs only in which consent is mandatory; the form shape is the same.
+    resolver: zodResolver(centre ? centreIntakeSchema : enrollSchema) as unknown as Resolver<EnrollInput>,
     mode: 'onTouched',
     defaultValues: {
       consentContact: false,
       consentResearch: false,
       consentGuardian: false,
       website: '',
+      // The patient's own province/district, preset to the centre's as a convenience.
+      ...(centre ? { province: centre.province as EnrollInput['province'], district: centre.city } : {}),
     },
   });
 
@@ -87,7 +94,7 @@ export function EnrollWizard() {
   async function submit(values: EnrollInput) {
     setStatus('sending');
     try {
-      const res = await fetch('/api/registry/enroll', {
+      const res = await fetch(centre ? `/api/centres/intake/${centre.slug}` : '/api/registry/enroll', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
@@ -118,6 +125,11 @@ export function EnrollWizard() {
     >
       {/* honeypot */}
       <input type="text" tabIndex={-1} aria-hidden autoComplete="off" className="hidden" {...register('website')} />
+      {centre && (
+        <p className="mb-6 rounded-2xl border border-[var(--color-cyan)]/30 bg-[var(--color-cyan)]/5 px-4 py-3 text-sm">
+          {ti('banner', { name: centre.name })}
+        </p>
+      )}
 
       {step === 1 && (
         <div className="flex flex-col gap-5">
@@ -237,8 +249,13 @@ export function EnrollWizard() {
       {step === 4 && (
         <div className="flex flex-col gap-4">
           <p className="text-sm text-[var(--color-muted)]">{t('consentIntro')}</p>
-          <ConsentCheck id="consentRegistry" required error={err('consentRegistry', 'consentRegistry')} inputProps={register('consentRegistry')}>
-            {t('consent.registry')}
+          {centre && (
+            <ConsentCheck id="consentCentre" required error={err('consentCentre', 'consentRegistry')} inputProps={register('consentCentre')}>
+              {ti('consent.centre', { name: centre.name })}
+            </ConsentCheck>
+          )}
+          <ConsentCheck id="consentRegistry" required={!centre} error={centre ? undefined : err('consentRegistry', 'consentRegistry')} inputProps={register('consentRegistry')}>
+            {centre ? ti('consent.registry') : t('consent.registry')}
           </ConsentCheck>
           <ConsentCheck id="consentContact" inputProps={register('consentContact')}>
             {t('consent.contact')}
@@ -252,7 +269,7 @@ export function EnrollWizard() {
         </div>
       )}
 
-      {step === 5 && <ReviewStep values={getValues()} onEdit={setStep} />}
+      {step === 5 && <ReviewStep values={getValues()} onEdit={setStep} centre={centre} />}
 
       {status === 'error' && (
         <p className="mt-4 rounded-2xl border border-[var(--color-rose)]/30 bg-[var(--color-rose)]/5 px-4 py-3 text-sm text-[var(--color-rose)]">
@@ -263,8 +280,17 @@ export function EnrollWizard() {
   );
 }
 
-function ReviewStep({ values, onEdit }: { values: EnrollInput; onEdit: (s: number) => void }) {
+function ReviewStep({
+  values,
+  onEdit,
+  centre,
+}: {
+  values: EnrollInput;
+  onEdit: (s: number) => void;
+  centre?: EnrollCentre;
+}) {
   const t = useTranslations('RegistryEnroll');
+  const ti = useTranslations('Centres.intake');
   const tc = useTranslations('RegistryCommon');
   const locale = useLocale();
 
@@ -316,7 +342,8 @@ function ReviewStep({ values, onEdit }: { values: EnrollInput; onEdit: (s: numbe
       step: 4,
       heading: t('review.consent'),
       rows: [
-        [t('consent.registry'), yn(values.consentRegistry)],
+        ...(centre ? ([[ti('consent.centre', { name: centre.name }), yn(values.consentCentre)]] as [string, string][]) : []),
+        [centre ? ti('consent.registry') : t('consent.registry'), yn(values.consentRegistry)],
         [t('consent.contact'), yn(values.consentContact)],
         [t('consent.research'), yn(values.consentResearch)],
       ],

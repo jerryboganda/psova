@@ -28,24 +28,41 @@ import { WizardShell } from './WizardShell';
 import { FormField } from './FormField';
 import { ConsentCheck } from './ConsentCheck';
 import { TrackingCodeCard } from './TrackingCodeCard';
-import { fieldClass } from './field';
+import { Link } from '@/i18n/navigation';
+import { brandButtonClass, fieldClass } from './field';
 
 const STEP_FIELDS: Path<CaseForm>[][] = [
-  ['fullName', 'gender', 'dob', 'guardianName'],
+  ['fullName', 'gender', 'dob', 'guardianName', 'mrn'],
   ['phone', 'altPhone', 'email', 'cnic', 'province', 'district', 'address'],
   ['conditionSlug', 'conditionOther', 'bodySite', 'onset', 'issvaCategory', 'severity', 'basis', 'facility', 'clinicalNotes', 'treatments'],
   ['consentAttested'],
 ];
 
-export function ClinicianCaseWizard() {
+/**
+ * NVAR clinician case form; also used by centre staff to add a patient to their centre
+ * (`endpoint`, preset `defaults`, the centre's own `showMrn` number, an `openHrefBase` link).
+ */
+export function ClinicianCaseWizard({
+  endpoint = '/api/registry/cases',
+  defaults,
+  showMrn = false,
+  openHrefBase,
+}: {
+  endpoint?: string;
+  defaults?: Partial<CaseForm>;
+  showMrn?: boolean;
+  /** After saving, link to `${openHrefBase}/${patientId}`. */
+  openHrefBase?: string;
+} = {}) {
   const t = useTranslations('RegistryClinician');
+  const tp = useTranslations('Centres.patients');
   const te = useTranslations('RegistryEnroll');
   const tc = useTranslations('RegistryCommon');
   const locale = useLocale();
 
   const [step, setStep] = useState(1);
-  const [status, setStatus] = useState<'idle' | 'sending' | 'error'>('idle');
-  const [done, setDone] = useState<string | null>(null);
+  const [status, setStatus] = useState<'idle' | 'sending' | 'error' | 'conflict'>('idle');
+  const [done, setDone] = useState<{ code: string; id: string } | null>(null);
 
   const {
     register,
@@ -57,7 +74,7 @@ export function ClinicianCaseWizard() {
   } = useForm<CaseForm, unknown, CaseInput>({
     resolver: zodResolver(caseSchema),
     mode: 'onTouched',
-    defaultValues: { treatments: [] },
+    defaultValues: { treatments: [], ...defaults },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'treatments' });
@@ -80,21 +97,34 @@ export function ClinicianCaseWizard() {
   async function submit(values: CaseInput) {
     setStatus('sending');
     try {
-      const res = await fetch('/api/registry/cases', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
       });
       const data = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        setStatus('conflict');
+        return;
+      }
       if (!res.ok || !data?.ok) throw new Error();
-      setDone(data.trackingCode as string);
+      setDone({ code: data.trackingCode as string, id: (data.patientId as string) ?? '' });
     } catch {
       setStatus('error');
     }
   }
 
   if (done) {
-    return <TrackingCodeCard code={done} note={t('successNote')} />;
+    return (
+      <div className="flex flex-col gap-6">
+        <TrackingCodeCard code={done.code} note={t('successNote')} />
+        {openHrefBase && done.id && (
+          <Link href={`${openHrefBase}/${done.id}`} className={brandButtonClass + ' mx-auto'}>
+            {tp('openPatient')}
+          </Link>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -128,6 +158,11 @@ export function ClinicianCaseWizard() {
           <FormField id="c-guardianName" label={te('fields.guardianName')} hint={te('fields.guardianNameHint')} error={eErr('guardianName', 'guardian')}>
             <input id="c-guardianName" className={fieldClass} aria-invalid={!!errors.guardianName} {...register('guardianName')} />
           </FormField>
+          {showMrn && (
+            <FormField id="c-mrn" label={tp('mrn')} optionalLabel={tc('optional')} hint={tp('mrnHint')}>
+              <input id="c-mrn" dir="ltr" className={fieldClass} {...register('mrn')} />
+            </FormField>
+          )}
         </div>
       )}
 
@@ -277,9 +312,9 @@ export function ClinicianCaseWizard() {
         </div>
       )}
 
-      {status === 'error' && (
+      {(status === 'error' || status === 'conflict') && (
         <p className="mt-4 rounded-2xl border border-[var(--color-rose)]/30 bg-[var(--color-rose)]/5 px-4 py-3 text-sm text-[var(--color-rose)]">
-          {t('submitError')}
+          {status === 'conflict' ? tp('mrnTaken') : t('submitError')}
         </p>
       )}
     </WizardShell>

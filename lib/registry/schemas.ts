@@ -98,8 +98,7 @@ function refineDemographics(
 /*  Public enrollment (POST /api/registry/enroll)                             */
 /* -------------------------------------------------------------------------- */
 
-export const enrollSchema = z
-  .object({
+const enrollBase = z.object({
     // step 1 — patient
     fullName: z.string().min(3).max(120),
     gender: z.enum(GENDERS),
@@ -122,16 +121,30 @@ export const enrollSchema = z
     facility: z.string().max(160).optional(),
     treatmentNotes: z.string().max(2000).optional(),
     // step 4 — consent
-    consentRegistry: z.literal(true),
+    consentRegistry: z.boolean(),
+    consentCentre: z.boolean().optional(), // centre QR intake only
     consentContact: z.boolean(),
     consentResearch: z.boolean(),
     consentGuardian: z.boolean(),
     // anti-bot
     website: z.string().max(0).optional(),
-  })
+  });
+
+export const enrollSchema = enrollBase
+  .extend({ consentRegistry: z.literal(true) })
   .superRefine((data, ctx) => refineDemographics(data, ctx, { requireGuardianConsent: true }));
 
 export type EnrollInput = z.infer<typeof enrollSchema>;
+
+/**
+ * Patient registering through a centre's QR code (POST /api/centres/intake/[slug]).
+ * Consent to the centre is required; consent to NVAR is the patient's own choice.
+ */
+export const centreIntakeSchema = enrollBase
+  .extend({ consentCentre: z.literal(true) })
+  .superRefine((data, ctx) => refineDemographics(data, ctx, { requireGuardianConsent: true }));
+
+export type CentreIntakeInput = z.infer<typeof centreIntakeSchema>;
 
 /* -------------------------------------------------------------------------- */
 /*  Status lookup (POST /api/registry/status)                                 */
@@ -208,6 +221,8 @@ export const caseSchema = z
     treatments: z.array(treatmentSchema).max(10).default([]),
     // clinician attests patient consent
     consentAttested: z.literal(true),
+    // centre staff only: the centre's own patient number (ignored by the NVAR clinician flow)
+    mrn: z.string().trim().max(40).optional(),
   })
   .superRefine((data, ctx) => refineDemographics(data, ctx, { requireGuardianConsent: false }));
 

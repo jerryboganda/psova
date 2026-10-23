@@ -174,6 +174,14 @@ model RegistryPatient {
   source            RecordSource
   clinicianId       String?
   clinician         ClinicianProfile? @relation(fields: [clinicianId], references: [id], onDelete: SetNull)
+  // Centres network: a centre-owned record stays private to its centre until the centre
+  // shares it with NVAR (sharedWithNvar). NVAR queries must filter on this (lib/registry/visibility.ts).
+  // Restrict (not SetNull): detaching a record from its centre would silently publish it to NVAR.
+  centerId          String?
+  center            Center?           @relation(fields: [centerId], references: [id], onDelete: Restrict)
+  mrn               String?           @db.VarChar(40) // the centre's own patient number
+  sharedWithNvar    Boolean           @default(false)
+  sharedAt          DateTime?
   possibleDuplicate Boolean           @default(false)
   duplicateOfId     String? // set when status = DUPLICATE
   publicReason      String?           @db.Text // shown in status lookup when REJECTED (non-PII)
@@ -208,6 +216,7 @@ model RegistryPatient {
   consentContact  Boolean  @default(false)
   consentResearch Boolean  @default(false)
   consentGuardian Boolean  @default(false) // guardian declaration when minor
+  consentCentre   Boolean  @default(false) // agreed to be registered with / stored by the centre
   consentVersion  String   @default("v1")
   consentAt       DateTime @default(now())
 
@@ -221,6 +230,8 @@ model RegistryPatient {
   @@index([phoneHash])
   @@index([status, province])
   @@index([createdAt])
+  @@index([centerId, createdAt])
+  @@unique([centerId, mrn])
   @@map("registry_patient")
 }
 
@@ -383,6 +394,7 @@ model Center {
 
   members   CenterMember[]
   payments  CenterPayment[]
+  patients  RegistryPatient[]
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 

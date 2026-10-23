@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTranslations, useFormatter } from 'next-intl';
+import { useTranslations, useFormatter, useLocale } from 'next-intl';
 import { Search, Loader2, Info } from 'lucide-react';
 import { statusSchema, type StatusInput } from '@/lib/registry/schemas';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -12,15 +12,17 @@ import { FormField } from './FormField';
 import { fieldClass, brandButtonClass, errorClass } from './field';
 
 type Result = {
-  status: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  status: 'PENDING' | 'VERIFIED' | 'REJECTED' | 'CENTRE';
   submittedAt: string;
   firstName: string;
   publicReason?: string;
+  centre?: { en: string; ur: string };
 };
 
 export function StatusLookup() {
   const t = useTranslations('RegistryStatus');
   const format = useFormatter();
+  const locale = useLocale();
   const [state, setState] = useState<'idle' | 'checking' | 'notfound' | 'error'>('idle');
   const [result, setResult] = useState<Result | null>(null);
 
@@ -98,6 +100,12 @@ export function StatusLookup() {
               <dt className="text-sm text-[var(--color-faint)]">{t('firstNameLabel')}:</dt>
               <dd className="text-sm font-medium text-[var(--color-fg)]">{result.firstName}</dd>
             </div>
+            {result.centre && (
+              <div className="flex items-baseline gap-2">
+                <dt className="text-sm text-[var(--color-faint)]">{t('centreLabel')}:</dt>
+                <dd className="text-sm font-medium text-[var(--color-fg)]">{locale === 'ur' ? result.centre.ur : result.centre.en}</dd>
+              </div>
+            )}
           </dl>
           <p className="mt-4 text-sm text-[var(--color-muted)]">{t(`statusHelp.${result.status}`)}</p>
           {result.status === 'REJECTED' && result.publicReason && (

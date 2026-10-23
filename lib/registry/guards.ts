@@ -71,9 +71,14 @@ export function rateLimitedResponse(retryAfter: number): NextResponse {
 
 /** First hop of x-forwarded-for (SECURITY §4). */
 export function getClientIp(req: Request): string | null {
-  const xff = req.headers.get('x-forwarded-for');
+  return clientIpFromHeaders(req.headers);
+}
+
+/** Same lookup for server components, which only have `headers()`. */
+export function clientIpFromHeaders(headers: Headers): string | null {
+  const xff = headers.get('x-forwarded-for');
   if (xff) return xff.split(',')[0].trim();
-  return req.headers.get('x-real-ip');
+  return headers.get('x-real-ip');
 }
 
 /**

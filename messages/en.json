@@ -567,7 +567,8 @@
       "PENDING": "Pending",
       "VERIFIED": "Verified",
       "REJECTED": "Rejected",
-      "DUPLICATE": "Duplicate"
+      "DUPLICATE": "Duplicate",
+      "CENTRE": "Registered with a centre"
     },
     "sources": {
       "SELF": "Self-enrolled",
@@ -746,8 +747,10 @@
       "PENDING": "Your submission is in the queue for PSOVA to review.",
       "VERIFIED": "Your record has been verified and counted in the registry.",
       "REJECTED": "PSOVA needs more information before this record can be verified.",
-      "DUPLICATE": "Your record has been verified and counted in the registry."
-    }
+      "DUPLICATE": "Your record has been verified and counted in the registry.",
+      "CENTRE": "You are registered with this centre, which holds your record securely. Contact the centre about appointments and care."
+    },
+    "centreLabel": "Centre"
   },
   "RegistryClinician": {
     "nav": {
@@ -1231,7 +1234,12 @@
         "REJECTED": "Rejected"
       },
       "certificate": "Registration certificate",
-      "publicProfile": "View public profile"
+      "publicProfile": "View public profile",
+      "stats": {
+        "patients": "Patients registered",
+        "recent": "New in the last 7 days",
+        "add": "Add a patient"
+      }
     },
     "profile": {
       "eyebrow": "PSOVA Registered Centre",
@@ -1266,7 +1274,8 @@
       "profile": "Profile",
       "membership": "Membership",
       "poster": "QR poster",
-      "certificate": "Certificate"
+      "certificate": "Certificate",
+      "patients": "Patients"
     },
     "staff": {
       "title": "Staff",
@@ -1337,6 +1346,53 @@
       "invalid": "This link is invalid or has expired. Ask your centre owner to resend the invite.",
       "toLogin": "Go to sign in",
       "doneTitle": "Password saved"
+    },
+    "intake": {
+      "title": "Register as a patient",
+      "lede": "A short, private form. Your details are encrypted and held by this centre. You will get a tracking code at the end.",
+      "banner": "You are registering with {name}.",
+      "consent": {
+        "centre": "I agree to be registered with {name} and for the centre to store my details securely (encrypted).",
+        "registry": "If my doctor decides to, my case may also be shared with the National Vascular Anomaly Registry (NVAR) (optional)."
+      },
+      "closedTitle": "Online registration is closed",
+      "closedBody": "This centre is not taking online registrations right now. Please contact the centre directly."
+    },
+    "patients": {
+      "title": "Patients",
+      "count": "{count, plural, =0 {No patients yet} =1 {1 patient} other {# patients}}",
+      "add": "Add patient",
+      "search": "Search",
+      "searchLabel": "Search patients",
+      "searchPlaceholder": "Name, phone, CNIC, tracking code or MRN",
+      "empty": "No patients yet. Add one, or share your QR poster so patients can register themselves.",
+      "noResults": "No patients match your search.",
+      "duplicate": "Possible duplicate",
+      "sharedNvar": "In NVAR",
+      "pagination": "Pages",
+      "back": "Back to patients",
+      "mrn": "Centre patient number (MRN)",
+      "mrnHint": "Your own file or hospital number. Must be unique within your centre.",
+      "mrnTaken": "That patient number is already used at your centre.",
+      "openPatient": "Open patient",
+      "conditionOther": "Other",
+      "conditionUnknown": "Not sure",
+      "newTitle": "Add a patient",
+      "newLede": "Register a patient at your centre. They get a tracking code, and the record stays private to your centre.",
+      "readOnly": "Your membership has lapsed, so new patients cannot be added. Existing records are still available to read.",
+      "renew": "Renew membership",
+      "waTitle": "Send the tracking code on WhatsApp",
+      "timeline": {
+        "title": "Timeline",
+        "intakeQr": "Registered by the patient (QR / link)",
+        "addedByStaff": "Added by centre staff"
+      }
+    },
+    "wa": {
+      "english": "English",
+      "urdu": "اردو",
+      "noMobile": "This patient has no WhatsApp-capable mobile number.",
+      "trackingCode": "Hello {name}, you are registered at {centre}. Your PSOVA tracking code is {code}. Please keep it private. You can check your status here: {url}"
     }
   }
 }

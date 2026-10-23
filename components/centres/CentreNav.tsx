@@ -1,13 +1,14 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { BadgeCheck, Building2, CreditCard, FileBadge, LayoutDashboard, QrCode, Users } from 'lucide-react';
+import { BadgeCheck, Building2, CreditCard, FileBadge, LayoutDashboard, QrCode, Stethoscope, Users } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { LogoutButton } from '@/components/registry/LogoutButton';
 import { cn } from '@/lib/utils';
 
 const LINKS = [
   { href: '/centre', key: 'overview', Icon: LayoutDashboard, exact: true, ownerOnly: false },
+  { href: '/centre/patients', key: 'patients', Icon: Stethoscope, exact: false, ownerOnly: false },
   { href: '/centre/staff', key: 'staff', Icon: Users, exact: false, ownerOnly: true },
   { href: '/centre/profile', key: 'profile', Icon: Building2, exact: false, ownerOnly: true },
   { href: '/centre/membership', key: 'membership', Icon: CreditCard, exact: false, ownerOnly: true },

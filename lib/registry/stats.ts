@@ -3,6 +3,7 @@
 // totals are exact. Dashboard is gated until VERIFIED ≥ STATS_PUBLISH_THRESHOLD.
 
 import { prisma } from './db';
+import { NVAR_VISIBLE } from './visibility';
 import { AGE_BANDS, ageBandKey, K_ANON_MIN, STATS_PUBLISH_THRESHOLD } from './constants';
 
 function suppress(count: number): number | null {
@@ -23,12 +24,12 @@ export type PublicStats = {
 export async function getPublicStats(): Promise<PublicStats> {
   const [rows, condGroups] = await Promise.all([
     prisma.registryPatient.findMany({
-      where: { status: 'VERIFIED' },
+      where: { AND: [NVAR_VISIBLE, { status: 'VERIFIED' }] },
       select: { province: true, gender: true, birthYear: true, createdAt: true, clinicianId: true },
     }),
     prisma.registryDiagnosis.groupBy({
       by: ['conditionSlug'],
-      where: { patient: { status: 'VERIFIED' } },
+      where: { patient: { AND: [NVAR_VISIBLE, { status: 'VERIFIED' }] } },
       _count: { conditionSlug: true },
     }),
   ]);

@@ -29,6 +29,8 @@ export const RATE_LIMITS = {
   register: { max: 10, windowMs: 60 * 60 * 1000 },
   centerApply: { max: 5, windowMs: 60 * 60 * 1000 },
   centerStaff: { max: 30, windowMs: 60 * 60 * 1000 },
+  // A waiting room scanning the QR code shares one clinic wifi IP, so this is looser than `enroll`.
+  centreIntake: { max: 40, windowMs: 60 * 60 * 1000 },
   stats: { max: 60, windowMs: 60 * 60 * 1000 },
 } as const;
 
