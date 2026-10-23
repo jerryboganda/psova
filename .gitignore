@@ -32,8 +32,6 @@ next-env.d.ts
 
 # mobile and Rust build products
 /apps/mobile/dist/
-/apps/mobile/src-tauri/target/
-/apps/mobile/src-tauri/gen/
 /release-artifacts/
 
 # quality reports

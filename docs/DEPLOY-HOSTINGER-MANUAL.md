@@ -56,9 +56,8 @@ Then check `https://psova.org.pk/en/<page>` and the `/ur/` version.
    Event "Upcoming → Past" switches in the browser by date, so it needs no redeploy.
 6. **First request after restart can 404/slow** for ~10 s while Passenger boots; the script retries.
 7. **hPanel will keep showing old commit `40d930d`** and "Git provider is not connected". That's expected.
-8. **Mobile app branch** (`feature/psova-tauri-mobile`) is not on `main`/production. Event content exists in both:
-   `data/news.ts` on main, `packages/content/src/news.ts` (plus regenerated `public/content-snapshot.json`
-   and `apps/mobile/public/content-snapshot.json`) on the mobile branch. Keep them in sync when adding content.
+8. Event content exists in two places: `data/news.ts` (website) and `packages/content/src/news.ts` (plus the regenerated
+   `public/content-snapshot.json` and `apps/mobile/public/content-snapshot.json`, via `npm run content:build`). Keep them in sync.
 9. `psova.polytronx.com` is dead (VPS proxy, 502). Everything, including the mobile app's API calls, uses `https://psova.org.pk`.
 10. The local `node_modules/@psova/*` links pointed at the old `E:` drive; fixed with junctions to `D:\Projects\PSOVA`.
     If `tsc` says `Cannot find module '@psova/domain'` on the mobile branch, re-point them.
@@ -68,7 +67,8 @@ Then check `https://psova.org.pk/en/<page>` and the `/ur/` version.
 
 `hostinger-build` also builds `apps/mobile` with `VITE_BASE=/app/` and ships it in `public/app/`, so the deploy publishes it at
 `https://psova.org.pk/app/index.html` (the path has a dot, so the locale proxy leaves it alone). The same app on phones
-calls `https://psova.org.pk/api/v1/*`. Contact email and the key-value tables use the Hostinger SMTP mailbox and MariaDB.
+calls `https://psova.org.pk/api/v1/*`. It is the only mobile app: the native Tauri Android/iOS app was removed on 2026-10-23.
+It is installable (manifest + `sw.js` service worker, scope `/app/`); bump `CACHE` in `apps/mobile/public/sw.js` only if you need to force-drop old cached files. Contact email and the key-value tables use the Hostinger SMTP mailbox and MariaDB.
 
 ## When dependencies change (Next upgrade etc.)
 

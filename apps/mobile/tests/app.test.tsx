@@ -34,12 +34,11 @@ describe('PSOVA mobile shell', () => {
     expect(await screen.findByRole('heading', { name: 'Welcome to PSOVA' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Skip' }));
     expect(await screen.findByRole('heading', { name: 'Before you begin' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Get started' })).toBeDisabled();
     await userEvent.click(screen.getByRole('checkbox'));
-    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Get started' }));
     expect(await screen.findByText('Every birthmark has a story — and a path to care.')).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('psova.settings')!)).toMatchObject({ onboarded: true, notifications: false });
+    expect(JSON.parse(localStorage.getItem('psova.settings')!)).toMatchObject({ onboarded: true });
   });
 
   it('opens bundled offline content and navigates to the condition library', async () => {

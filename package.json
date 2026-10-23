@@ -23,13 +23,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
-    "mobile:dev": "npm run tauri:dev -w @psova/mobile",
-    "mobile:build": "npm run build -w @psova/mobile",
-    "mobile:android:init": "npm run tauri --workspace @psova/mobile -- android init",
-    "mobile:android:dev": "npm run tauri --workspace @psova/mobile -- android dev",
-    "mobile:android:build": "npm run tauri --workspace @psova/mobile -- android build",
-    "mobile:ios:init": "npm run tauri --workspace @psova/mobile -- ios init",
-    "mobile:ios:build": "npm run tauri --workspace @psova/mobile -- ios build"
+    "mobile:dev": "npm run dev -w @psova/mobile",
+    "mobile:build": "npm run build -w @psova/mobile"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

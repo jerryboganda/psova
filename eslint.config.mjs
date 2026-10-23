@@ -47,8 +47,6 @@ export default defineConfig([
     'build/**',
     'coverage/**',
     'apps/mobile/dist/**',
-    'apps/mobile/src-tauri/gen/**',
-    'apps/mobile/src-tauri/target/**',
     'public/vendor/**',
   ]),
 ]);

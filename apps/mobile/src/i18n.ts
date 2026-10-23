@@ -32,8 +32,6 @@ const en = {
   },
   news: {
     title: 'News and events', body: 'Announcements, awareness activities, and family stories.',
-    notifications: 'Get PSOVA news alerts', enable: 'Enable notifications', enabled: 'Notifications enabled',
-    permissionDenied: 'Notification permission was not granted. You can change it in device settings.',
   },
   more: {
     title: 'More', settings: 'Settings', contact: 'Ask PSOVA', donate: 'Donate / get involved', about: 'About PSOVA',
@@ -43,7 +41,7 @@ const en = {
   },
   settings: {
     title: 'Settings', appearance: 'Appearance', system: 'Use device setting', light: 'Light', dark: 'Dark',
-    notifications: 'Notifications', storage: 'Offline storage', revision: 'Content revision', published: 'Snapshot date',
+    storage: 'Offline storage', revision: 'Content revision', published: 'Snapshot date',
     review: 'Content review status', refresh: 'Refresh saved information', deleteLocal: 'Delete local app data',
     deleteConfirm: 'Delete preferences, favorites, drafts, and cached updates from this device?', deleted: 'Local app data deleted.',
     intro: 'Introduction', replay: 'Show the welcome tour again',
@@ -58,8 +56,11 @@ const en = {
     safetyBody: 'This app gives general, educational information. It does not diagnose, prescribe treatment, or replace a consultation with a qualified clinician. Your preferences and saved centres stay on this device; no account is needed.',
     emergency: 'In an emergency, contact local emergency services or go to the nearest hospital.',
     agree: 'I understand this app does not replace medical advice.',
-    alertsTitle: 'Stay informed', alertsBody: 'Get alerts about PSOVA news, awareness camps, and events. You can change this at any time.',
-    notNow: 'Not now', skip: 'Skip', progress: 'Welcome tour progress',
+    start: 'Get started', skip: 'Skip', progress: 'Welcome tour progress',
+  },
+  install: {
+    title: 'Install the PSOVA app', body: 'Add it to your home screen — opens instantly and works offline.', install: 'Install',
+    ios: 'Tap Share, then “Add to Home Screen”.',
   },
   contact: {
     title: 'Contact or ask an expert', body: 'Messages are saved on this device if you are offline and sent when a connection returns.',
@@ -104,8 +105,6 @@ const ur: typeof en = {
   },
   news: {
     title: 'خبریں و تقریبات', body: 'اعلانات، آگاہی سرگرمیاں اور خاندانی کہانیاں۔',
-    notifications: 'پی ایس او وی اے خبروں کے الرٹس حاصل کریں', enable: 'نوٹیفکیشن فعال کریں', enabled: 'نوٹیفکیشن فعال ہیں',
-    permissionDenied: 'نوٹیفکیشن کی اجازت نہیں ملی۔ اسے ڈیوائس سیٹنگز میں بدلا جا سکتا ہے۔',
   },
   more: {
     title: 'مزید', settings: 'سیٹنگز', contact: 'پی ایس او وی اے سے پوچھیں', donate: 'عطیہ / ساتھ دیں', about: 'پی ایس او وی اے کا تعارف',
@@ -115,7 +114,7 @@ const ur: typeof en = {
   },
   settings: {
     title: 'سیٹنگز', appearance: 'ظاہری شکل', system: 'ڈیوائس سیٹنگ استعمال کریں', light: 'روشن', dark: 'گہرا',
-    notifications: 'نوٹیفکیشن', storage: 'آف لائن اسٹوریج', revision: 'مواد کا ورژن', published: 'اسنیپ شاٹ تاریخ',
+    storage: 'آف لائن اسٹوریج', revision: 'مواد کا ورژن', published: 'اسنیپ شاٹ تاریخ',
     review: 'مواد کی نظرثانی', refresh: 'محفوظ معلومات تازہ کریں', deleteLocal: 'مقامی ایپ ڈیٹا حذف کریں',
     deleteConfirm: 'اس ڈیوائس سے ترجیحات، محفوظ مراکز، مسودے اور کیش حذف کریں؟', deleted: 'مقامی ایپ ڈیٹا حذف ہو گیا۔',
     intro: 'تعارف', replay: 'خوش آمدید ٹور دوبارہ دکھائیں',
@@ -130,8 +129,11 @@ const ur: typeof en = {
     safetyBody: 'یہ ایپ عمومی اور تعلیمی معلومات دیتی ہے۔ یہ تشخیص نہیں کرتی، علاج تجویز نہیں کرتی، اور مستند معالج سے مشورے کا متبادل نہیں۔ آپ کی ترجیحات اور محفوظ مراکز اسی ڈیوائس پر رہتے ہیں؛ کسی اکاؤنٹ کی ضرورت نہیں۔',
     emergency: 'ہنگامی صورت میں مقامی ایمرجنسی خدمات سے رابطہ کریں یا قریبی ہسپتال جائیں۔',
     agree: 'میں سمجھتا/سمجھتی ہوں کہ یہ ایپ طبی مشورے کا متبادل نہیں۔',
-    alertsTitle: 'باخبر رہیں', alertsBody: 'پی ایس او وی اے کی خبروں، آگاہی کیمپس اور تقریبات کی اطلاع پائیں۔ آپ اسے کسی بھی وقت بدل سکتے ہیں۔',
-    notNow: 'ابھی نہیں', skip: 'چھوڑیں', progress: 'خوش آمدید ٹور کی پیش رفت',
+    start: 'شروع کریں', skip: 'چھوڑیں', progress: 'خوش آمدید ٹور کی پیش رفت',
+  },
+  install: {
+    title: 'پی ایس او وی اے ایپ انسٹال کریں', body: 'اسے ہوم اسکرین پر شامل کریں — فوراً کھلتی ہے اور آف لائن بھی چلتی ہے۔', install: 'انسٹال',
+    ios: 'شیئر پر ٹیپ کریں، پھر “Add to Home Screen” منتخب کریں۔',
   },
   contact: {
     title: 'رابطہ یا ماہر سے سوال', body: 'آف لائن ہونے پر پیغام ڈیوائس پر محفوظ رہتا ہے اور کنکشن آنے پر بھیجا جاتا ہے۔',

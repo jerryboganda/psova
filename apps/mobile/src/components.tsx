@@ -6,7 +6,7 @@ import { ArrowLeft, BadgeCheck, BookOpen, ChevronRight, CircleDashed, Home, Layo
 import { localizedValue } from '@psova/domain';
 import { SITE } from '@psova/content/site';
 import { useApp } from './app-context';
-import { lightHaptic } from './native';
+import { lightHaptic } from './platform';
 
 export const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 export const SPRING = { type: 'spring', bounce: 0.18, duration: 0.45 } as const;

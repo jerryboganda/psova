@@ -1,10 +1,10 @@
 import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
-import { HashRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './app-context';
 import { BottomTabs, EASE_OUT, LoadingScreen, LogoMark, StatusBanner } from './components';
-import { listenForDeepLinks } from './native';
 import { Onboarding } from './onboarding';
+import { InstallPrompt } from './install-prompt';
 import {
   AnatomyScreen, ConditionScreen, ContactScreen, DirectoryScreen, GlossaryScreen, HomeScreen, LibraryScreen,
   MoreScreen, NewsDetailScreen, NewsScreen, SettingsScreen, StaticScreen,
@@ -28,7 +28,7 @@ const routeVariants = {
 };
 
 function Shell() {
-  const { loading, snapshot, settings } = useApp(); const navigate = useNavigate();
+  const { loading, snapshot, settings } = useApp();
   const location = useLocation();
   const depth = location.pathname.split('/').filter(Boolean).length;
   const [prev, setPrev] = useState({ path: location.pathname, depth, dir: 0 });
@@ -37,7 +37,6 @@ function Shell() {
     setPrev({ path: location.pathname, depth, dir: Math.sign(depth - prev.depth) * rtl });
   }
   const dir = prev.dir;
-  useEffect(() => { let dispose: () => void = () => {}; void listenForDeepLinks((path) => navigate(path)).then((fn) => { dispose = fn; }); return () => dispose(); }, [navigate]);
   // Hold the splash briefly on cold start so the logo draw finishes instead of blinking past.
   const [splashHeld, setSplashHeld] = useState(true);
   useEffect(() => { const timer = window.setTimeout(() => setSplashHeld(false), 1300); return () => window.clearTimeout(timer); }, []);
@@ -56,7 +55,7 @@ function Main({ dir }: { dir: number }) {
         <Routes location={location}><Route path="/" element={<HomeScreen/>}/><Route path="/library" element={<LibraryScreen/>}/><Route path="/library/:slug" element={<ConditionScreen/>}/><Route path="/anatomy" element={<AnatomyScreen/>}/><Route path="/directory" element={<DirectoryScreen/>}/><Route path="/news" element={<NewsScreen/>}/><Route path="/news/:id" element={<NewsDetailScreen/>}/><Route path="/more" element={<MoreScreen/>}/><Route path="/contact" element={<ContactScreen/>}/><Route path="/settings" element={<SettingsScreen/>}/><Route path="/more/glossary" element={<GlossaryScreen/>}/>{(['about','patients','professionals','research','privacy','terms','donate'] as const).map((kind) => <Route key={kind} path={`/more/${kind}`} element={<StaticScreen kind={kind}/>}/>) }<Route path="*" element={<Navigate to="/" replace/>}/></Routes>
       </motion.div>
     </AnimatePresence>
-    <BottomTabs/></div>;
+    <InstallPrompt/><BottomTabs/></div>;
 }
 
 export default function App() { return <ErrorBoundary><MotionConfig reducedMotion="user"><AppProvider><HashRouter><Shell/></HashRouter></AppProvider></MotionConfig></ErrorBoundary>; }

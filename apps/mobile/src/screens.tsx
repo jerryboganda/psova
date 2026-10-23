@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, type CSSProperties, type PointerEvent as Rea
 import { Link, useParams } from 'react-router-dom';
 import { AnimatePresence, motion, useScroll, useSpring, useTransform } from 'motion/react';
 import {
-  ArrowRight, Bell, BookOpen, Check, ChevronDown, ChevronRight, CircleHelp, Clock3, Database,
+  ArrowRight, BookOpen, Check, ChevronDown, ChevronRight, CircleHelp, Clock3, Database,
   ExternalLink, FlaskConical, Globe2, Heart, HeartHandshake, Info, Languages, LockKeyhole,
   MapPin, MessageCircle, Navigation, Newspaper, Phone, RefreshCw, ScanSearch, Settings, Share2, ShieldCheck,
   SlidersHorizontal, Sparkles, Stethoscope, Trash2, TriangleAlert, UserRound, Users, X,
@@ -14,8 +14,7 @@ import { BrandLine, Button, Card, Chip, CountUp, EASE_OUT, EmptyState, ForwardRo
 import { FlowField } from './flow-field';
 import { MAP_HEIGHT, PAKISTAN_PATH, projectToMap } from './pakistan-map';
 import { enqueueContact, flushOutbox } from './outbox';
-import { lightHaptic, openExternal, shareContent } from './native';
-import { enableNewsAlerts } from './push';
+import { lightHaptic, openExternal, shareContent } from './platform';
 import { clearLocalData } from './storage';
 
 function localized(locale: 'en' | 'ur') { return (value: { en: string; ur: string }) => localizedValue(value, locale); }
@@ -314,11 +313,9 @@ export function DirectoryScreen() {
 }
 
 export function NewsScreen() {
-  const { snapshot, settings, messages, setNotifications } = useApp();
-  const l = localized(settings.locale); const [permissionMessage, setPermissionMessage] = useState('');
-  const enable = async () => { const granted = await enableNewsAlerts(settings.locale); await setNotifications(granted); setPermissionMessage(granted ? messages.news.enabled : messages.news.permissionDenied); };
+  const { snapshot, settings, messages } = useApp();
+  const l = localized(settings.locale);
   return <Page title={messages.news.title} lead={messages.news.body}>
-    <section className="notification-card"><span className={`row-icon tone-violet ${settings.notifications ? '' : 'bell-ring'}`}><Bell /></span><div><strong>{messages.news.notifications}</strong><AnimatePresence>{(permissionMessage || settings.notifications) && <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>{permissionMessage || messages.news.enabled}</motion.p>}</AnimatePresence></div><Button variant={settings.notifications ? 'secondary' : 'primary'} onClick={() => void enable()} disabled={settings.notifications} aria-label={settings.notifications ? messages.news.enabled : undefined}>{settings.notifications ? <Check /> : messages.news.enable}</Button></section>
     <div className="news-list">{snapshot?.news.map((item) => { const date = new Date(item.date); return <Link key={item.id} to={`/news/${item.id}`} className="news-row press" onClick={tap}>
       <time className="news-date" dateTime={item.date}><strong>{dateFormat(settings.locale, { day: '2-digit' }).format(date)}</strong><span>{dateFormat(settings.locale, { month: 'short' }).format(date)}</span><small>{date.getFullYear()}</small></time>
       <div className="news-body"><span className="news-tag">{l(item.tag)}</span><h2>{l(item.title)}</h2><p>{l(item.excerpt)}</p><ReviewBadge status={item.publicationStatus} /></div>

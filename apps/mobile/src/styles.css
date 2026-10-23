@@ -387,10 +387,6 @@ html[dir="rtl"] .select-field select { padding-inline: 14px 36px; background-pos
 .action-spacer { flex: 1; }
 
 /* ---------- News ---------- */
-.notification-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; background: linear-gradient(135deg, color-mix(in srgb, var(--violet) 12%, var(--surface)), var(--surface)); border: 1px solid color-mix(in srgb, var(--violet) 20%, var(--line)); }
-.notification-card strong { font-weight: 600; font-size: 15px; }
-.notification-card p { margin-top: 3px; color: var(--text-2); font-size: 12.5px; }
-.notification-card .button { min-height: 40px; font-size: 13.5px; padding: 0 14px; }
 .news-list { display: flex; flex-direction: column; }
 .news-row { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 16px; padding: 18px 0; border-top: 1px solid var(--line); }
 .news-row:first-child { border-top: 0; padding-top: 4px; }
@@ -568,8 +564,6 @@ button, .button, .chip, .bottom-tabs a, .forward-row, .condition-row, .rail-tile
 .sheet-footer { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding-top: 14px; margin-top: 6px; border-top: 1px solid var(--line); }
 
 /* ---------- News / glossary / forms ---------- */
-.bell-ring svg { transform-origin: 50% 10%; animation: bell 1.1s var(--ease-out) .9s 2; }
-.notification-card p { overflow: hidden; }
 .glossary-item + .glossary-item { border-top: 1px solid var(--line); }
 .glossary-term { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; border: 0; background: transparent; text-align: start; font-weight: 600; font-size: 15.5px; color: var(--text); }
 .glossary-term .row-chevron { transition: transform .3s var(--ease-out); }
@@ -599,7 +593,6 @@ button, .button, .chip, .bottom-tabs a, .forward-row, .condition-row, .rail-tile
 @keyframes heartbeat { 0%, 100% { transform: scale(1); } 9% { transform: scale(1.45); } 20% { transform: scale(1); } 30% { transform: scale(1.25); } 42% { transform: scale(1); } }
 @keyframes focus-flash { 0% { box-shadow: 0 0 0 2px var(--cyan), 0 0 40px -6px color-mix(in srgb, var(--cyan) 60%, transparent); } 100% { box-shadow: 0 0 0 0 transparent, var(--highlight); } }
 @keyframes burst { from { transform: scale(.5); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
-@keyframes bell { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-5deg); } 75% { transform: rotate(2deg); } }
 @keyframes fade-in { to { opacity: 1; } }
 
 /* ---------- Accessibility preferences (apple-design §14) ---------- */
@@ -630,3 +623,14 @@ button, .button, .chip, .bottom-tabs a, .forward-row, .condition-row, .rail-tile
 .onboard-check { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-weight: 550; line-height: 1.45; cursor: pointer; }
 .onboard-check input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--cyan); }
 .onboarding-actions { position: relative; display: grid; gap: 10px; max-width: 520px; width: 100%; margin-inline: auto; }
+
+/* ---------- Install prompt (web only) ---------- */
+.install-prompt { position: fixed; z-index: 45; inset-inline: var(--gutter); bottom: calc(var(--dock-space) + 10px); max-width: 520px; margin-inline: auto; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 20px; background: var(--glass); box-shadow: inset 0 0 0 1px var(--line-strong), var(--dock-shadow); -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%); }
+.install-prompt .logo-mark { width: 40px; height: 40px; }
+.install-prompt .logo-lockup { flex: none; }
+.install-copy { flex: 1; min-width: 0; }
+.install-prompt strong { display: block; font-size: 14.5px; }
+.install-prompt p { margin: 2px 0 0; color: var(--text-2); font-size: 13px; line-height: 1.4; }
+.install-prompt .button { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.install-prompt .icon-button { width: 34px; height: 34px; flex: none; }
+.inline-icon { width: 14px; height: 14px; vertical-align: -2px; }
