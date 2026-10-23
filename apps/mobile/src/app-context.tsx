@@ -17,6 +17,8 @@ interface AppState {
   setLocale(locale: Locale): Promise<void>;
   setTheme(theme: Settings['theme']): Promise<void>;
   setNotifications(enabled: boolean): Promise<void>;
+  completeOnboarding(notifications: boolean): Promise<void>;
+  replayOnboarding(): Promise<void>;
   toggleFavorite(id: string): Promise<void>;
   refresh(): Promise<void>;
 }
@@ -78,6 +80,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLocale: (locale) => updateSettings({ locale }),
     setTheme: (theme) => updateSettings({ theme }),
     setNotifications: (notifications) => updateSettings({ notifications }),
+    completeOnboarding: (notifications) => updateSettings({ notifications, onboarded: true }),
+    replayOnboarding: () => updateSettings({ onboarded: false }),
     toggleFavorite: async (id) => {
       const next = new Set(favorites);
       const favorite = !next.has(id);

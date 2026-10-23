@@ -10,8 +10,8 @@ async function database() {
   return Database.load('sqlite:psova.db');
 }
 
-export type Settings = { locale: 'en' | 'ur'; theme: 'system' | 'light' | 'dark'; notifications: boolean };
-export const defaultSettings: Settings = { locale: 'en', theme: 'system', notifications: false };
+export type Settings = { locale: 'en' | 'ur'; theme: 'system' | 'light' | 'dark'; notifications: boolean; onboarded: boolean };
+export const defaultSettings: Settings = { locale: 'en', theme: 'system', notifications: false, onboarded: false };
 
 export async function loadSettings(): Promise<Settings> {
   const previewLocale = new URLSearchParams(window.location.search).get('locale');

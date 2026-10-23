@@ -8,7 +8,7 @@ import snapshot from '../public/content-snapshot.json';
 
 beforeEach(() => {
   window.location.hash = '#/';
-  const memory = new Map<string, string>();
+  const memory = new Map<string, string>([['psova.settings', JSON.stringify({ onboarded: true })]]);
   vi.stubGlobal('localStorage', {
     get length() { return memory.size; },
     clear: () => memory.clear(),
@@ -28,6 +28,20 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe('PSOVA mobile shell', () => {
+  it('walks a first-time user through onboarding and requires the medical disclaimer', async () => {
+    localStorage.removeItem('psova.settings');
+    render(<App/>);
+    expect(await screen.findByRole('heading', { name: 'Welcome to PSOVA' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    expect(await screen.findByRole('heading', { name: 'Before you begin' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+    expect(await screen.findByText('Every birthmark has a story — and a path to care.')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('psova.settings')!)).toMatchObject({ onboarded: true, notifications: false });
+  });
+
   it('opens bundled offline content and navigates to the condition library', async () => {
     render(<App/>);
     expect(await screen.findByText('Every birthmark has a story — and a path to care.')).toBeInTheDocument();

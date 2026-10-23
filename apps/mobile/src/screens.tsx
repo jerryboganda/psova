@@ -5,7 +5,7 @@ import {
   ArrowRight, Bell, BookOpen, Check, ChevronDown, ChevronRight, CircleHelp, Clock3, Database,
   ExternalLink, FlaskConical, Globe2, Heart, HeartHandshake, Info, Languages, LockKeyhole,
   MapPin, MessageCircle, Navigation, Newspaper, Phone, RefreshCw, ScanSearch, Settings, Share2, ShieldCheck,
-  SlidersHorizontal, Stethoscope, Trash2, TriangleAlert, UserRound, Users, X,
+  SlidersHorizontal, Sparkles, Stethoscope, Trash2, TriangleAlert, UserRound, Users, X,
 } from 'lucide-react';
 import { contactPayloadSchema, directionsHref, localizedValue, matchesSearch, telHref, whatsappHref, type ContactPayload } from '@psova/domain';
 import { SITE } from '@psova/content/site';
@@ -14,8 +14,8 @@ import { BrandLine, Button, Card, Chip, CountUp, EASE_OUT, EmptyState, ForwardRo
 import { FlowField } from './flow-field';
 import { MAP_HEIGHT, PAKISTAN_PATH, projectToMap } from './pakistan-map';
 import { enqueueContact, flushOutbox } from './outbox';
-import { lightHaptic, openExternal, requestNewsNotifications, shareContent } from './native';
-import { registerRemotePush, TauriPushTokenProvider } from './push';
+import { lightHaptic, openExternal, shareContent } from './native';
+import { enableNewsAlerts } from './push';
 import { clearLocalData } from './storage';
 
 function localized(locale: 'en' | 'ur') { return (value: { en: string; ur: string }) => localizedValue(value, locale); }
@@ -316,7 +316,7 @@ export function DirectoryScreen() {
 export function NewsScreen() {
   const { snapshot, settings, messages, setNotifications } = useApp();
   const l = localized(settings.locale); const [permissionMessage, setPermissionMessage] = useState('');
-  const enable = async () => { const granted = await requestNewsNotifications().catch(() => false); if (!granted) { await setNotifications(false); setPermissionMessage(messages.news.permissionDenied); return; } try { await registerRemotePush(new TauriPushTokenProvider(), settings.locale); await setNotifications(true); setPermissionMessage(messages.news.enabled); } catch { await setNotifications(false); setPermissionMessage(messages.news.permissionDenied); } };
+  const enable = async () => { const granted = await enableNewsAlerts(settings.locale); await setNotifications(granted); setPermissionMessage(granted ? messages.news.enabled : messages.news.permissionDenied); };
   return <Page title={messages.news.title} lead={messages.news.body}>
     <section className="notification-card"><span className={`row-icon tone-violet ${settings.notifications ? '' : 'bell-ring'}`}><Bell /></span><div><strong>{messages.news.notifications}</strong><AnimatePresence>{(permissionMessage || settings.notifications) && <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>{permissionMessage || messages.news.enabled}</motion.p>}</AnimatePresence></div><Button variant={settings.notifications ? 'secondary' : 'primary'} onClick={() => void enable()} disabled={settings.notifications} aria-label={settings.notifications ? messages.news.enabled : undefined}>{settings.notifications ? <Check /> : messages.news.enable}</Button></section>
     <div className="news-list">{snapshot?.news.map((item) => { const date = new Date(item.date); return <Link key={item.id} to={`/news/${item.id}`} className="news-row press" onClick={tap}>
@@ -382,12 +382,13 @@ export function ContactScreen() {
 }
 
 export function SettingsScreen() {
-  const { snapshot, settings, messages, setLocale, setTheme, refresh, refreshing } = useApp(); const [notice, setNotice] = useState('');
+  const { snapshot, settings, messages, setLocale, setTheme, refresh, refreshing, replayOnboarding } = useApp(); const [notice, setNotice] = useState('');
   const remove = async () => { if (!window.confirm(messages.settings.deleteConfirm)) return; await clearLocalData(); setNotice(messages.settings.deleted); window.setTimeout(() => window.location.reload(), 700); };
   return <Page title={messages.settings.title} back>
     <section className="settings-section"><h2><Languages />{messages.common.language}</h2><Segmented id="locale" value={settings.locale} onChange={(value) => void setLocale(value)} options={[{ value: 'en', label: messages.common.english }, { value: 'ur', label: messages.common.urdu }]} /></section>
     <section className="settings-section"><h2><Globe2 />{messages.settings.appearance}</h2><Segmented id="theme" value={settings.theme} onChange={(value) => void setTheme(value)} options={(['system', 'light', 'dark'] as const).map((theme) => ({ value: theme, label: messages.settings[theme] }))} /></section>
     <section className="settings-section"><h2><Database />{messages.settings.storage}</h2><dl><div><dt>{messages.settings.revision}</dt><dd>{snapshot?.revision ?? '—'}</dd></div><div><dt>{messages.settings.published}</dt><dd>{snapshot ? new Date(snapshot.publishedAt).toLocaleDateString() : '—'}</dd></div><div><dt>{messages.settings.review}</dt><dd>{snapshot ? Object.values(snapshot.review).join(' · ') : '—'}</dd></div></dl><Button variant="secondary" className="block" onClick={() => void refresh()} disabled={refreshing}><RefreshCw className={refreshing ? 'spin' : ''}/>{messages.settings.refresh}</Button></section>
+    <section className="settings-section"><h2><Sparkles />{messages.settings.intro}</h2><Button variant="secondary" className="block" onClick={() => void replayOnboarding()}>{messages.settings.replay}</Button></section>
     <section className="settings-section danger-zone"><h2><Trash2 />{messages.settings.deleteLocal}</h2><Button variant="danger" className="block" onClick={() => void remove()}>{messages.settings.deleteLocal}</Button>{notice && <p role="status">{notice}</p>}</section>
   </Page>;
 }

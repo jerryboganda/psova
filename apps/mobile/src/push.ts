@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { pushRegistrationSchema, type Locale } from '@psova/domain';
-import { isNative } from './native';
+import { isNative, requestNewsNotifications } from './native';
 
 const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, '') ?? 'https://psova.org.pk';
 
@@ -24,4 +24,10 @@ export async function registerRemotePush(provider: NativePushTokenProvider, loca
 
 export async function unregisterRemotePush(token: string): Promise<void> {
   await fetch(`${API_BASE}/api/v1/push/register`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
+}
+
+/** Asks for OS permission, then registers with PSOVA; true only when both succeed. */
+export async function enableNewsAlerts(locale: Locale): Promise<boolean> {
+  if (!(await requestNewsNotifications().catch(() => false))) return false;
+  try { await registerRemotePush(new TauriPushTokenProvider(), locale); return true; } catch { return false; }
 }
