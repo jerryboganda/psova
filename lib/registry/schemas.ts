@@ -26,6 +26,7 @@ import {
   CENTER_STAFF_ROLES,
   APPOINTMENT_KINDS,
   RESPONSE_SCORES,
+  DOCUMENT_KINDS,
 } from './constants';
 import { isValidCnic, isValidPkMobile, isPlausibleDob, deriveDobParts } from './normalize';
 
@@ -488,3 +489,10 @@ export const encounterCreateSchema = z
     }
   });
 export type EncounterCreateInput = z.infer<typeof encounterCreateSchema>;
+
+/** The non-file fields of an upload (multipart form). */
+export const documentUploadSchema = z.object({
+  kind: z.enum(DOCUMENT_KINDS),
+  consentForTeaching: z.boolean(),
+});
+export type DocumentUploadInput = z.infer<typeof documentUploadSchema>;

@@ -90,7 +90,9 @@ docs/registry/               ★ NVAR specification documents — READ BEFORE RE
 - **Never commit** `.env*`, keys, or dumps. `.env.example` documents required vars.
 - Public statistics obey **k-anonymity (suppress counts < 5)**.
 - Patients do **not** get accounts — enrollment returns a tracking code.
-- No file/photo uploads in v1.
+- No file/photo uploads in the NVAR patient/clinician flows. The **centres module** (`docs/centres/PLAN.md`) is the one
+  exception: staff upload clinical photos/reports, stored AES-256-GCM encrypted under `UPLOAD_DIR` (outside the deploy
+  folder, never `public/`) via `lib/registry/storage.ts`; every open is audit-logged.
 - Keep `connection_limit=5` in `DATABASE_URL` (Hostinger shared MySQL cap).
 
 ## NVAR documentation index (read in this order for registry work)
@@ -105,6 +107,7 @@ docs/registry/               ★ NVAR specification documents — READ BEFORE RE
 | `docs/registry/UI-SPEC.md` | Every page/component, message keys, design mandate, RTL |
 | `docs/registry/TASKS.md` | ★ Phase-by-phase implementation checklist (P1→P8) |
 | `docs/registry/DEPLOYMENT-HOSTINGER.md` | Exact Hostinger hPanel deployment runbook |
+| `docs/centres/PLAN.md` | ★ Centres network (clinic/hospital accounts, patients, journey, uploads, sharing) — phase plan C1→C8 |
 | `docs/DEPLOY-HOSTINGER-MANUAL.md` | ★ HOW PRODUCTION ACTUALLY DEPLOYS (push to main does NOT deploy; CI build + SSH upload via `scripts/hostinger-deploy.sh`) |
 
 Work phase-by-phase per `TASKS.md`; commit at the end of each phase with a

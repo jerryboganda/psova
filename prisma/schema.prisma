@@ -224,6 +224,7 @@ model RegistryPatient {
   diagnoses    RegistryDiagnosis[]
   encounters   Encounter[]
   appointments Appointment[]
+  documents    PatientDocument[]
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
 
@@ -408,6 +409,7 @@ model Center {
   patients     RegistryPatient[]
   appointments Appointment[]
   encounters   Encounter[]
+  documents    PatientDocument[]
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 
@@ -520,4 +522,35 @@ model Encounter {
   @@index([patientId, date])
   @@index([centerId])
   @@map("encounter")
+}
+
+enum DocumentKind {
+  PHOTO
+  REPORT
+  IMAGING
+  OTHER
+}
+
+/// An uploaded clinical photo/report. The bytes live encrypted on disk (lib/registry/storage.ts);
+/// only metadata is here. fileName can contain a patient's name, so it is encrypted too.
+model PatientDocument {
+  id        String          @id @default(cuid())
+  patientId String
+  patient   RegistryPatient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  centerId  String
+  center    Center          @relation(fields: [centerId], references: [id], onDelete: Restrict)
+
+  kind               DocumentKind
+  fileName           String       @db.Text // 🔐
+  mime               String       @db.VarChar(40) // sniffed from the bytes, never client-declared
+  size               Int // plaintext bytes
+  storageKey         String       @unique @db.VarChar(64)
+  consentForTeaching Boolean      @default(false) // may be attached to de-identified MDT posts
+  uploadedById       String?
+
+  createdAt DateTime @default(now())
+
+  @@index([patientId])
+  @@index([centerId])
+  @@map("patient_document")
 }

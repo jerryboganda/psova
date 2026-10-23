@@ -1,14 +1,18 @@
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
-import { ArrowLeft, CalendarClock, ClipboardPlus, Clock, Syringe } from 'lucide-react';
+import { ArrowLeft, CalendarClock, ClipboardPlus, Clock, FileImage, FileText, Syringe } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Link } from '@/i18n/navigation';
 import { RecordView } from '@/components/registry/RecordView';
 import { AppointmentForm } from '@/components/centres/AppointmentForm';
+import { DocumentDeleteButton } from '@/components/centres/DocumentDeleteButton';
+import { DocumentUpload } from '@/components/centres/DocumentUpload';
 import { WhatsAppButtons } from '@/components/centres/WhatsAppButtons';
 import { getJourney } from '@/lib/registry/centre-journey';
+import { listDocuments } from '@/lib/registry/centre-documents';
+import { uploadsConfigured } from '@/lib/registry/storage';
 import { getCentrePatient } from '@/lib/registry/centre-patients';
 import { centrePageContext } from '@/lib/registry/centre-page';
 import { CENTRE_TIME_ZONE } from '@/lib/registry/constants';
@@ -30,11 +34,16 @@ export default async function CentrePatientPage({
   const record = await getCentrePatient(center, id, { actorId: user.id, role: member.role, ip: clientIpFromHeaders(h) });
   if (!record) notFound();
   const journey = await getJourney(center, id, member.role);
+  // Photos and reports are clinical: reception does not see them.
+  const clinical = member.role !== 'RECEPTION';
+  const documents = clinical ? await listDocuments(center, id) : [];
+  const canDeleteDocs = member.role === 'OWNER' || member.role === 'DOCTOR';
 
   const t = await getTranslations('Centres.patients');
   const tv = await getTranslations('Centres.visit');
   const ta = await getTranslations('Centres.appointments');
   const tc = await getTranslations('RegistryCommon');
+  const td = await getTranslations('Centres.documents');
   const format = await getFormatter();
   const canWrite = membershipAllowsWrites(state);
   const canVisit = canWrite && member.role !== 'RECEPTION';
@@ -65,6 +74,7 @@ export default async function CentrePatientPage({
   ].sort((x, y) => Date.parse(y.at) - Date.parse(x.at));
 
   const dot = 'absolute -start-[1.3rem] top-1.5 size-2 rounded-full';
+  const kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
   return (
     <Section>
@@ -106,6 +116,48 @@ export default async function CentrePatientPage({
                   {ta('bookTitle')}
                 </h2>
                 <AppointmentForm patientId={id} />
+              </GlassCard>
+            )}
+
+            {clinical && (
+              <GlassCard interactive={false}>
+                <h2 className="mb-1 flex items-center gap-2 text-lg font-bold">
+                  <FileImage className="size-5 text-[var(--color-cyan)]" />
+                  {td('title')}
+                </h2>
+                <p className="mb-4 text-xs text-[var(--color-faint)]">{td('lede')}</p>
+                {documents.length === 0 ? (
+                  <p className="mb-4 text-sm text-[var(--color-muted)]">{td('empty')}</p>
+                ) : (
+                  <ul className="mb-5 flex flex-col gap-3">
+                    {documents.map((d) => (
+                      <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <FileText className="size-5 shrink-0 text-[var(--color-cyan)]" />
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{d.fileName}</p>
+                            <p className="text-xs text-[var(--color-faint)]">
+                              {td(`kinds.${d.kind}`)} · {kb(d.size)} · {when(d.createdAt, false)}
+                              {d.consentForTeaching && <> · {td('teachingBadge')}</>}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`/api/centre/documents/${d.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold hover:bg-white/10"
+                          >
+                            {d.mime.startsWith('image/') ? td('open') : td('download')}
+                          </a>
+                          {canDeleteDocs && canWrite && <DocumentDeleteButton id={d.id} />}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {canWrite && (uploadsConfigured() ? <DocumentUpload patientId={id} /> : <p className="text-sm text-amber-200">{td('notConfigured')}</p>)}
               </GlassCard>
             )}
 

@@ -133,3 +133,39 @@ export function blindIndex(value: string, kind: BlindIndexKind): string {
         : normalizePmc(value);
   return createHmac('sha256', idx).update(`${kind}:${normalized}`).digest('hex');
 }
+
+/* -------------------------------------------------------------------------- */
+/*  File encryption (centre uploads, docs/centres/PLAN.md)                    */
+/* -------------------------------------------------------------------------- */
+
+// Layout: "PSV1" | iv (12) | auth tag (16) | ciphertext. `aad` (the file's storage key) is
+// authenticated, so a ciphertext file moved to another record fails to decrypt.
+const FILE_MAGIC = Buffer.from('PSV1');
+const TAG_BYTES = 16;
+
+export function encryptBytes(plain: Buffer, aad: string): Buffer {
+  const { enc } = keys();
+  const iv = randomBytes(IV_BYTES);
+  const cipher = createCipheriv(ALGO, enc, iv);
+  cipher.setAAD(Buffer.from(aad));
+  const ct = Buffer.concat([cipher.update(plain), cipher.final()]);
+  return Buffer.concat([FILE_MAGIC, iv, cipher.getAuthTag(), ct]);
+}
+
+export function decryptBytes(blob: Buffer, aad: string): Buffer {
+  const { enc } = keys();
+  const head = FILE_MAGIC.length + IV_BYTES + TAG_BYTES;
+  if (blob.length < head || !blob.subarray(0, FILE_MAGIC.length).equals(FILE_MAGIC)) {
+    throw new RegistryCryptoError('Unrecognized file format.');
+  }
+  try {
+    const iv = blob.subarray(FILE_MAGIC.length, FILE_MAGIC.length + IV_BYTES);
+    const tag = blob.subarray(FILE_MAGIC.length + IV_BYTES, head);
+    const decipher = createDecipheriv(ALGO, enc, iv);
+    decipher.setAAD(Buffer.from(aad));
+    decipher.setAuthTag(tag);
+    return Buffer.concat([decipher.update(blob.subarray(head)), decipher.final()]);
+  } catch {
+    throw new RegistryCryptoError('File decryption failed (tampered file or wrong key).');
+  }
+}

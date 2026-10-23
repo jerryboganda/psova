@@ -1466,6 +1466,35 @@
       "save": "Save visit",
       "error": "The visit could not be saved. Please check the details.",
       "invalid": "Please check this field."
+    },
+    "documents": {
+      "title": "Photos and reports",
+      "lede": "Stored encrypted. Every time a file is opened it is recorded in the audit log.",
+      "empty": "No files yet.",
+      "kinds": {
+        "PHOTO": "Clinical photo",
+        "REPORT": "Report",
+        "IMAGING": "Imaging",
+        "OTHER": "Other"
+      },
+      "file": "File",
+      "fileHint": "JPG, PNG, WebP or PDF, up to 10 MB.",
+      "kind": "Type",
+      "teaching": "The patient (or guardian) agreed that this file may be used, with identifying details removed, for teaching and case discussion.",
+      "teachingBadge": "Teaching consent",
+      "upload": "Upload",
+      "uploading": "Uploading…",
+      "uploaded": "Uploaded.",
+      "tooLarge": "That file is larger than 10 MB.",
+      "quota": "Your centre's storage is full. Contact PSOVA to increase it.",
+      "badType": "Only JPG, PNG, WebP and PDF files are accepted.",
+      "unavailable": "File uploads are not available right now.",
+      "notConfigured": "File uploads are switched off on this server.",
+      "error": "That could not be completed. Please try again.",
+      "open": "Open",
+      "download": "Download",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this file permanently? This cannot be undone."
     }
   }
 }

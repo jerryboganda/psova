@@ -22,6 +22,8 @@ export type ApiErrorCode =
   | 'conflict'
   | 'invalid-transition'
   | 'membership-expired'
+  | 'quota-exceeded'
+  | 'unavailable'
   | 'payload-too-large'
   | 'rate-limited'
   | 'server-error';

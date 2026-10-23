@@ -108,6 +108,25 @@ repo (Websites → Add website → Node.js → Import Git repository, branch `ma
 from the old app, test on its temporary `*.hostingersite.com` URL, then move the domain. That also gives real
 auto-deploy on push. Not done yet because it moves a live domain; do it deliberately, not mid-event.
 
+## Centre uploads (photos / reports)
+
+Centre staff can attach clinical photos and PDF reports to patients. The files are stored **encrypted** (AES-256-GCM, same key as
+the registry) on the server disk, not in the database. One-time setup on the Hostinger server:
+
+```bash
+ssh -i ~/.ssh/hostinger_dmb_ed25519 -p 65002 u776151780@145.79.25.8 'mkdir -p ~/psova-uploads && chmod 700 ~/psova-uploads'
+```
+
+Then set `UPLOAD_DIR=/home/u776151780/psova-uploads` (absolute path; `UPLOAD_QUOTA_MB` optional, default 2048 per centre) in the
+Node.js app environment in hPanel and restart. Rules that matter:
+
+- **Outside the deploy folder, never under `public/`.** A deploy replaces `.next` and `public`, and `public/` is served to the world.
+  `hostinger-deploy.sh` and its rollback do not touch `~/psova-uploads`.
+- **Back it up together with the database**, and keep an offline copy of `REGISTRY_ENCRYPTION_KEY`: without that key the files
+  (and all encrypted patient fields) cannot be read.
+- Leave `UPLOAD_DIR` empty to switch uploads off; the patient page then says so.
+- Disk use is capped per centre by `UPLOAD_QUOTA_MB`; check `du -sh ~/psova-uploads/*` occasionally against the hosting plan.
+
 ## Health checklist after any deploy
 
 ```bash
