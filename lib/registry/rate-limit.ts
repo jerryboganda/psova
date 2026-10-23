@@ -28,6 +28,7 @@ export const RATE_LIMITS = {
   status: { max: 10, windowMs: 60 * 60 * 1000 },
   register: { max: 10, windowMs: 60 * 60 * 1000 },
   centerApply: { max: 5, windowMs: 60 * 60 * 1000 },
+  centerStaff: { max: 30, windowMs: 60 * 60 * 1000 },
   stats: { max: 60, windowMs: 60 * 60 * 1000 },
 } as const;
 

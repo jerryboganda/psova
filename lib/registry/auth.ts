@@ -6,6 +6,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { nextCookies } from 'better-auth/next-js';
 import { prisma } from './db';
+import { sendPasswordSetupEmail } from './mailer';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
@@ -18,6 +19,13 @@ export const auth = betterAuth({
     enabled: true,
     // Registry has no email-verification flow in v1; admin verifies people, not inboxes.
     requireEmailVerification: false,
+    // Used for staff invites (set your password) and password resets. 7 days so an invite
+    // survives a weekend; revoke other sessions once a password is (re)set.
+    resetPasswordTokenExpiresIn: 7 * 24 * 60 * 60,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, url }) => {
+      await sendPasswordSetupEmail(user.email, user.name, url);
+    },
   },
   user: {
     additionalFields: {

@@ -181,3 +181,54 @@ export async function sendCenterPaymentResult(
       ].join('\n');
   await send(to, subject, text);
 }
+
+/** Set/reset password link (staff invite or password reset). Bilingual plain text. */
+export async function sendPasswordSetupEmail(to: string, name: string, url: string): Promise<void> {
+  const subject = 'PSOVA — Set your password / اپنا پاس ورڈ مقرر کریں';
+  const text = [
+    `Dear ${name},`,
+    '',
+    'Use the link below to set your PSOVA account password. If you were invited to a',
+    'centre, this is how you sign in for the first time. The link expires in 7 days.',
+    '',
+    url,
+    '',
+    'If you did not expect this email, you can ignore it.',
+    '',
+    '— — —',
+    '',
+    `محترم ${name}،`,
+    '',
+    'اپنے PSOVA اکاؤنٹ کا پاس ورڈ مقرر کرنے کے لیے نیچے دیا گیا لنک استعمال کریں۔ اگر آپ',
+    'کو کسی مرکز میں مدعو کیا گیا ہے تو پہلی بار سائن اِن کرنے کا یہی طریقہ ہے۔ لنک 7 دن',
+    'میں ختم ہو جاتا ہے۔',
+    '',
+    url,
+    '',
+    'اگر آپ کو اس ای میل کی توقع نہیں تھی تو اسے نظر انداز کر دیں۔',
+    '',
+    '— PSOVA',
+  ].join('\n');
+  await send(to, subject, text);
+}
+
+/** Membership renewal reminder to the centre owner. Bilingual plain text. */
+export async function sendRenewalReminder(to: string, centerName: string, expiresOn: string): Promise<void> {
+  const subject = 'PSOVA Centres Network — Membership renewal / رکنیت کی تجدید';
+  const text = [
+    `The PSOVA membership for "${centerName}" runs until ${expiresOn}.`,
+    'Please renew (PKR 12,000 per year) from the Membership page of your dashboard to',
+    'stay listed and keep full access. After a 30-day grace period the centre is hidden',
+    'from the directory and the dashboard becomes read-only. Your data is never deleted.',
+    '',
+    '— — —',
+    '',
+    `"${centerName}" کی PSOVA رکنیت ${expiresOn} تک ہے۔`,
+    'فہرست میں رہنے اور مکمل رسائی برقرار رکھنے کے لیے ڈیش بورڈ کے رکنیت صفحے سے تجدید',
+    '(12,000 روپے سالانہ) کریں۔ 30 دن کی رعایتی مدت کے بعد مرکز ڈائریکٹری سے ہٹ جاتا ہے',
+    'اور ڈیش بورڈ صرف دیکھنے تک محدود ہو جاتا ہے۔ آپ کا ڈیٹا کبھی حذف نہیں کیا جاتا۔',
+    '',
+    '— PSOVA',
+  ].join('\n');
+  await send(to, subject, text);
+}

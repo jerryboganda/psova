@@ -1,10 +1,13 @@
 import { headers } from 'next/headers';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Hourglass, ShieldAlert } from 'lucide-react';
-import { redirect } from '@/i18n/navigation';
+import { Link, redirect } from '@/i18n/navigation';
 import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { LogoutButton } from '@/components/registry/LogoutButton';
+import { CentreNav } from '@/components/centres/CentreNav';
+import { maybeSendRenewalReminder } from '@/lib/registry/centers';
+import { membershipState } from '@/lib/registry/membership';
 import { getSession } from '@/lib/registry/guards';
 import { prisma } from '@/lib/registry/db';
 import { SITE } from '@/data/site';
@@ -31,14 +34,15 @@ export default async function CentreLayout({
 
   const member = await prisma.centerMember.findUnique({
     where: { userId: session.user.id },
-    select: { active: true, center: { select: { status: true, statusReason: true } } },
+    select: { active: true, role: true, center: true },
   });
   if (!member || !member.active) {
     redirect({ href: '/registry/login', locale });
     return null;
   }
 
-  const { status, statusReason } = member.center;
+  const { center } = member;
+  const { status, statusReason } = center;
   if (status !== 'APPROVED') {
     const Icon = status === 'APPLIED' ? Hourglass : ShieldAlert;
     return (
@@ -66,14 +70,25 @@ export default async function CentreLayout({
     );
   }
 
+  const state = membershipState(center.membershipExpiresAt);
+  const isOwner = member.role === 'OWNER';
+  if (isOwner) void maybeSendRenewalReminder(center, session.user.email, state);
+
   return (
     <div className="pt-24 md:pt-28">
-      <div className="border-b border-white/10 bg-white/[0.02]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-3 sm:px-6 lg:px-8">
-          <span className="text-sm font-semibold">{t('title')}</span>
-          <LogoutButton />
+      <CentreNav isOwner={isOwner} centreName={center.nameEn} />
+      {state !== 'ACTIVE' && (
+        <div className="border-b border-amber-300/20 bg-amber-300/5 print:hidden">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm text-amber-100/90 sm:px-6 lg:px-8">
+            <span>{t(`membership.state.${state}`)}</span>
+            {isOwner && (
+              <Link href="/centre/membership" className="font-semibold underline">
+                {t('membership.renew')}
+              </Link>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       {children}
     </div>
   );

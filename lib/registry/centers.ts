@@ -2,7 +2,8 @@
 // admin approval and manual-payment verification. Centre membership state is
 // computed from `membershipExpiresAt` (lib/registry/membership.ts).
 
-import type { Prisma } from '@prisma/client';
+import { randomBytes } from 'node:crypto';
+import type { Center, Prisma } from '@prisma/client';
 import { auth } from './auth';
 import { prisma } from './db';
 import { blindIndex, decryptField, encryptField } from './crypto';
@@ -14,6 +15,7 @@ import {
   sendCenterApplicationReceived,
   sendCenterApproved,
   sendCenterPaymentResult,
+  sendRenewalReminder,
 } from './mailer';
 import type {
   AdminCenterPaymentsQuery,
@@ -22,6 +24,9 @@ import type {
   CenterApplyInput,
   CenterPaymentActionInput,
   CenterPaymentProofInput,
+  CenterProfileInput,
+  StaffInviteInput,
+  StaffUpdateInput,
 } from './schemas';
 
 const PAGE_SIZE = 20;
@@ -138,6 +143,10 @@ export async function submitCenterPayment(
   proof: CenterPaymentProofInput,
   ctx: { actorId: string; ip: string | null },
 ): Promise<void> {
+  // Cap unreviewed submissions so a centre cannot flood the verification queue.
+  if ((await prisma.centerPayment.count({ where: { centerId, status: 'PENDING' } })) >= 3) {
+    throw new RegistryApiError(409, 'conflict');
+  }
   const payment = await prisma.centerPayment.create({
     data: { centerId, ...paymentCreateData(proof) },
   });
@@ -417,4 +426,190 @@ export async function setCenterPaymentAction(
     ip: ctx.ip,
   });
   if (ownerEmail) void sendCenterPaymentResult(ownerEmail, payment.center.nameEn, false);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Centre self-service: staff, profile, renewal reminder                     */
+/* -------------------------------------------------------------------------- */
+
+export type StaffRow = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  active: boolean;
+  isOwner: boolean;
+  createdAt: string;
+};
+
+export async function listStaff(centerId: string): Promise<StaffRow[]> {
+  const members = await prisma.centerMember.findMany({
+    where: { centerId },
+    orderBy: { createdAt: 'asc' },
+    include: { user: { select: { name: true, email: true } } },
+  });
+  return members.map((m) => ({
+    id: m.id,
+    name: m.user.name,
+    email: m.user.email,
+    role: m.role,
+    active: m.active,
+    isOwner: m.role === 'OWNER',
+    createdAt: m.createdAt.toISOString(),
+  }));
+}
+
+const siteUrl = () => (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+
+/** Email a "set your password" link (Better Auth's reset flow; also serves as the staff invite). */
+async function sendSetupLink(email: string): Promise<void> {
+  try {
+    await auth.api.requestPasswordReset({
+      body: { email, redirectTo: `${siteUrl()}/en/registry/reset-password` },
+    });
+  } catch (error) {
+    // The owner can use "resend"; never fail the invite over mail.
+    console.error('[centre staff] setup link failed', error instanceof Error ? error.message : error);
+  }
+}
+
+/**
+ * Staff accounts are created through Better Auth's internal adapter (the same
+ * steps as sign-up) instead of signUpEmail: that would auto-sign-in and, via the
+ * nextCookies plugin, replace the owner's own session with the new user's.
+ */
+export async function inviteStaff(
+  center: Center,
+  input: StaffInviteInput,
+  ctx: { actorId: string; ip: string | null },
+): Promise<void> {
+  const email = input.email.toLowerCase();
+  const authCtx = await auth.$context;
+  if ((await authCtx.internalAdapter.findUserByEmail(email))?.user) {
+    throw new RegistryApiError(409, 'conflict');
+  }
+
+  // Random throwaway password; the invitee sets their own through the emailed link.
+  const hash = await authCtx.password.hash(randomBytes(24).toString('base64url'));
+  const user = await authCtx.internalAdapter.createUser({
+    email,
+    name: input.name,
+    emailVerified: false,
+    role: 'center',
+  });
+  try {
+    await authCtx.internalAdapter.linkAccount({
+      userId: user.id,
+      providerId: 'credential',
+      accountId: user.id,
+      password: hash,
+    });
+    await prisma.centerMember.create({ data: { centerId: center.id, userId: user.id, role: input.role } });
+  } catch (e) {
+    await prisma.user.delete({ where: { id: user.id } }).catch(() => {});
+    throw e;
+  }
+
+  await writeAudit({
+    actorId: ctx.actorId,
+    actorRole: 'center',
+    action: AuditAction.CENTER_STAFF_INVITE,
+    entity: 'CenterMember',
+    entityId: user.id,
+    meta: { centerId: center.id, role: input.role },
+    ip: ctx.ip,
+  });
+  await sendSetupLink(email);
+}
+
+export async function updateStaff(
+  center: Center,
+  memberId: string,
+  action: StaffUpdateInput,
+  ctx: { actorId: string; ip: string | null },
+): Promise<void> {
+  const member = await prisma.centerMember.findFirst({
+    where: { id: memberId, centerId: center.id },
+    include: { user: { select: { email: true } } },
+  });
+  if (!member) throw new RegistryApiError(404, 'not-found');
+  // The applicant keeps ownership; they cannot be demoted or locked out here.
+  if (member.role === 'OWNER') throw new RegistryApiError(403, 'forbidden');
+
+  if (action.action === 'RESEND') {
+    await sendSetupLink(member.user.email);
+  } else if (action.action === 'SET_ROLE') {
+    await prisma.centerMember.update({ where: { id: member.id }, data: { role: action.role } });
+  } else {
+    const active = action.action === 'REACTIVATE';
+    await prisma.centerMember.update({ where: { id: member.id }, data: { active } });
+    // Deactivation takes effect immediately, not at the next session expiry.
+    if (!active) await prisma.session.deleteMany({ where: { userId: member.userId } });
+  }
+
+  await writeAudit({
+    actorId: ctx.actorId,
+    actorRole: 'center',
+    action: AuditAction.CENTER_STAFF_UPDATE,
+    entity: 'CenterMember',
+    entityId: member.id,
+    meta: { centerId: center.id, action: action.action },
+    ip: ctx.ip,
+  });
+}
+
+export async function updateCenterProfile(
+  center: Center,
+  input: CenterProfileInput,
+  ctx: { actorId: string; ip: string | null },
+): Promise<void> {
+  await prisma.center.update({
+    where: { id: center.id },
+    data: {
+      nameUr: input.nameUr || null,
+      address: input.address,
+      phone: input.phone,
+      email: input.contactEmail,
+      website: input.websiteUrl || null,
+      services: input.services,
+      conditions: input.conditions,
+    },
+  });
+  await writeAudit({
+    actorId: ctx.actorId,
+    actorRole: 'center',
+    action: AuditAction.CENTER_PROFILE_UPDATE,
+    entity: 'Center',
+    entityId: center.id,
+    ip: ctx.ip,
+  });
+}
+
+/**
+ * Called when an owner opens the dashboard. While the membership is expiring or in
+ * grace, at most one reminder email a week; the updateMany makes concurrent
+ * page loads send it once.
+ */
+export async function maybeSendRenewalReminder(
+  center: Center,
+  ownerEmail: string,
+  state: MembershipState,
+): Promise<void> {
+  if ((state !== 'EXPIRING' && state !== 'GRACE') || !center.membershipExpiresAt) return;
+  const claimed = await prisma.center.updateMany({
+    where: {
+      id: center.id,
+      OR: [{ lastReminderAt: null }, { lastReminderAt: { lt: addDays(new Date(), -7) } }],
+    },
+    data: { lastReminderAt: new Date() },
+  });
+  if (claimed.count === 0) return;
+  await writeAudit({
+    actorRole: 'system',
+    action: AuditAction.CENTER_RENEWAL_REMINDER,
+    entity: 'Center',
+    entityId: center.id,
+    meta: { state },
+  });
+  void sendRenewalReminder(ownerEmail, center.nameEn, center.membershipExpiresAt.toISOString().slice(0, 10));
 }

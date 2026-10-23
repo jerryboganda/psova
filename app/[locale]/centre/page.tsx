@@ -4,7 +4,7 @@ import { BadgeCheck, Eye, FileBadge } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { requireCenterMember } from '@/lib/registry/guards';
-import { prisma } from '@/lib/registry/db';
+import { PaymentHistory } from '@/components/centres/PaymentHistory';
 import { Link } from '@/i18n/navigation';
 import { isPubliclyListed } from '@/lib/registry/membership';
 
@@ -19,15 +19,9 @@ export default async function CentreHomePage({
   setRequestLocale(locale);
   const t = await getTranslations('Centres');
   const tm = await getTranslations('RegistryAdmin.centres');
-  const tp = await getTranslations('Centres.apply.payment');
   const format = await getFormatter();
 
   const { user, center, state } = await requireCenterMember(await headers());
-  const payments = await prisma.centerPayment.findMany({
-    where: { centerId: center.id },
-    orderBy: { createdAt: 'desc' },
-    take: 20,
-  });
   const date = (d: Date) => format.dateTime(d, { dateStyle: 'medium' });
 
   return (
@@ -69,30 +63,7 @@ export default async function CentreHomePage({
 
         <GlassCard interactive={false}>
           <h2 className="mb-4 text-lg font-semibold">{t('dash.payments.title')}</h2>
-          {payments.length === 0 ? (
-            <p className="text-sm text-[var(--color-muted)]">{t('dash.payments.empty')}</p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {payments.map((p) => (
-                <li key={p.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-medium">
-                      {tp(`methods.${p.method}`)} · <span dir="ltr">{p.txnRef}</span>
-                    </span>
-                    <span className="text-xs text-[var(--color-muted)]">{t(`dash.payments.${p.status}`)}</span>
-                  </div>
-                  <p className="mt-1 text-xs text-[var(--color-faint)]">
-                    {t('dash.payments.date')}: {date(p.paidOn)}
-                  </p>
-                  {p.status === 'REJECTED' && p.rejectReason && (
-                    <p className="mt-2 text-xs text-[var(--color-rose)]">
-                      {t('dash.reason')}: {p.rejectReason}
-                    </p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+          <PaymentHistory centerId={center.id} />
         </GlassCard>
       </div>
     </Section>

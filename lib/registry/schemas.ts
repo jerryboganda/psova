@@ -23,6 +23,7 @@ import {
   CENTER_SERVICES,
   CENTER_PAYMENT_METHODS,
   CENTER_PAYMENT_STATUSES,
+  CENTER_STAFF_ROLES,
 } from './constants';
 import { isValidCnic, isValidPkMobile, isPlausibleDob, deriveDobParts } from './normalize';
 
@@ -382,3 +383,38 @@ export const adminCenterPaymentsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
 });
 export type AdminCenterPaymentsQuery = z.infer<typeof adminCenterPaymentsQuerySchema>;
+
+export const staffInviteSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  email: z.string().email(),
+  role: z.enum(CENTER_STAFF_ROLES),
+});
+export type StaffInviteInput = z.infer<typeof staffInviteSchema>;
+
+export const staffUpdateSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('SET_ROLE'), role: z.enum(CENTER_STAFF_ROLES) }),
+  z.object({ action: z.literal('DEACTIVATE') }),
+  z.object({ action: z.literal('REACTIVATE') }),
+  z.object({ action: z.literal('RESEND') }),
+]);
+export type StaffUpdateInput = z.infer<typeof staffUpdateSchema>;
+
+/** What a centre owner may edit. Name, licence and head-doctor credentials stay PSOVA-controlled. */
+export const centerProfileSchema = z.object({
+  nameUr: z.string().trim().max(160).optional(),
+  address: z.string().trim().min(5).max(300),
+  phone: z.string().trim().regex(/^[0-9+\-\s()]{7,20}$/),
+  contactEmail: z.string().email(),
+  websiteUrl: z.string().url().max(200).optional().or(z.literal('')),
+  services: z.array(z.enum(CENTER_SERVICES)).min(1).max(CENTER_SERVICES.length),
+  conditions: z.array(z.enum(CONDITION_SLUGS)).min(1).max(CONDITION_SLUGS.length),
+});
+export type CenterProfileInput = z.infer<typeof centerProfileSchema>;
+
+export const resetPasswordSchema = z
+  .object({
+    password: z.string().min(10).max(128),
+    confirm: z.string(),
+  })
+  .refine((d) => d.password === d.confirm, { path: ['confirm'], message: 'Passwords do not match.' });
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

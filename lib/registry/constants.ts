@@ -172,6 +172,10 @@ export const AuditAction = {
   CENTER_PAYMENT_SUBMIT: 'CENTER_PAYMENT_SUBMIT',
   CENTER_PAYMENT_VERIFY: 'CENTER_PAYMENT_VERIFY',
   CENTER_PAYMENT_REJECT: 'CENTER_PAYMENT_REJECT',
+  CENTER_STAFF_INVITE: 'CENTER_STAFF_INVITE',
+  CENTER_STAFF_UPDATE: 'CENTER_STAFF_UPDATE',
+  CENTER_PROFILE_UPDATE: 'CENTER_PROFILE_UPDATE',
+  CENTER_RENEWAL_REMINDER: 'CENTER_RENEWAL_REMINDER',
 } as const;
 
 export type AuditActionType = (typeof AuditAction)[keyof typeof AuditAction];
@@ -188,6 +192,8 @@ export const CENTER_TYPES = ['PUBLIC', 'PRIVATE', 'TRUST'] as const;
 export const CENTER_STATUSES = ['APPLIED', 'APPROVED', 'REJECTED', 'SUSPENDED'] as const;
 export const CENTER_TIERS = ['MEMBER', 'ACCREDITED', 'EXCELLENCE'] as const;
 export const CENTER_ROLES = ['OWNER', 'DOCTOR', 'NURSE', 'RECEPTION'] as const;
+/** Roles an owner can hand out (the owner is the applicant and cannot be reassigned). */
+export const CENTER_STAFF_ROLES = ['DOCTOR', 'NURSE', 'RECEPTION'] as const;
 export const CENTER_PAYMENT_METHODS = ['BANK', 'JAZZCASH', 'EASYPAISA', 'RAAST'] as const;
 export const CENTER_PAYMENT_STATUSES = ['PENDING', 'VERIFIED', 'REJECTED'] as const;
 

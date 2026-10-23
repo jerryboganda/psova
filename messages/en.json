@@ -1216,7 +1216,8 @@
           "EXPIRING": "Expires soon — please renew to stay listed.",
           "GRACE": "Expired — grace period. Renew now to avoid your centre being hidden and the dashboard going read-only.",
           "EXPIRED": "Expired — your centre is hidden from the directory and the dashboard is read-only. Renew to restore access."
-        }
+        },
+        "renew": "Renew membership"
       },
       "payments": {
         "title": "Payments",
@@ -1258,6 +1259,84 @@
       "print": "Print / save as PDF",
       "unavailableTitle": "Certificate not available",
       "unavailableBody": "A certificate is available while your membership is active. Renew your membership to restore it."
+    },
+    "nav": {
+      "overview": "Overview",
+      "staff": "Staff",
+      "profile": "Profile",
+      "membership": "Membership",
+      "poster": "QR poster",
+      "certificate": "Certificate"
+    },
+    "staff": {
+      "title": "Staff",
+      "lede": "Invite your team. Each person gets their own login, so every action is traceable.",
+      "inviteTitle": "Invite a team member",
+      "inviteLede": "They receive an email with a link to set their password.",
+      "name": "Full name",
+      "email": "Email",
+      "role": "Role",
+      "choose": "Choose a role…",
+      "roles": {
+        "OWNER": "Owner",
+        "DOCTOR": "Doctor",
+        "NURSE": "Nurse",
+        "RECEPTION": "Reception"
+      },
+      "roleHelp": {
+        "DOCTOR": "Full clinical access, sharing and referrals.",
+        "NURSE": "Patients, visits and uploads.",
+        "RECEPTION": "Patient details and appointments, no clinical notes."
+      },
+      "invite": "Send invite",
+      "invited": "Invite sent.",
+      "exists": "This email already has an account.",
+      "error": "That could not be completed. Please try again.",
+      "invalid": "Please check this field.",
+      "listTitle": "Your team",
+      "inactive": "Inactive",
+      "resend": "Resend invite",
+      "resent": "Invite sent again.",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate"
+    },
+    "profileEdit": {
+      "title": "Centre profile",
+      "lede": "This is what patients see on your public page and in the directory.",
+      "locked": "The centre name, licence number and head-doctor credentials can only be changed by PSOVA. Contact us if they need updating.",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Saved.",
+      "error": "Your changes could not be saved."
+    },
+    "poster": {
+      "scan": "Scan to register as a patient",
+      "body": "Scan this code with your phone camera to register with this centre. You will get a tracking code.",
+      "note": "Print this poster and display it at reception. The code takes patients to your centre's registration form."
+    },
+    "membership": {
+      "title": "Membership",
+      "lede": "PKR {fee} per year (PKR 1,000 per month, paid once a year). PSOVA verifies each payment by hand.",
+      "submitTitle": "Submit a payment",
+      "howTo": "Pay to a PSOVA account by bank transfer, JazzCash, Easypaisa or Raast, then enter the transaction details here.",
+      "accounts": "View PSOVA payment accounts",
+      "submit": "Submit for verification",
+      "done": "Submitted. PSOVA will verify it shortly.",
+      "limit": "You already have payments waiting for verification.",
+      "error": "We could not submit this. Please check the details."
+    },
+    "reset": {
+      "title": "Set your password",
+      "lede": "Choose a password for your PSOVA account.",
+      "password": "New password",
+      "confirm": "Confirm password",
+      "hint": "At least 10 characters.",
+      "mismatch": "The passwords do not match.",
+      "submit": "Save password",
+      "error": "We could not set your password. The link may have expired.",
+      "invalid": "This link is invalid or has expired. Ask your centre owner to resend the invite.",
+      "toLogin": "Go to sign in",
+      "doneTitle": "Password saved"
     }
   }
 }
