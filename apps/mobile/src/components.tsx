@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react';
 import { ArrowLeft, BadgeCheck, BookOpen, ChevronRight, CircleDashed, Home, LayoutGrid, Newspaper, Search, Stethoscope, WifiOff, X } from 'lucide-react';
+import { localizedValue } from '@psova/domain';
+import { SITE } from '@psova/content/site';
 import { useApp } from './app-context';
 import { lightHaptic } from './native';
 
@@ -27,6 +29,12 @@ export function LogoMark({ compact = false, animated = false }: { compact?: bool
   );
 }
 
+/** Full brand lockup used in every screen header so the identity reads the same everywhere. */
+export function BrandLine() {
+  const { settings } = useApp();
+  return <div className="brand-line"><LogoMark compact /><span><strong>PSOVA</strong><small>{localizedValue(SITE.fullName, settings.locale)}</small></span></div>;
+}
+
 export function Page({ title, lead, children, back = false, actions, accent, meta, art }: { title: string; lead?: string; children: ReactNode; back?: boolean; actions?: ReactNode; accent?: string; meta?: ReactNode; art?: ReactNode }) {
   const navigate = useNavigate();
   const { messages } = useApp();
@@ -42,8 +50,8 @@ export function Page({ title, lead, children, back = false, actions, accent, met
   return (
     <main className="page" id="main-content" style={accent ? { '--accent': accent } as CSSProperties : undefined}>
       {accent && <div className="page-glow" aria-hidden="true" />}
-      <div className={`top-bar ${condensed ? 'condensed' : ''}`}>
-        {back ? <button className="icon-button" onClick={() => { tap(); navigate(-1); }} aria-label={messages.common.back}><ArrowLeft className="rtl-flip" /></button> : <LogoMark compact />}
+      <div className={`top-bar ${condensed ? 'condensed' : ''} ${back ? '' : 'has-brand'}`}>
+        {back ? <button className="icon-button" onClick={() => { tap(); navigate(-1); }} aria-label={messages.common.back}><ArrowLeft className="rtl-flip" /></button> : <BrandLine />}
         <span className="top-bar-title" aria-hidden="true">{title}</span>
         <div className="page-actions">{actions}</div>
       </div>

@@ -10,7 +10,7 @@ import {
 import { contactPayloadSchema, directionsHref, localizedValue, matchesSearch, telHref, whatsappHref, type ContactPayload } from '@psova/domain';
 import { SITE } from '@psova/content/site';
 import { useApp } from './app-context';
-import { Button, Card, Chip, CountUp, EASE_OUT, EmptyState, ForwardRow, ListGroup, LogoMark, Page, RevealHeading, ReviewBadge, SearchField, SectionHeader, Segmented, Sheet, SPRING } from './components';
+import { BrandLine, Button, Card, Chip, CountUp, EASE_OUT, EmptyState, ForwardRow, ListGroup, LogoMark, Page, RevealHeading, ReviewBadge, SearchField, SectionHeader, Segmented, Sheet, SPRING } from './components';
 import { FlowField } from './flow-field';
 import { MAP_HEIGHT, PAKISTAN_PATH, projectToMap } from './pakistan-map';
 import { enqueueContact, flushOutbox } from './outbox';
@@ -81,7 +81,7 @@ export function HomeScreen() {
       <div className="hero-aurora" aria-hidden="true" />
       <motion.div className="flow-host" style={{ y: fieldY, opacity: fieldOpacity }}><FlowField /></motion.div>
       <div className="home-top">
-        <div className="brand-line"><LogoMark compact /><span><strong>PSOVA</strong><small>{l(SITE.fullName)}</small></span></div>
+        <BrandLine />
         <div className="page-actions">
           <button className="icon-button lang-switch" onClick={() => { tap(); void setLocale(settings.locale === 'en' ? 'ur' : 'en'); }}>{settings.locale === 'en' ? messages.common.urdu : messages.common.english}</button>
           <Link className="icon-button" to="/settings" aria-label={messages.more.settings} onClick={tap}><Settings /></Link>
