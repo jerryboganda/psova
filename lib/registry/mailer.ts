@@ -232,3 +232,31 @@ export async function sendRenewalReminder(to: string, centerName: string, expire
   ].join('\n');
   await send(to, subject, text);
 }
+
+/** A centre was sent a referral / second-opinion request, or the sender got the outcome. Bilingual plain text. */
+export async function sendShareNotice(
+  to: string,
+  otherCentre: string,
+  event: 'received' | 'accepted' | 'declined' | 'answered',
+  type: 'REFERRAL' | 'SECOND_OPINION',
+): Promise<void> {
+  const kind = type === 'REFERRAL' ? 'referral' : 'second-opinion request';
+  const kindUr = type === 'REFERRAL' ? 'ریفرل' : 'دوسری رائے کی درخواست';
+  const en = {
+    received: `"${otherCentre}" sent your centre a ${kind}. Sign in and open Referrals to review it.`,
+    accepted: `"${otherCentre}" accepted your referral. The patient is now registered at their centre.`,
+    declined: `"${otherCentre}" declined your ${kind}. Sign in to see any reason they gave.`,
+    answered: `"${otherCentre}" answered your second-opinion request. Sign in and open Referrals to read it.`,
+  }[event];
+  const ur = {
+    received: `"${otherCentre}" نے آپ کے مرکز کو ایک ${kindUr} بھیجی ہے۔ سائن اِن کر کے ریفرلز میں اس کا جائزہ لیں۔`,
+    accepted: `"${otherCentre}" نے آپ کا ریفرل قبول کر لیا ہے۔ مریض اب ان کے مرکز میں رجسٹرڈ ہے۔`,
+    declined: `"${otherCentre}" نے آپ کی ${kindUr} مسترد کر دی ہے۔ اگر وجہ بتائی گئی ہو تو سائن اِن کر کے دیکھیں۔`,
+    answered: `"${otherCentre}" نے آپ کی دوسری رائے کی درخواست کا جواب دے دیا ہے۔ سائن اِن کر کے ریفرلز میں پڑھیں۔`,
+  }[event];
+  await send(
+    to,
+    'PSOVA Centres Network — Case sharing / کیس شیئرنگ',
+    [en, '', '— — —', '', ur, '', 'No patient details are included in this email. / اس ای میل میں مریض کی کوئی تفصیل شامل نہیں۔', '', '— PSOVA'].join('\n'),
+  );
+}

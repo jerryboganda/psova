@@ -186,6 +186,16 @@ export const AuditAction = {
   CENTER_DOCUMENT_UPLOAD: 'CENTER_DOCUMENT_UPLOAD',
   CENTER_DOCUMENT_VIEW: 'CENTER_DOCUMENT_VIEW',
   CENTER_DOCUMENT_DELETE: 'CENTER_DOCUMENT_DELETE',
+  CENTER_SHARE_NVAR: 'CENTER_SHARE_NVAR',
+  CENTER_NVAR_WITHDRAW: 'CENTER_NVAR_WITHDRAW',
+  CENTER_SHARE_SEND: 'CENTER_SHARE_SEND',
+  CENTER_SHARE_RESPOND: 'CENTER_SHARE_RESPOND',
+  CENTER_SHARE_VIEW: 'CENTER_SHARE_VIEW',
+  CENTER_MDT_POST: 'CENTER_MDT_POST',
+  CENTER_MDT_COMMENT: 'CENTER_MDT_COMMENT',
+  CENTER_MDT_UPDATE: 'CENTER_MDT_UPDATE',
+  CENTER_MDT_DOCUMENT_VIEW: 'CENTER_MDT_DOCUMENT_VIEW',
+  MDT_MODERATE: 'MDT_MODERATE',
   CENTER_RENEWAL_REMINDER: 'CENTER_RENEWAL_REMINDER',
 } as const;
 
@@ -222,6 +232,7 @@ export const CENTER_SERVICES = [
   'genetic-testing',
 ] as const;
 
+export const SHARE_TYPES = ['REFERRAL', 'SECOND_OPINION'] as const;
 export const DOCUMENT_KINDS = ['PHOTO', 'REPORT', 'IMAGING', 'OTHER'] as const;
 export const APPOINTMENT_KINDS = ['FIRST_VISIT', 'FOLLOW_UP', 'PROCEDURE'] as const;
 export const APPOINTMENT_STATUSES = ['SCHEDULED', 'DONE', 'MISSED', 'CANCELLED'] as const;
@@ -254,5 +265,6 @@ export type CenterTypeValue = (typeof CENTER_TYPES)[number];
 export type CenterStatusValue = (typeof CENTER_STATUSES)[number];
 export type CenterTierValue = (typeof CENTER_TIERS)[number];
 export type CenterRoleValue = (typeof CENTER_ROLES)[number];
+export type ShareTypeValue = (typeof SHARE_TYPES)[number];
 export type AppointmentKindValue = (typeof APPOINTMENT_KINDS)[number];
 export type CenterPaymentMethodValue = (typeof CENTER_PAYMENT_METHODS)[number];

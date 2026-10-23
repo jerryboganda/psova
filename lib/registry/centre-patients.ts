@@ -55,6 +55,16 @@ function toRow(r: ListedPatient): CentrePatientRow {
 
 const include = { diagnoses: { select: { conditionSlug: true }, take: 1 } } as const;
 
+/** Dashboard counters: all patients and those registered in the last 7 days (no decryption). */
+export async function patientCounts(center: Center): Promise<{ total: number; recent: number }> {
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const [total, recent] = await Promise.all([
+    prisma.registryPatient.count({ where: { centerId: center.id } }),
+    prisma.registryPatient.count({ where: { centerId: center.id, createdAt: { gte: weekAgo } } }),
+  ]);
+  return { total, recent };
+}
+
 /** Exact-match lookups the blind indexes allow: tracking code, MRN, CNIC, phone. */
 function exactConditions(q: string): Prisma.RegistryPatientWhereInput[] {
   const conditions: Prisma.RegistryPatientWhereInput[] = [{ mrn: q }];

@@ -1,11 +1,10 @@
-import { headers } from 'next/headers';
 import QRCode from 'qrcode';
 import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
 import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { TierBadge } from '@/components/centres/TierBadge';
 import { PrintButton } from '@/components/centres/PrintButton';
-import { requireCenterMember } from '@/lib/registry/guards';
+import { centrePageContext } from '@/lib/registry/centre-page';
 import { isPubliclyListed } from '@/lib/registry/membership';
 import { localized } from '@/lib/utils';
 
@@ -21,7 +20,7 @@ export default async function CentreCertificatePage({
   const t = await getTranslations('Centres.certificate');
   const format = await getFormatter();
 
-  const { center, state } = await requireCenterMember(await headers());
+  const { center, state } = await centrePageContext(locale);
 
   if (!isPubliclyListed(center.status, state)) {
     return (

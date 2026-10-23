@@ -26,6 +26,8 @@ export default defineConfig([
   {
     files: [
       'components/registry/AdminAudit.tsx',
+      'components/registry/AdminCentres.tsx',
+      'components/centres/CentreStaff.tsx',
       'components/registry/AdminClinicians.tsx',
       'components/registry/AdminRecordDetail.tsx',
       'components/registry/AdminRecordsBrowser.tsx',

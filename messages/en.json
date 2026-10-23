@@ -863,7 +863,8 @@
       "submittedAt": "Submitted",
       "verifiedAt": "Verified",
       "clinician": "Submitted by",
-      "updatedAt": "Last updated"
+      "updatedAt": "Last updated",
+      "centre": "Source centre"
     },
     "given": "Given",
     "notGiven": "Not given"
@@ -875,7 +876,8 @@
       "records": "Records",
       "clinicians": "Clinicians",
       "audit": "Audit",
-      "centres": "Centres"
+      "centres": "Centres",
+      "mdt": "Case board"
     },
     "overview": {
       "title": "Overview",
@@ -1064,6 +1066,19 @@
         "VERIFIED": "Verified",
         "REJECTED": "Rejected"
       }
+    },
+    "mdt": {
+      "title": "Case board moderation",
+      "lede": "Centres post de-identified cases for discussion. Hide a post or comment that contains identifying details or does not belong. Hidden items disappear for centres immediately and can be restored.",
+      "empty": "No posts yet.",
+      "hide": "Hide",
+      "unhide": "Restore",
+      "error": "That action could not be completed.",
+      "status": {
+        "OPEN": "Open",
+        "RESOLVED": "Resolved",
+        "HIDDEN": "Hidden"
+      }
     }
   },
   "RegistryStats": {
@@ -1241,7 +1256,8 @@
         "recent": "New in the last 7 days",
         "add": "Add a patient",
         "today": "Appointments today",
-        "overdue": "Overdue follow-ups"
+        "overdue": "Overdue follow-ups",
+        "referrals": "Requests waiting"
       }
     },
     "profile": {
@@ -1279,7 +1295,9 @@
       "poster": "QR poster",
       "certificate": "Certificate",
       "patients": "Patients",
-      "appointments": "Appointments"
+      "appointments": "Appointments",
+      "shares": "Referrals",
+      "mdt": "Case board"
     },
     "staff": {
       "title": "Staff",
@@ -1389,7 +1407,8 @@
       "timeline": {
         "title": "Timeline",
         "intakeQr": "Registered by the patient (QR / link)",
-        "addedByStaff": "Added by centre staff"
+        "addedByStaff": "Added by centre staff",
+        "referral": "Received by referral from another centre"
       },
       "backToPatient": "Back to patient"
     },
@@ -1495,6 +1514,116 @@
       "download": "Download",
       "delete": "Delete",
       "deleteConfirm": "Delete this file permanently? This cannot be undone."
+    },
+    "sharing": {
+      "title": "Sharing this case",
+      "nvarTitle": "National registry (NVAR)",
+      "nvarNot": "Not shared. Only your centre can see this record.",
+      "nvarShared": "Shared with NVAR. PSOVA reviews the record before it is counted in the national statistics.",
+      "nvarStatus": "NVAR status",
+      "nvarConsent": "I confirm the patient (or their guardian) agreed to be included in the National Vascular Anomaly Registry.",
+      "nvarShare": "Share with NVAR",
+      "nvarWithdraw": "Withdraw from NVAR",
+      "nvarWithdrawBlocked": "Records that PSOVA has already verified can only be withdrawn by contacting PSOVA.",
+      "error": "That could not be completed. Please try again.",
+      "readOnly": "Your membership has lapsed, so sharing is paused. Renew to share cases.",
+      "sendTitle": "Refer or ask for a second opinion",
+      "noTargets": "There are no other registered centres to send to yet.",
+      "typeLabel": "Type of request",
+      "types": {
+        "REFERRAL": "Referral",
+        "SECOND_OPINION": "Second opinion"
+      },
+      "typeHelp": {
+        "REFERRAL": "Send the patient to another centre. If they accept, the patient is registered there with the diagnosis and treatment history.",
+        "SECOND_OPINION": "Ask another centre for an opinion. They see a summary with no identifying details, plus any files marked for teaching, and reply in writing."
+      },
+      "toCentre": "Send to",
+      "chooseCentre": "Choose a centre…",
+      "noteReferral": "Reason for referral and what the centre should know",
+      "noteOpinion": "Clinical question and summary (no names or contact details)",
+      "confirmReferral": "The patient (or guardian) has agreed to be referred and to their record being shared with this centre.",
+      "confirmOpinion": "My note contains nothing that could identify the patient.",
+      "send": "Send",
+      "sent": "Sent.",
+      "alreadyOpen": "You already have an open request of this kind for this patient and centre.",
+      "postToMdt": "Post this case to the case board (de-identified)",
+      "pageTitle": "Referrals and second opinions",
+      "pageLede": "Cases other centres send to you, and the ones you sent.",
+      "dir": {
+        "incoming": "Received",
+        "outgoing": "Sent"
+      },
+      "empty": {
+        "incoming": "Nothing has been sent to your centre.",
+        "outgoing": "You have not sent any requests."
+      },
+      "status": {
+        "SENT": "Waiting",
+        "ACCEPTED": "Accepted",
+        "DECLINED": "Declined",
+        "COMPLETED": "Answered"
+      },
+      "deidentified": "De-identified summary",
+      "senderNote": "Note from the sending centre",
+      "yourNote": "Your note",
+      "opinion": "Opinion",
+      "declineReasonShown": "Reason given",
+      "openCopy": "Open the patient at your centre",
+      "openPatient": "Open patient",
+      "accept": "Accept referral",
+      "decline": "Decline",
+      "respond": "Send opinion",
+      "opinionLabel": "Your opinion",
+      "declineReason": "Reason for declining (optional)",
+      "attrCondition": "Condition",
+      "attrGender": "Gender",
+      "attrAge": "Age",
+      "attrProvince": "Province",
+      "attrSite": "Affected area",
+      "attrSeverity": "Severity",
+      "attrBasis": "Diagnosis basis",
+      "attrTreatments": "Treatments"
+    },
+    "mdt": {
+      "title": "Case board",
+      "lede": "Discuss difficult cases with doctors at other PSOVA centres. Posts are de-identified, and PSOVA moderates the board.",
+      "newPost": "Post a case",
+      "newLede": "Describe the case without anything that could identify the patient: no names, contact details, hospital numbers, exact dates of birth or photos showing faces.",
+      "filter": {
+        "ALL": "All",
+        "OPEN": "Open",
+        "RESOLVED": "Resolved"
+      },
+      "status": {
+        "OPEN": "Open",
+        "RESOLVED": "Resolved",
+        "HIDDEN": "Hidden"
+      },
+      "empty": "No posts yet. Be the first to post a case.",
+      "back": "Back to the case board",
+      "discussion": "Discussion ({count})",
+      "noComments": "No comments yet.",
+      "unknownAuthor": "A colleague",
+      "comment": "Comment",
+      "commentLabel": "Add to the discussion",
+      "resolve": "Mark resolved",
+      "reopen": "Reopen",
+      "readOnly": "Your membership has lapsed, so posting is paused.",
+      "renew": "Renew membership",
+      "error": "That could not be completed. Please try again.",
+      "warning": "Never include names, phone numbers, CNIC, hospital numbers or other identifiers. Posts are visible to doctors at every registered centre.",
+      "postTitle": "Title",
+      "gender": "Gender",
+      "ageBand": "Age",
+      "province": "Province",
+      "condition": "Condition",
+      "bodySite": "Affected area",
+      "summary": "Case summary and question",
+      "summaryHint": "What was found, what has been tried, and what you would like the group's view on.",
+      "attach": "Attach files (only files marked for teaching can be attached)",
+      "confirm": "I confirm this post contains nothing that could identify the patient, and any attached files show no identifying features.",
+      "publish": "Publish to the board"
     }
   }
 }

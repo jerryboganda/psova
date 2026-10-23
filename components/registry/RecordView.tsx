@@ -176,6 +176,7 @@ export function RecordView({
               { label: t('fields.submittedAt'), value: fmtDate(record.createdAt) },
               { label: t('fields.verifiedAt'), value: fmtDate(record.verifiedAt) },
               { label: t('fields.clinician'), value: record.clinician ? `${record.clinician.name} · ${record.clinician.facility}` : dash },
+              { label: t('fields.centre'), value: record.centre ?? dash },
               { label: t('fields.updatedAt'), value: fmtDate(record.updatedAt) },
             ]}
           />

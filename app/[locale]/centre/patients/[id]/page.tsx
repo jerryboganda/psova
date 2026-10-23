@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
-import { ArrowLeft, CalendarClock, ClipboardPlus, Clock, FileImage, FileText, Syringe } from 'lucide-react';
+import { ArrowLeft, CalendarClock, ClipboardPlus, Clock, FileImage, FileText, Share2, Syringe } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Link } from '@/i18n/navigation';
@@ -9,9 +9,12 @@ import { RecordView } from '@/components/registry/RecordView';
 import { AppointmentForm } from '@/components/centres/AppointmentForm';
 import { DocumentDeleteButton } from '@/components/centres/DocumentDeleteButton';
 import { DocumentUpload } from '@/components/centres/DocumentUpload';
+import { NvarSharePanel } from '@/components/centres/NvarSharePanel';
+import { SendShareForm } from '@/components/centres/SendShareForm';
 import { WhatsAppButtons } from '@/components/centres/WhatsAppButtons';
 import { getJourney } from '@/lib/registry/centre-journey';
 import { listDocuments } from '@/lib/registry/centre-documents';
+import { listPatientShares, listShareTargets } from '@/lib/registry/centre-sharing';
 import { uploadsConfigured } from '@/lib/registry/storage';
 import { getCentrePatient } from '@/lib/registry/centre-patients';
 import { centrePageContext } from '@/lib/registry/centre-page';
@@ -38,12 +41,18 @@ export default async function CentrePatientPage({
   const clinical = member.role !== 'RECEPTION';
   const documents = clinical ? await listDocuments(center, id) : [];
   const canDeleteDocs = member.role === 'OWNER' || member.role === 'DOCTOR';
+  // Sharing (NVAR, referrals, second opinions, MDT) is a clinical-lead decision: owner or doctor.
+  const canShare = member.role === 'OWNER' || member.role === 'DOCTOR';
+  const [shareTargets, shares] = canShare
+    ? await Promise.all([listShareTargets(center), listPatientShares(center, id)])
+    : [[], []];
 
   const t = await getTranslations('Centres.patients');
   const tv = await getTranslations('Centres.visit');
   const ta = await getTranslations('Centres.appointments');
   const tc = await getTranslations('RegistryCommon');
   const td = await getTranslations('Centres.documents');
+  const ts = await getTranslations('Centres.sharing');
   const format = await getFormatter();
   const canWrite = membershipAllowsWrites(state);
   const canVisit = canWrite && member.role !== 'RECEPTION';
@@ -161,6 +170,52 @@ export default async function CentrePatientPage({
               </GlassCard>
             )}
 
+            {canShare && (
+              <GlassCard interactive={false}>
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-bold">
+                  <Share2 className="size-5 text-[var(--color-cyan)]" />
+                  {ts('title')}
+                </h2>
+                <div className="flex flex-col gap-6">
+                  {canWrite ? (
+                    <NvarSharePanel
+                      patientId={id}
+                      shared={record.sharedWithNvar}
+                      nvarStatus={record.status}
+                      consentRecorded={record.consent.registry}
+                      rejectReason={record.publicReason}
+                    />
+                  ) : (
+                    <p className="text-sm text-[var(--color-muted)]">{ts('readOnly')}</p>
+                  )}
+
+                  <div className="border-t border-white/10 pt-5">
+                    <h3 className="mb-3 font-semibold">{ts('sendTitle')}</h3>
+                    {canWrite ? <SendShareForm patientId={id} targets={shareTargets} /> : null}
+                    {shares.length > 0 && (
+                      <ul className="mt-4 flex flex-col gap-2">
+                        {shares.map((s) => (
+                          <li key={s.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm">
+                            <p className="font-medium">
+                              {ts(`types.${s.type}`)} → {s.centre.name}
+                              <span className="ms-2 rounded-full bg-white/5 px-2 py-0.5 text-xs text-[var(--color-muted)]">{ts(`status.${s.status}`)}</span>
+                            </p>
+                            {s.response && <p className="mt-1 whitespace-pre-wrap text-xs text-[var(--color-muted)]">{s.response}</p>}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  <div className="border-t border-white/10 pt-5">
+                    <Link href={`/centre/mdt/new?patient=${id}`} className="text-sm text-[var(--color-cyan)] hover:underline">
+                      {ts('postToMdt')}
+                    </Link>
+                  </div>
+                </div>
+              </GlassCard>
+            )}
+
             <GlassCard interactive={false}>
               <h2 className="mb-4 flex items-center gap-2 text-lg font-bold">
                 <Clock className="size-5 text-[var(--color-cyan)]" />
@@ -172,7 +227,7 @@ export default async function CentrePatientPage({
                     return (
                       <li key="registered" className="relative text-sm">
                         <span className={`${dot} bg-white/40`} aria-hidden />
-                        <p className="font-medium">{record.source === 'SELF' ? t('timeline.intakeQr') : t('timeline.addedByStaff')}</p>
+                        <p className="font-medium">{record.consent.version === 'v1-referral' ? t('timeline.referral') : record.source === 'SELF' ? t('timeline.intakeQr') : t('timeline.addedByStaff')}</p>
                         <p className="text-xs text-[var(--color-faint)]">{when(e.at, true)}</p>
                       </li>
                     );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { LayoutDashboard, ListChecks, Database, UserCheck, Building2, ScrollText } from 'lucide-react';
+import { LayoutDashboard, ListChecks, Database, UserCheck, Building2, MessagesSquare, ScrollText } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { LogoutButton } from './LogoutButton';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ export function AdminNav() {
     { href: '/registry/admin/records', label: t('nav.records'), Icon: Database, exact: false },
     { href: '/registry/admin/clinicians', label: t('nav.clinicians'), Icon: UserCheck, exact: false },
     { href: '/registry/admin/centres', label: t('nav.centres'), Icon: Building2, exact: false },
+    { href: '/registry/admin/mdt', label: t('nav.mdt'), Icon: MessagesSquare, exact: false },
     { href: '/registry/admin/audit', label: t('nav.audit'), Icon: ScrollText, exact: false },
   ];
 

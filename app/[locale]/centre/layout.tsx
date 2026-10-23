@@ -76,7 +76,7 @@ export default async function CentreLayout({
 
   return (
     <div className="pt-24 md:pt-28">
-      <CentreNav isOwner={isOwner} centreName={center.nameEn} />
+      <CentreNav role={member.role} centreName={center.nameEn} />
       {state !== 'ACTIVE' && (
         <div className="border-b border-amber-300/20 bg-amber-300/5 print:hidden">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm text-amber-100/90 sm:px-6 lg:px-8">

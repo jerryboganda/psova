@@ -1,23 +1,30 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { BadgeCheck, Building2, CalendarClock, CreditCard, FileBadge, LayoutDashboard, QrCode, Stethoscope, Users } from 'lucide-react';
+import { ArrowLeftRight, BadgeCheck, Building2, CalendarClock, CreditCard, FileBadge, LayoutDashboard, MessagesSquare, QrCode, Stethoscope, Users } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { LogoutButton } from '@/components/registry/LogoutButton';
 import { cn } from '@/lib/utils';
 
-const LINKS = [
-  { href: '/centre', key: 'overview', Icon: LayoutDashboard, exact: true, ownerOnly: false },
-  { href: '/centre/patients', key: 'patients', Icon: Stethoscope, exact: false, ownerOnly: false },
-  { href: '/centre/appointments', key: 'appointments', Icon: CalendarClock, exact: false, ownerOnly: false },
-  { href: '/centre/staff', key: 'staff', Icon: Users, exact: false, ownerOnly: true },
-  { href: '/centre/profile', key: 'profile', Icon: Building2, exact: false, ownerOnly: true },
-  { href: '/centre/membership', key: 'membership', Icon: CreditCard, exact: false, ownerOnly: true },
-  { href: '/centre/poster', key: 'poster', Icon: QrCode, exact: false, ownerOnly: false },
-  { href: '/centre/certificate', key: 'certificate', Icon: FileBadge, exact: false, ownerOnly: false },
-] as const;
+type Access = 'all' | 'lead' | 'owner'; // lead = owner or doctor
 
-export function CentreNav({ isOwner, centreName }: { isOwner: boolean; centreName: string }) {
+const LINKS = [
+  { href: '/centre', key: 'overview', Icon: LayoutDashboard, exact: true, access: 'all' },
+  { href: '/centre/patients', key: 'patients', Icon: Stethoscope, exact: false, access: 'all' },
+  { href: '/centre/appointments', key: 'appointments', Icon: CalendarClock, exact: false, access: 'all' },
+  { href: '/centre/shares', key: 'shares', Icon: ArrowLeftRight, exact: false, access: 'lead' },
+  { href: '/centre/mdt', key: 'mdt', Icon: MessagesSquare, exact: false, access: 'lead' },
+  { href: '/centre/staff', key: 'staff', Icon: Users, exact: false, access: 'owner' },
+  { href: '/centre/profile', key: 'profile', Icon: Building2, exact: false, access: 'owner' },
+  { href: '/centre/membership', key: 'membership', Icon: CreditCard, exact: false, access: 'owner' },
+  { href: '/centre/poster', key: 'poster', Icon: QrCode, exact: false, access: 'all' },
+  { href: '/centre/certificate', key: 'certificate', Icon: FileBadge, exact: false, access: 'all' },
+] as const satisfies readonly { href: string; key: string; Icon: unknown; exact: boolean; access: Access }[];
+
+const allowed = (access: Access, role: string) =>
+  access === 'all' || (access === 'lead' ? role === 'OWNER' || role === 'DOCTOR' : role === 'OWNER');
+
+export function CentreNav({ role, centreName }: { role: string; centreName: string }) {
   const t = useTranslations('Centres.nav');
   const pathname = usePathname();
 
@@ -30,7 +37,7 @@ export function CentreNav({ isOwner, centreName }: { isOwner: boolean; centreNam
             <span className="max-w-[14rem] truncate">{centreName}</span>
           </span>
           <nav className="flex flex-wrap gap-1">
-            {LINKS.filter((l) => isOwner || !l.ownerOnly).map(({ href, key, Icon, exact }) => {
+            {LINKS.filter((l) => allowed(l.access, role)).map(({ href, key, Icon, exact }) => {
               const active = exact ? pathname === href : pathname.startsWith(href);
               return (
                 <Link

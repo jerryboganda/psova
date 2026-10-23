@@ -29,6 +29,8 @@ model User {
   clinicianProfile ClinicianProfile?
   centerMember     CenterMember?
   encounters       Encounter[]
+  mdtPosts         MdtPost[]
+  mdtComments      MdtComment[]
   auditLogs        AuditLog[]
 
   @@map("user")
@@ -225,6 +227,7 @@ model RegistryPatient {
   encounters   Encounter[]
   appointments Appointment[]
   documents    PatientDocument[]
+  caseShares   CaseShare[]
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @updatedAt
 
@@ -404,14 +407,18 @@ model Center {
   membershipExpiresAt DateTime? // null until the first payment is verified
   lastReminderAt      DateTime?
 
-  members      CenterMember[]
-  payments     CenterPayment[]
-  patients     RegistryPatient[]
-  appointments Appointment[]
-  encounters   Encounter[]
-  documents    PatientDocument[]
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  members        CenterMember[]
+  payments       CenterPayment[]
+  patients       RegistryPatient[]
+  appointments   Appointment[]
+  encounters     Encounter[]
+  documents      PatientDocument[]
+  sharesSent     CaseShare[]       @relation("SharesSent")
+  sharesReceived CaseShare[]       @relation("SharesReceived")
+  mdtPosts       MdtPost[]
+  mdtComments    MdtComment[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   @@index([status])
   @@index([province])
@@ -541,11 +548,12 @@ model PatientDocument {
   center    Center          @relation(fields: [centerId], references: [id], onDelete: Restrict)
 
   kind               DocumentKind
-  fileName           String       @db.Text // 🔐
-  mime               String       @db.VarChar(40) // sniffed from the bytes, never client-declared
+  fileName           String            @db.Text // 🔐
+  mime               String            @db.VarChar(40) // sniffed from the bytes, never client-declared
   size               Int // plaintext bytes
-  storageKey         String       @unique @db.VarChar(64)
-  consentForTeaching Boolean      @default(false) // may be attached to de-identified MDT posts
+  storageKey         String            @unique @db.VarChar(64)
+  consentForTeaching Boolean           @default(false) // may be attached to de-identified MDT posts
+  mdtPosts           MdtPostDocument[]
   uploadedById       String?
 
   createdAt DateTime @default(now())
@@ -553,4 +561,105 @@ model PatientDocument {
   @@index([patientId])
   @@index([centerId])
   @@map("patient_document")
+}
+
+/// ---------------- Sharing between centres + MDT board (docs/centres/PLAN.md) ----------------
+
+enum ShareType {
+  REFERRAL // identified: on accept the receiving centre gets its own copy of the record
+  SECOND_OPINION // de-identified summary, read-only, answered with a written opinion
+}
+
+enum ShareStatus {
+  SENT
+  ACCEPTED // referral accepted; copiedPatientId is the receiving centre's record
+  DECLINED
+  COMPLETED // second opinion answered
+}
+
+model CaseShare {
+  id           String          @id @default(cuid())
+  patientId    String
+  patient      RegistryPatient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  fromCenterId String
+  fromCenter   Center          @relation("SharesSent", fields: [fromCenterId], references: [id], onDelete: Restrict)
+  toCenterId   String
+  toCenter     Center          @relation("SharesReceived", fields: [toCenterId], references: [id], onDelete: Restrict)
+
+  type            ShareType
+  status          ShareStatus @default(SENT)
+  note            String?     @db.Text // 🔐 sender's clinical summary / reason
+  response        String?     @db.Text // 🔐 the opinion, or the reason for declining
+  copiedPatientId String? // referral accepted: the receiving centre's record
+  createdById     String?
+  respondedById   String?
+
+  createdAt   DateTime  @default(now())
+  respondedAt DateTime?
+
+  @@index([fromCenterId, createdAt])
+  @@index([toCenterId, status])
+  @@index([patientId])
+  @@map("case_share")
+}
+
+enum MdtStatus {
+  OPEN
+  RESOLVED
+  HIDDEN // removed by PSOVA moderation
+}
+
+/// De-identified case for discussion across centres. Deliberately has NO link to a patient.
+model MdtPost {
+  id       String  @id @default(cuid())
+  centerId String
+  center   Center  @relation(fields: [centerId], references: [id], onDelete: Restrict)
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  title         String    @db.VarChar(160)
+  summary       String    @db.Text
+  gender        Gender?
+  ageBand       String?   @db.VarChar(20)
+  province      Province?
+  conditionSlug String?   @db.VarChar(80)
+  bodySite      String?   @db.VarChar(40)
+  status        MdtStatus @default(OPEN)
+
+  comments  MdtComment[]
+  documents MdtPostDocument[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([status, createdAt])
+  @@index([centerId])
+  @@map("mdt_post")
+}
+
+model MdtComment {
+  id       String  @id @default(cuid())
+  postId   String
+  post     MdtPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  centerId String
+  center   Center  @relation(fields: [centerId], references: [id], onDelete: Restrict)
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  body      String   @db.Text
+  hidden    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([postId, createdAt])
+  @@map("mdt_comment")
+}
+
+/// Teaching-consented documents attached to a post (so other centres can open exactly these).
+model MdtPostDocument {
+  postId     String
+  post       MdtPost         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  documentId String
+  document   PatientDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([postId, documentId])
+  @@map("mdt_post_document")
 }

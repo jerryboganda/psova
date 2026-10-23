@@ -403,6 +403,7 @@ type RecordWithRelations = Prisma.RegistryPatientGetPayload<{
   include: {
     diagnoses: { include: { treatments: true } };
     clinician: { include: { user: { select: { name: true; email: true } } } };
+    center: { select: { nameEn: true } };
   };
 }>;
 
@@ -469,6 +470,8 @@ export type DecryptedRecord = {
     at: string;
   };
   clinician: { id: string; name: string; facility: string } | null;
+  /** The centre that shared this record with NVAR (null for records entered directly into NVAR). */
+  centre: string | null;
   diagnoses: DecryptedDiagnosis[];
 };
 
@@ -516,6 +519,7 @@ function mapDecrypted(rec: RecordWithRelations): DecryptedRecord {
           facility: rec.clinician.facility,
         }
       : null,
+    centre: rec.center?.nameEn ?? null,
     diagnoses: rec.diagnoses.map((d) => ({
       id: d.id,
       conditionSlug: d.conditionSlug,
@@ -558,6 +562,7 @@ export async function getDecryptedRecord(
     include: {
       diagnoses: { include: { treatments: true } },
       clinician: { include: { user: { select: { name: true, email: true } } } },
+      center: { select: { nameEn: true } },
     },
   });
   if (!rec) return null;
@@ -684,6 +689,7 @@ export async function getAdminRecordDetail(
     include: {
       diagnoses: { include: { treatments: true } },
       clinician: { include: { user: { select: { name: true, email: true } } } },
+      center: { select: { nameEn: true } },
     },
   });
   if (!rec || !isNvarVisible(rec)) return null;

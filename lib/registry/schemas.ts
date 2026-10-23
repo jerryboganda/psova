@@ -27,6 +27,8 @@ import {
   APPOINTMENT_KINDS,
   RESPONSE_SCORES,
   DOCUMENT_KINDS,
+  SHARE_TYPES,
+  AGE_BANDS,
 } from './constants';
 import { isValidCnic, isValidPkMobile, isPlausibleDob, deriveDobParts } from './normalize';
 
@@ -496,3 +498,48 @@ export const documentUploadSchema = z.object({
   consentForTeaching: z.boolean(),
 });
 export type DocumentUploadInput = z.infer<typeof documentUploadSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*  Centre sharing: NVAR, referrals / second opinions, MDT board              */
+/* -------------------------------------------------------------------------- */
+
+export const nvarShareSchema = z.discriminatedUnion('action', [
+  // `consentConfirmed`: staff confirm the patient/guardian agreed to join NVAR (needed when intake did not record it).
+  z.object({ action: z.literal('SHARE'), consentConfirmed: z.boolean() }),
+  z.object({ action: z.literal('WITHDRAW') }),
+]);
+export type NvarShareInput = z.infer<typeof nvarShareSchema>;
+
+export const shareSendSchema = z.object({
+  toCenterId: z.string().min(1).max(40),
+  type: z.enum(SHARE_TYPES),
+  note: z.string().trim().min(10).max(2000),
+  // referral: the patient agreed to be referred; second opinion: the note has no identifying details
+  confirmed: z.literal(true),
+});
+export type ShareSendInput = z.infer<typeof shareSendSchema>;
+
+export const shareRespondSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('ACCEPT') }),
+  z.object({ action: z.literal('DECLINE'), reason: z.string().trim().max(500).optional() }),
+  z.object({ action: z.literal('RESPOND'), response: z.string().trim().min(10).max(4000) }),
+]);
+export type ShareRespondInput = z.infer<typeof shareRespondSchema>;
+
+export const mdtPostCreateSchema = z.object({
+  title: z.string().trim().min(5).max(160),
+  summary: z.string().trim().min(20).max(4000),
+  gender: z.enum(GENDERS).optional(),
+  ageBand: z.enum(AGE_BANDS.map((b) => b.key) as [string, ...string[]]).optional(),
+  province: z.enum(PROVINCES).optional(),
+  conditionSlug: z.enum(CONDITION_SLUG_OPTIONS).optional(),
+  bodySite: z.enum(BODY_SITES).optional(),
+  documentIds: z.array(z.string().min(1).max(40)).max(10).default([]),
+  // the author confirms the post contains nothing that could identify the patient
+  confirmed: z.literal(true),
+});
+export type MdtPostCreateInput = z.infer<typeof mdtPostCreateSchema>;
+
+export const mdtCommentSchema = z.object({ body: z.string().trim().min(2).max(2000) });
+export const mdtUpdateSchema = z.object({ action: z.enum(['RESOLVE', 'REOPEN']) });
+export const adminMdtActionSchema = z.object({ action: z.enum(['HIDE', 'UNHIDE']) });
