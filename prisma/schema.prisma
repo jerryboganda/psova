@@ -28,6 +28,7 @@ model User {
   accounts         Account[]
   clinicianProfile ClinicianProfile?
   centerMember     CenterMember?
+  encounters       Encounter[]
   auditLogs        AuditLog[]
 
   @@map("user")
@@ -204,12 +205,12 @@ model RegistryPatient {
   phoneHash String @db.VarChar(64)
 
   // --- non-PII demographics (plaintext, used for stats) ---
-  gender    Gender
-  province  Province
-  district  String // city/district name (free text from curated list)
-  birthYear Int // derived at write time from dob (for age-band stats)
+  gender     Gender
+  province   Province
+  district   String // city/district name (free text from curated list)
+  birthYear  Int // derived at write time from dob (for age-band stats)
   birthMonth Int // 1-12, derived
-  isMinor   Boolean  @default(false)
+  isMinor    Boolean  @default(false)
 
   // --- consent (plaintext booleans + metadata) ---
   consentRegistry Boolean // required true
@@ -220,10 +221,13 @@ model RegistryPatient {
   consentVersion  String   @default("v1")
   consentAt       DateTime @default(now())
 
-  diagnoses RegistryDiagnosis[]
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
+  diagnoses    RegistryDiagnosis[]
+  encounters   Encounter[]
+  appointments Appointment[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 
+  @@unique([centerId, mrn])
   @@index([status])
   @@index([province])
   @@index([cnicHash])
@@ -231,7 +235,6 @@ model RegistryPatient {
   @@index([status, province])
   @@index([createdAt])
   @@index([centerId, createdAt])
-  @@unique([centerId, mrn])
   @@map("registry_patient")
 }
 
@@ -269,6 +272,14 @@ model RegistryTreatment {
   facility String? // institution name (non-PII)
   year     Int?
   outcome  TreatmentOutcome @default(UNKNOWN)
+
+  // Centre journey: logged at a visit (docs/centres/PLAN.md). Null for NVAR-entered treatments.
+  date          DateTime?
+  drug          String?    @db.VarChar(120)
+  dose          String?    @db.VarChar(120)
+  complications String?    @db.Text // 🔐
+  encounterId   String?
+  encounter     Encounter? @relation(fields: [encounterId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
@@ -384,19 +395,21 @@ model Center {
   headDoctorPmc  String @db.Text // 🔐 PMDC/PMC registration number
   headDoctorHash String @db.VarChar(64) // # dedup blind index
 
-  status         CenterStatus @default(APPLIED)
-  tier           CenterTier   @default(MEMBER)
-  statusReason   String?      @db.Text // public-safe reason shown to the owner on reject/suspend
-  approvedAt     DateTime?
-  approvedById   String?
+  status              CenterStatus @default(APPLIED)
+  tier                CenterTier   @default(MEMBER)
+  statusReason        String?      @db.Text // public-safe reason shown to the owner on reject/suspend
+  approvedAt          DateTime?
+  approvedById        String?
   membershipExpiresAt DateTime? // null until the first payment is verified
   lastReminderAt      DateTime?
 
-  members   CenterMember[]
-  payments  CenterPayment[]
-  patients  RegistryPatient[]
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  members      CenterMember[]
+  payments     CenterPayment[]
+  patients     RegistryPatient[]
+  appointments Appointment[]
+  encounters   Encounter[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
   @@index([status])
   @@index([province])
@@ -440,4 +453,71 @@ model CenterPayment {
   @@index([centerId])
   @@index([status])
   @@map("center_payment")
+}
+
+/// ---------------- Centre patient journey (docs/centres/PLAN.md) ----------------
+
+enum AppointmentKind {
+  FIRST_VISIT
+  FOLLOW_UP
+  PROCEDURE
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  DONE
+  MISSED
+  CANCELLED
+}
+
+enum ResponseScore {
+  WORSE
+  STABLE
+  PARTIAL
+  COMPLETE
+}
+
+model Appointment {
+  id          String            @id @default(cuid())
+  patientId   String
+  patient     RegistryPatient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  centerId    String
+  center      Center            @relation(fields: [centerId], references: [id], onDelete: Restrict)
+  startsAt    DateTime
+  kind        AppointmentKind   @default(FOLLOW_UP)
+  status      AppointmentStatus @default(SCHEDULED)
+  note        String?           @db.Text // 🔐
+  createdById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([centerId, startsAt])
+  @@index([patientId])
+  @@map("appointment")
+}
+
+model Encounter {
+  id        String          @id @default(cuid())
+  patientId String
+  patient   RegistryPatient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  centerId  String
+  center    Center          @relation(fields: [centerId], references: [id], onDelete: Restrict)
+  authorId  String?
+  author    User?           @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  date           DateTime
+  notes          String?        @db.Text // 🔐
+  lesionSizeCm   Float?
+  painScore      Int? // 0-10
+  responseScore  ResponseScore?
+  plan           String?        @db.Text // 🔐
+  nextReviewDate DateTime?
+
+  treatments RegistryTreatment[]
+  createdAt  DateTime            @default(now())
+
+  @@index([patientId, date])
+  @@index([centerId])
+  @@map("encounter")
 }

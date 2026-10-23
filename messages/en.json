@@ -750,7 +750,8 @@
       "DUPLICATE": "Your record has been verified and counted in the registry.",
       "CENTRE": "You are registered with this centre, which holds your record securely. Contact the centre about appointments and care."
     },
-    "centreLabel": "Centre"
+    "centreLabel": "Centre",
+    "nextAppointment": "Next appointment"
   },
   "RegistryClinician": {
     "nav": {
@@ -1238,7 +1239,9 @@
       "stats": {
         "patients": "Patients registered",
         "recent": "New in the last 7 days",
-        "add": "Add a patient"
+        "add": "Add a patient",
+        "today": "Appointments today",
+        "overdue": "Overdue follow-ups"
       }
     },
     "profile": {
@@ -1275,7 +1278,8 @@
       "membership": "Membership",
       "poster": "QR poster",
       "certificate": "Certificate",
-      "patients": "Patients"
+      "patients": "Patients",
+      "appointments": "Appointments"
     },
     "staff": {
       "title": "Staff",
@@ -1386,13 +1390,82 @@
         "title": "Timeline",
         "intakeQr": "Registered by the patient (QR / link)",
         "addedByStaff": "Added by centre staff"
-      }
+      },
+      "backToPatient": "Back to patient"
     },
     "wa": {
       "english": "English",
       "urdu": "اردو",
       "noMobile": "This patient has no WhatsApp-capable mobile number.",
-      "trackingCode": "Hello {name}, you are registered at {centre}. Your PSOVA tracking code is {code}. Please keep it private. You can check your status here: {url}"
+      "trackingCode": "Hello {name}, you are registered at {centre}. Your PSOVA tracking code is {code}. Please keep it private. You can check your status here: {url}",
+      "appointment": "Hello {name}, this is a reminder from {centre}: your {kind} appointment is on {when}. Please reply to confirm.",
+      "missed": "Hello {name}, we missed you at {centre} for your {kind} appointment on {when}. Please contact us to book a new time."
+    },
+    "appointments": {
+      "title": "Appointments",
+      "lede": "Today's schedule, what is coming up, and follow-ups that were missed. Times are Pakistan time.",
+      "scopes": {
+        "today": "Today",
+        "upcoming": "Next 14 days",
+        "overdue": "Overdue"
+      },
+      "empty": {
+        "today": "No appointments today.",
+        "upcoming": "No appointments in the next 14 days.",
+        "overdue": "Nothing overdue."
+      },
+      "kinds": {
+        "FIRST_VISIT": "First visit",
+        "FOLLOW_UP": "Follow-up",
+        "PROCEDURE": "Procedure"
+      },
+      "statuses": {
+        "SCHEDULED": "Scheduled",
+        "DONE": "Done",
+        "MISSED": "Missed",
+        "CANCELLED": "Cancelled"
+      },
+      "markDone": "Done",
+      "markMissed": "Missed",
+      "cancel": "Cancel",
+      "error": "That could not be saved.",
+      "bookTitle": "Book an appointment",
+      "when": "Date and time",
+      "kind": "Type",
+      "note": "Note (optional)",
+      "book": "Book",
+      "booked": "Appointment booked.",
+      "waReminder": "Send a reminder on WhatsApp",
+      "waMissed": "Patient missed this visit: send a message on WhatsApp"
+    },
+    "visit": {
+      "add": "Record a visit",
+      "title": "Record a visit",
+      "lede": "Findings, the plan and any treatment given. Saving a review date books the follow-up automatically.",
+      "visit": "Visit",
+      "date": "Visit date",
+      "response": "Response to treatment",
+      "responses": {
+        "WORSE": "Worse",
+        "STABLE": "Stable",
+        "PARTIAL": "Partial response",
+        "COMPLETE": "Complete response"
+      },
+      "size": "Lesion size (cm)",
+      "pain": "Pain (0–10)",
+      "notes": "Clinical notes",
+      "plan": "Plan",
+      "treatmentToggle": "A treatment was given at this visit",
+      "treatmentType": "Treatment",
+      "treatmentOutcome": "Outcome",
+      "drug": "Drug / agent",
+      "dose": "Dose",
+      "complications": "Complications",
+      "nextReview": "Next review date",
+      "nextReviewHint": "A follow-up appointment at 9:00 am is booked for this date.",
+      "save": "Save visit",
+      "error": "The visit could not be saved. Please check the details.",
+      "invalid": "Please check this field."
     }
   }
 }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations, useFormatter, useLocale } from 'next-intl';
+import { CENTRE_TIME_ZONE } from '@/lib/registry/constants';
 import { Search, Loader2, Info } from 'lucide-react';
 import { statusSchema, type StatusInput } from '@/lib/registry/schemas';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -17,10 +18,12 @@ type Result = {
   firstName: string;
   publicReason?: string;
   centre?: { en: string; ur: string };
+  nextAppointment?: { startsAt: string; kind: string };
 };
 
 export function StatusLookup() {
   const t = useTranslations('RegistryStatus');
+  const ta = useTranslations('Centres.appointments');
   const format = useFormatter();
   const locale = useLocale();
   const [state, setState] = useState<'idle' | 'checking' | 'notfound' | 'error'>('idle');
@@ -100,6 +103,16 @@ export function StatusLookup() {
               <dt className="text-sm text-[var(--color-faint)]">{t('firstNameLabel')}:</dt>
               <dd className="text-sm font-medium text-[var(--color-fg)]">{result.firstName}</dd>
             </div>
+            {result.nextAppointment && (
+              <div className="flex items-baseline gap-2">
+                <dt className="text-sm text-[var(--color-faint)]">{t('nextAppointment')}:</dt>
+                <dd className="text-sm font-medium text-[var(--color-fg)]">
+                  {format.dateTime(new Date(result.nextAppointment.startsAt), { dateStyle: 'medium', timeStyle: 'short', timeZone: CENTRE_TIME_ZONE })}
+                  {' · '}
+                  {ta(`kinds.${result.nextAppointment.kind}`)}
+                </dd>
+              </div>
+            )}
             {result.centre && (
               <div className="flex items-baseline gap-2">
                 <dt className="text-sm text-[var(--color-faint)]">{t('centreLabel')}:</dt>

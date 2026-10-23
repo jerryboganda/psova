@@ -162,6 +162,7 @@ export type StatusResult = {
   publicReason?: string;
   /** Present when the record belongs to a centre and has not been shared with NVAR. */
   centre?: { en: string; ur: string };
+  nextAppointment?: { startsAt: string; kind: string };
 };
 
 export async function statusLookup(
@@ -183,6 +184,12 @@ export async function statusLookup(
       centerId: true,
       sharedWithNvar: true,
       center: { select: { nameEn: true, nameUr: true } },
+      appointments: {
+        where: { status: 'SCHEDULED', startsAt: { gte: new Date() } },
+        orderBy: { startsAt: 'asc' },
+        take: 1,
+        select: { startsAt: true, kind: true },
+      },
     },
   });
 
@@ -204,6 +211,9 @@ export async function statusLookup(
       submittedAt: patient.createdAt.toISOString(),
       firstName: firstToken(decryptField(patient.fullName)),
       centre: { en: patient.center.nameEn, ur: patient.center.nameUr || patient.center.nameEn },
+      nextAppointment: patient.appointments[0]
+        ? { startsAt: patient.appointments[0].startsAt.toISOString(), kind: patient.appointments[0].kind }
+        : undefined,
     };
   }
 

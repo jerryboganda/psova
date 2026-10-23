@@ -24,6 +24,8 @@ import {
   CENTER_PAYMENT_METHODS,
   CENTER_PAYMENT_STATUSES,
   CENTER_STAFF_ROLES,
+  APPOINTMENT_KINDS,
+  RESPONSE_SCORES,
 } from './constants';
 import { isValidCnic, isValidPkMobile, isPlausibleDob, deriveDobParts } from './normalize';
 
@@ -433,3 +435,56 @@ export const resetPasswordSchema = z
   })
   .refine((d) => d.password === d.confirm, { path: ['confirm'], message: 'Passwords do not match.' });
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*  Centre patient journey: appointments and visits                           */
+/* -------------------------------------------------------------------------- */
+
+const isoInstant = z.string().datetime({ offset: true });
+const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+export const appointmentCreateSchema = z.object({
+  patientId: z.string().min(1).max(40),
+  startsAt: isoInstant,
+  kind: z.enum(APPOINTMENT_KINDS),
+  note: z.string().trim().max(500).optional(),
+});
+export type AppointmentCreateInput = z.infer<typeof appointmentCreateSchema>;
+
+export const appointmentUpdateSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('STATUS'), status: z.enum(['SCHEDULED', 'DONE', 'MISSED', 'CANCELLED']) }),
+  z.object({ action: z.literal('RESCHEDULE'), startsAt: isoInstant }),
+]);
+export type AppointmentUpdateInput = z.infer<typeof appointmentUpdateSchema>;
+
+export const encounterCreateSchema = z
+  .object({
+    date: dateOnly,
+    notes: z.string().trim().max(4000).optional(),
+    lesionSizeCm: z.number().min(0).max(200).optional(),
+    painScore: z.number().int().min(0).max(10).optional(),
+    responseScore: z.enum(RESPONSE_SCORES).optional(),
+    // doctor-only (enforced server-side): the plan and any treatment given at this visit
+    plan: z.string().trim().max(2000).optional(),
+    nextReviewDate: dateOnly.optional(),
+    treatment: z
+      .object({
+        type: z.enum(TREATMENT_TYPES),
+        drug: z.string().trim().max(120).optional(),
+        dose: z.string().trim().max(120).optional(),
+        outcome: z.enum(TREATMENT_OUTCOMES),
+        complications: z.string().trim().max(1000).optional(),
+      })
+      .optional(),
+  })
+  .superRefine((d, ctx) => {
+    const t = Date.parse(d.date);
+    const now = Date.now();
+    if (Number.isNaN(t) || t > now + 24 * 60 * 60 * 1000 || t < Date.parse('1950-01-01')) {
+      ctx.addIssue({ code: 'custom', path: ['date'], message: 'Enter the visit date.' });
+    }
+    if (d.nextReviewDate && Date.parse(d.nextReviewDate) < t) {
+      ctx.addIssue({ code: 'custom', path: ['nextReviewDate'], message: 'The review must be after the visit.' });
+    }
+  });
+export type EncounterCreateInput = z.infer<typeof encounterCreateSchema>;

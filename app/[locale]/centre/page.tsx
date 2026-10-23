@@ -8,6 +8,7 @@ import { PaymentHistory } from '@/components/centres/PaymentHistory';
 import { Link } from '@/i18n/navigation';
 import { isPubliclyListed, membershipAllowsWrites } from '@/lib/registry/membership';
 import { prisma } from '@/lib/registry/db';
+import { appointmentCounts } from '@/lib/registry/centre-journey';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,8 @@ export default async function CentreHomePage({
   const { user, center, state } = await requireCenterMember(await headers());
   const date = (d: Date) => format.dateTime(d, { dateStyle: 'medium' });
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const [patients, recent] = await Promise.all([
+  const [appts, patients, recent] = await Promise.all([
+    appointmentCounts(center),
     prisma.registryPatient.count({ where: { centerId: center.id } }),
     prisma.registryPatient.count({ where: { centerId: center.id, createdAt: { gte: weekAgo } } }),
   ]);
@@ -35,7 +37,7 @@ export default async function CentreHomePage({
       <h1 className="mb-1 text-2xl font-bold md:text-3xl">{t('dash.welcome', { name: user.name })}</h1>
       <p className="mb-8 text-[var(--color-muted)]">{center.nameEn}</p>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Link href="/centre/patients" className="rounded-[var(--radius-2xl)] border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-white/25">
           <p className="text-3xl font-bold">{patients}</p>
           <p className="text-sm text-[var(--color-muted)]">{t('dash.stats.patients')}</p>
@@ -43,6 +45,14 @@ export default async function CentreHomePage({
         <Link href="/centre/patients" className="rounded-[var(--radius-2xl)] border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-white/25">
           <p className="text-3xl font-bold">{recent}</p>
           <p className="text-sm text-[var(--color-muted)]">{t('dash.stats.recent')}</p>
+        </Link>
+        <Link href="/centre/appointments?scope=today" className="rounded-[var(--radius-2xl)] border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-white/25">
+          <p className="text-3xl font-bold">{appts.today}</p>
+          <p className="text-sm text-[var(--color-muted)]">{t('dash.stats.today')}</p>
+        </Link>
+        <Link href="/centre/appointments?scope=overdue" className="rounded-[var(--radius-2xl)] border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-white/25">
+          <p className={`text-3xl font-bold ${appts.overdue > 0 ? 'text-amber-300' : ''}`}>{appts.overdue}</p>
+          <p className="text-sm text-[var(--color-muted)]">{t('dash.stats.overdue')}</p>
         </Link>
         {membershipAllowsWrites(state) && (
           <Link href="/centre/patients/new" className="flex items-center gap-3 rounded-[var(--radius-2xl)] bg-brand p-5 font-semibold text-white">

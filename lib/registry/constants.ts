@@ -179,6 +179,10 @@ export const AuditAction = {
   CENTER_PATIENT_VIEW: 'CENTER_PATIENT_VIEW',
   CENTER_PATIENT_LIST: 'CENTER_PATIENT_LIST',
   WHATSAPP_OPENED: 'WHATSAPP_OPENED',
+  CENTER_APPOINTMENT_CREATE: 'CENTER_APPOINTMENT_CREATE',
+  CENTER_APPOINTMENT_UPDATE: 'CENTER_APPOINTMENT_UPDATE',
+  CENTER_APPOINTMENT_LIST: 'CENTER_APPOINTMENT_LIST',
+  CENTER_VISIT_CREATE: 'CENTER_VISIT_CREATE',
   CENTER_RENEWAL_REMINDER: 'CENTER_RENEWAL_REMINDER',
 } as const;
 
@@ -215,6 +219,12 @@ export const CENTER_SERVICES = [
   'genetic-testing',
 ] as const;
 
+export const APPOINTMENT_KINDS = ['FIRST_VISIT', 'FOLLOW_UP', 'PROCEDURE'] as const;
+export const APPOINTMENT_STATUSES = ['SCHEDULED', 'DONE', 'MISSED', 'CANCELLED'] as const;
+export const RESPONSE_SCORES = ['WORSE', 'STABLE', 'PARTIAL', 'COMPLETE'] as const;
+/** Pakistan has no DST; centre times are shown and defaulted in this zone. */
+export const CENTRE_TIME_ZONE = 'Asia/Karachi';
+
 /** Yearly membership: PKR 1,000/month billed annually. */
 export const MEMBERSHIP_FEE_PKR = 12000;
 /** Reminder window before expiry, and read-only/hidden grace after it. */
@@ -240,4 +250,5 @@ export type CenterTypeValue = (typeof CENTER_TYPES)[number];
 export type CenterStatusValue = (typeof CENTER_STATUSES)[number];
 export type CenterTierValue = (typeof CENTER_TIERS)[number];
 export type CenterRoleValue = (typeof CENTER_ROLES)[number];
+export type AppointmentKindValue = (typeof APPOINTMENT_KINDS)[number];
 export type CenterPaymentMethodValue = (typeof CENTER_PAYMENT_METHODS)[number];
