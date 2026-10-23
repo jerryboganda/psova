@@ -1,4 +1,4 @@
-import { Component, useEffect, useRef, type ErrorInfo, type ReactNode } from 'react';
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { HashRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider, useApp } from './app-context';
@@ -30,12 +30,12 @@ function Shell() {
   const { loading, snapshot } = useApp(); const navigate = useNavigate();
   const location = useLocation();
   const depth = location.pathname.split('/').filter(Boolean).length;
-  const previous = useRef({ path: location.pathname, depth, dir: 0 });
-  if (previous.current.path !== location.pathname) {
+  const [prev, setPrev] = useState({ path: location.pathname, depth, dir: 0 });
+  if (prev.path !== location.pathname) {
     const rtl = document.documentElement.dir === 'rtl' ? -1 : 1;
-    previous.current = { path: location.pathname, depth, dir: Math.sign(depth - previous.current.depth) * rtl };
+    setPrev({ path: location.pathname, depth, dir: Math.sign(depth - prev.depth) * rtl });
   }
-  const dir = previous.current.dir;
+  const dir = prev.dir;
   useEffect(() => { let dispose: () => void = () => {}; void listenForDeepLinks((path) => navigate(path)).then((fn) => { dispose = fn; }); return () => dispose(); }, [navigate]);
   if (loading || !snapshot) return <LoadingScreen/>;
   return <div className="app-shell"><a className="skip-link" href="#main-content">Skip to content</a><StatusBanner/>
