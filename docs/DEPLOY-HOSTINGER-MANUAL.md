@@ -108,6 +108,32 @@ repo (Websites → Add website → Node.js → Import Git repository, branch `ma
 from the old app, test on its temporary `*.hostingersite.com` URL, then move the domain. That also gives real
 auto-deploy on push. Not done yet because it moves a live domain; do it deliberately, not mid-event.
 
+## Schema changes (migrations + Prisma client)
+
+The deploy script never touches the database or the generated Prisma client, so a release that changes `prisma/schema.prisma`
+needs two extra steps. Order matters: **database first** (additive migrations leave the old code working), then the code.
+Done for the centres network on 2026-10-24 (six migrations, `20261023…` to `20261028…`).
+
+1. **Back up the DB** on the server into a subfolder (not `~/backups/psova-*`: the rollback picks the newest entry of that glob):
+   `mysqldump --single-transaction --routines --triggers <db> > ~/backups/db/psova-db-<stamp>.sql`. The connection string is in
+   the running app's environment (`/proc/$(pgrep -u $USER -f next-server)/environ`, key `DATABASE_URL`); read it in the server
+   shell and pass the password through `MYSQL_PWD` so it never lands in a command line or log. `mysql`/`mysqldump` are installed.
+2. **Apply the migrations** with the server's `mysql` client, oldest first, stopping at the first error (there is no Prisma CLI on the
+   server and Remote MySQL is not needed). Then record each in `_prisma_migrations` (`id=UUID()`, `checksum` = sha256 of the committed
+   `migration.sql`, `migration_name`, `finished_at`, `started_at`, `applied_steps_count=1`) so a later `prisma migrate deploy` from a
+   PC sees them as applied.
+3. **Deploy with the new generated client**: `scripts/hostinger-deploy.sh --with-prisma`. It swaps `node_modules/.prisma` for the one
+   generated in CI (matching the new schema) and keeps any query engine the server already had (e.g. OpenSSL 1.1). Rollback restores it.
+4. Before step 3 you can prove the new client against the migrated DB with a scratch copy and a transaction that is rolled back
+   (create a row, read it back, throw). That also showed MariaDB returns `JSON` columns as arrays here; the code still tolerates
+   a raw string (`lib/registry/json.ts`).
+
+New runtime packages that are bundled by Turbopack (e.g. `qrcode`) need nothing on the server; check by looking for the package
+in `.next/server/chunks` of the build rather than in the runtime `node_modules` tarball.
+
+Production environment is set in hPanel (not by this script). For the centres network add `UPLOAD_DIR` (below) and the `SMTP_*` set from
+`.env.example`: without SMTP, staff invites, approvals and renewal reminders are silently skipped.
+
 ## Centre uploads (photos / reports)
 
 Centre staff can attach clinical photos and PDF reports to patients. The files are stored **encrypted** (AES-256-GCM, same key as
