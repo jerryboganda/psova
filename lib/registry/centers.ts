@@ -371,12 +371,12 @@ function membershipDate(value: string | null | undefined): Date | null {
 }
 
 /** Creates an auth account for a centre owner/staff member without touching the admin session. */
-async function createCentreUser(name: string, email: string): Promise<string> {
+async function createCentreUser(name: string, email: string, password?: string): Promise<string> {
   const authCtx = await auth.$context;
   const existing = await authCtx.internalAdapter.findUserByEmail(email);
   if (existing?.user) throw new RegistryApiError(409, 'conflict');
 
-  const hash = await authCtx.password.hash(randomBytes(24).toString('base64url'));
+  const hash = await authCtx.password.hash(password || randomBytes(24).toString('base64url'));
   const user = await authCtx.internalAdapter.createUser({
     email,
     name,
@@ -400,7 +400,8 @@ async function createCentreUser(name: string, email: string): Promise<string> {
 async function resolveCentreOwner(
   ownerName: string | undefined,
   ownerEmail: string | undefined,
-): Promise<{ userId: string; created: boolean } | null> {
+  ownerPassword?: string,
+): Promise<{ userId: string; created: boolean; needsSetup: boolean } | null> {
   const email = ownerEmail?.trim().toLowerCase();
   if (!email) return null;
   const name = ownerName?.trim() || email.split('@')[0].replace(/[._-]+/g, ' ');
@@ -412,9 +413,9 @@ async function resolveCentreOwner(
     if (user.role === 'admin') throw new RegistryApiError(409, 'conflict');
     const member = await prisma.centerMember.findUnique({ where: { userId: user.id }, select: { id: true } });
     if (member) throw new RegistryApiError(409, 'conflict');
-    return { userId: user.id, created: false };
+    return { userId: user.id, created: false, needsSetup: false };
   }
-  return { userId: await createCentreUser(name, email), created: true };
+  return { userId: await createCentreUser(name, email, ownerPassword), created: true, needsSetup: !ownerPassword };
 }
 
 export type CenterAdminDetail = {
@@ -548,8 +549,8 @@ export async function getCenterAdminDetail(id: string): Promise<CenterAdminDetai
 export async function createCenterByAdmin(
   input: AdminCenterCreateInput,
   ctx: { adminId: string; ip: string | null },
-): Promise<{ id: string; ownerCreated: boolean; ownerEmail: string | null }> {
-  const owner = await resolveCentreOwner(input.ownerName, input.ownerEmail);
+): Promise<{ id: string; ownerCreated: boolean; ownerEmail: string | null; ownerNeedsSetup: boolean }> {
+  const owner = await resolveCentreOwner(input.ownerName, input.ownerEmail, input.ownerPassword);
   const ownerEmail = input.ownerEmail?.trim().toLowerCase() || null;
   const slug = await uniqueSlug(input.nameEn, input.city);
   const headDoctorHash = blindIndex(input.headDoctorPmc, 'pmc');
@@ -607,9 +608,14 @@ export async function createCenterByAdmin(
     ip: ctx.ip,
   });
 
-  if (owner?.created && ownerEmail) await sendSetupLink(ownerEmail);
+  if (owner?.needsSetup && ownerEmail) await sendSetupLink(ownerEmail);
   if (approved && ownerEmail) void sendCenterApproved(ownerEmail, input.nameEn);
-  return { id: centerId, ownerCreated: owner?.created ?? false, ownerEmail };
+  return {
+    id: centerId,
+    ownerCreated: owner?.created ?? false,
+    ownerEmail,
+    ownerNeedsSetup: owner?.needsSetup ?? false,
+  };
 }
 
 export async function updateCenterByAdmin(
@@ -754,7 +760,7 @@ export async function addCenterStaffByAdmin(
   centerId: string,
   input: AdminCenterStaffCreateInput,
   ctx: { adminId: string; ip: string | null },
-): Promise<{ created: boolean }> {
+): Promise<{ created: boolean; needsSetup: boolean }> {
   const center = await prisma.center.findUnique({ where: { id: centerId }, select: { id: true } });
   if (!center) throw new RegistryApiError(404, 'not-found');
 
@@ -773,7 +779,7 @@ export async function addCenterStaffByAdmin(
     userId = user.id;
     await prisma.user.update({ where: { id: userId }, data: { role: 'center' } });
   } else {
-    userId = await createCentreUser(name, email);
+    userId = await createCentreUser(name, email, input.password);
     created = true;
   }
 
@@ -793,8 +799,8 @@ export async function addCenterStaffByAdmin(
     meta: { centerId, role: input.role, created },
     ip: ctx.ip,
   });
-  if (created) await sendSetupLink(email);
-  return { created };
+  if (created && !input.password) await sendSetupLink(email);
+  return { created, needsSetup: created && !input.password };
 }
 
 async function assertNotLastOwner(centerId: string, memberId: string, role: string): Promise<void> {
@@ -1080,8 +1086,9 @@ export async function inviteStaff(
     return;
   }
 
-  // Random throwaway password; the invitee sets their own through the emailed link.
-  const hash = await authCtx.password.hash(randomBytes(24).toString('base64url'));
+  // A temporary password makes the invite usable without SMTP; otherwise the
+  // invitee sets their own through the emailed link.
+  const hash = await authCtx.password.hash(input.password || randomBytes(24).toString('base64url'));
   const user = await authCtx.internalAdapter.createUser({
     email,
     name: input.name,
@@ -1110,7 +1117,7 @@ export async function inviteStaff(
     meta: { centerId: center.id, role: input.role, created: true },
     ip: ctx.ip,
   });
-  await sendSetupLink(email);
+  if (!input.password) await sendSetupLink(email);
 }
 
 export async function updateStaff(

@@ -54,7 +54,7 @@ export function CentreStaff() {
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.ok) {
         reset();
-        setNotice({ kind: 'ok', text: t('invited') });
+        setNotice({ kind: 'ok', text: values.password ? t('invitedPassword') : t('invited') });
         load();
       } else {
         setNotice({ kind: 'error', text: data?.error === 'conflict' ? t('exists') : t('error') });
@@ -107,6 +107,10 @@ export function CentreStaff() {
                 <option key={r} value={r}>{t(`roles.${r}`)}</option>
               ))}
             </select>
+          </FormField>
+          <FormField id="st-password" label={t('password')} optionalLabel={t('passwordOptional')} error={errors.password ? t('invalid') : undefined}>
+            <input id="st-password" type="password" dir="ltr" minLength={10} className={fieldClass} aria-invalid={!!errors.password} {...register('password')} />
+            <p className="mt-1 text-xs text-[var(--color-faint)]">{t('passwordHint')}</p>
           </FormField>
         </div>
         <ul className="mt-4 grid gap-1 text-xs text-[var(--color-faint)] md:grid-cols-3">

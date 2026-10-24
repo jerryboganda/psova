@@ -100,6 +100,7 @@ type FormState = {
   statusReason: string;
   ownerName: string;
   ownerEmail: string;
+  ownerPassword: string;
 };
 
 const emptyForm: FormState = {
@@ -125,6 +126,7 @@ const emptyForm: FormState = {
   statusReason: '',
   ownerName: '',
   ownerEmail: '',
+  ownerPassword: '',
 };
 
 function formFromDetail(d: CenterDetail): FormState {
@@ -151,6 +153,7 @@ function formFromDetail(d: CenterDetail): FormState {
     statusReason: d.statusReason ?? '',
     ownerName: '',
     ownerEmail: '',
+    ownerPassword: '',
   };
 }
 
@@ -174,7 +177,7 @@ export function AdminCentreEditor({ id }: { id?: string }) {
 
   const [staffOpen, setStaffOpen] = useState(false);
   const [staffBusy, setStaffBusy] = useState(false);
-  const [staffForm, setStaffForm] = useState({ name: '', email: '', role: 'DOCTOR' });
+  const [staffForm, setStaffForm] = useState({ name: '', email: '', role: 'DOCTOR', password: '' });
   const [removeStaff, setRemoveStaff] = useState<StaffRow | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -241,6 +244,7 @@ export function AdminCentreEditor({ id }: { id?: string }) {
     if (isCreate) {
       base.ownerName = form.ownerName;
       base.ownerEmail = form.ownerEmail;
+      if (form.ownerPassword.trim()) base.ownerPassword = form.ownerPassword;
     } else {
       base.action = 'UPDATE';
     }
@@ -339,7 +343,7 @@ export function AdminCentreEditor({ id }: { id?: string }) {
         return;
       }
       setStaffOpen(false);
-      setStaffForm({ name: '', email: '', role: 'DOCTOR' });
+      setStaffForm({ name: '', email: '', role: 'DOCTOR', password: '' });
       await load();
     } finally {
       setStaffBusy(false);
@@ -587,6 +591,11 @@ export function AdminCentreEditor({ id }: { id?: string }) {
                 <label htmlFor="cf-owner-email" className={labelClass}>{t('ownerEmail')}</label>
                 <input id="cf-owner-email" type="email" dir="ltr" className={fieldClass} value={form.ownerEmail} onChange={(e) => set('ownerEmail', e.target.value)} />
               </div>
+              <div>
+                <label htmlFor="cf-owner-password" className={labelClass}>{t('ownerPassword')}</label>
+                <input id="cf-owner-password" type="password" dir="ltr" minLength={10} className={fieldClass} value={form.ownerPassword} onChange={(e) => set('ownerPassword', e.target.value)} />
+                <p className="mt-1 text-xs text-[var(--color-faint)]">{t('ownerPasswordHint')}</p>
+              </div>
             </div>
             <p className="mt-2 text-xs text-[var(--color-faint)]">{t('ownerEmailHint')}</p>
           </GlassCard>
@@ -754,6 +763,11 @@ export function AdminCentreEditor({ id }: { id?: string }) {
             <select id="sf-role" className={fieldClass} value={staffForm.role} onChange={(e) => setStaffForm((s) => ({ ...s, role: e.target.value }))}>
               {CENTER_ROLES.map((r) => <option key={r} value={r}>{tcn(`staff.roles.${r}`)}</option>)}
             </select>
+          </div>
+          <div>
+            <label htmlFor="sf-password" className={labelClass}>{t('staffPassword')}</label>
+            <input id="sf-password" type="password" dir="ltr" minLength={10} className={fieldClass} value={staffForm.password} onChange={(e) => setStaffForm((s) => ({ ...s, password: e.target.value }))} />
+            <p className="mt-1 text-xs text-[var(--color-faint)]">{t('staffPasswordHint')}</p>
           </div>
         </form>
       </Dialog>

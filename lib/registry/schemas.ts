@@ -456,6 +456,7 @@ export const staffInviteSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().email(),
   role: z.enum(CENTER_STAFF_ROLES),
+  password: z.string().min(10).max(128).optional().or(z.literal('')),
 });
 export type StaffInviteInput = z.infer<typeof staffInviteSchema>;
 
@@ -504,6 +505,8 @@ export const adminCenterCreateSchema = z
     // Optional owner account. Leave both blank for an admin-managed centre.
     ownerName: z.string().trim().min(2).max(120).optional().or(z.literal('')),
     ownerEmail: z.string().email().optional().or(z.literal('')),
+    // Optional temporary password for deployments without SMTP (otherwise a setup email is sent).
+    ownerPassword: z.string().min(10).max(128).optional().or(z.literal('')),
   })
   .superRefine((data, ctx) => {
     const hasName = Boolean(data.ownerName?.trim());
@@ -575,6 +578,7 @@ export const adminCenterStaffCreateSchema = z.object({
   name: z.string().trim().min(2).max(120).optional(),
   email: z.string().email(),
   role: z.enum(CENTER_ROLES),
+  password: z.string().min(10).max(128).optional().or(z.literal('')),
 });
 export type AdminCenterStaffCreateInput = z.infer<typeof adminCenterStaffCreateSchema>;
 
