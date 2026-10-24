@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslations, useLocale, useFormatter } from 'next-intl';
+import { RotateCcw } from 'lucide-react';
 import { useRouter } from '@/i18n/navigation';
 import { DataTable, type Column } from './DataTable';
 import { RegistryBadge } from './RegistryBadge';
@@ -28,16 +29,19 @@ export function MyCasesTable() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async (p: number) => {
     setLoading(true);
+    setError(false);
     try {
       const res = await fetch(`/api/registry/cases?page=${p}`, { cache: 'no-store' });
       const data = await res.json().catch(() => ({}));
-      if (data?.ok) {
-        setRows(data.items as Row[]);
-        setTotal(data.total as number);
-      }
+      if (!res.ok || !data?.ok) throw new Error();
+      setRows(data.items as Row[]);
+      setTotal(data.total as number);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -61,6 +65,17 @@ export function MyCasesTable() {
     { key: 'status', header: t('table.status'), render: (r) => <RegistryBadge status={r.status} /> },
     { key: 'date', header: t('table.date'), render: (r) => format.dateTime(new Date(r.createdAt), { dateStyle: 'medium' }) },
   ];
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-[var(--radius-2xl)] border border-[var(--color-rose)]/30 bg-[var(--color-rose)]/5 px-4 py-12 text-center">
+        <p className="text-sm text-[var(--color-rose)]">{t('loadError')}</p>
+        <button type="button" onClick={() => load(page)} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium">
+          <RotateCcw className="size-4" /> {t('retry')}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <DataTable

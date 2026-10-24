@@ -109,10 +109,20 @@ export default async function CentrePatientPage({
           )}
           <div>
             <p className="mb-2 text-xs text-[var(--color-faint)]">{t('waTitle')}</p>
-            <WhatsAppButtons patientId={record.id} phone={record.phone} template="trackingCode" texts={texts} />
+            {record.consent.contact ? (
+              <WhatsAppButtons patientId={record.id} phone={record.phone} template="trackingCode" texts={texts} />
+            ) : (
+              <p className="max-w-xs text-xs text-[var(--color-muted)]">{t('waNoConsent')}</p>
+            )}
           </div>
         </div>
       </div>
+
+      {!record.sharedWithNvar && (
+        <p className="mb-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-[var(--color-muted)]">
+          {t('notSharedNvar')}
+        </p>
+      )}
 
       <RecordView
         record={record}

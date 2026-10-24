@@ -8,6 +8,14 @@ export function normalizeCnic(value: string): string {
   return value.replace(/\D/g, '');
 }
 
+/** Progressive CNIC mask for inputs: 12345-1234567-1 (digits only, max 13). */
+export function formatCnicInput(value: string): string {
+  const d = value.replace(/\D/g, '').slice(0, 13);
+  if (d.length <= 5) return d;
+  if (d.length <= 12) return `${d.slice(0, 5)}-${d.slice(5)}`;
+  return `${d.slice(0, 5)}-${d.slice(5, 12)}-${d.slice(12)}`;
+}
+
 /** PK phone → digits; `0XXXXXXXXXX` → `92XXXXXXXXXX`; `+`/`00` stripped. */
 export function normalizePhone(value: string): string {
   let digits = value.replace(/\D/g, '');

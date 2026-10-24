@@ -7,7 +7,7 @@ import {
   apiOk,
   getClientIp,
   handleApiError,
-  requireCenterMember,
+  requireCenterApplicant,
   verifyOrigin,
 } from '@/lib/registry/guards';
 
@@ -16,7 +16,7 @@ export const runtime = 'nodejs';
 export async function POST(req: Request) {
   try {
     verifyOrigin(req);
-    const { user, center } = await requireCenterMember(req.headers, { roles: ['OWNER'] });
+    const { user, center } = await requireCenterApplicant(req.headers, { roles: ['OWNER'] });
     const parsed = centerPaymentProofSchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) return apiError('validation', 400);
     await submitCenterPayment(center.id, parsed.data, { actorId: user.id, ip: getClientIp(req) });

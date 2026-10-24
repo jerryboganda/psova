@@ -16,6 +16,16 @@ export const revalidate = 3600;
 export async function GET() {
   try {
     const stats = await getPublicStats();
+    if (!stats.published) {
+      return NextResponse.json({
+        ...stats,
+        byProvince: [],
+        byCondition: [],
+        byGender: [],
+        byAgeBand: [],
+        byYear: [],
+      });
+    }
     return NextResponse.json({ ok: true, ...stats });
   } catch {
     // Degrade gracefully (e.g. DB unreachable at build) — ISR revalidates later.

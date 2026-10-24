@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useFormatter, useTranslations } from 'next-intl';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Search } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { DataTable, type Column } from './DataTable';
 import { Dialog } from './Dialog';
 import { fieldClass, labelClass } from './field';
@@ -83,10 +84,13 @@ function CentresTab() {
   const format = useFormatter();
 
   const [filter, setFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState<CenterRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const [dlg, setDlg] = useState<{ row: CenterRow; mode: CenterMode } | null>(null);
   const [reason, setReason] = useState('');
@@ -97,17 +101,20 @@ function CentresTab() {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  const load = useCallback(async (p: number, f: string) => {
+  const load = useCallback(async (p: number, f: string, query: string) => {
     setLoading(true);
+    setLoadFailed(false);
     try {
       const params = new URLSearchParams({ page: String(p) });
       if (f) params.set('status', f);
+      if (query) params.set('q', query);
       const res = await fetch(`/api/registry/admin/centres?${params.toString()}`, { cache: 'no-store' });
       const data = await res.json().catch(() => ({}));
-      if (data?.ok) {
-        setRows(data.items as CenterRow[]);
-        setTotal(data.total as number);
-      }
+      if (!res.ok || !data?.ok) throw new Error();
+      setRows(data.items as CenterRow[]);
+      setTotal(data.total as number);
+    } catch {
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -115,10 +122,10 @@ function CentresTab() {
 
   useEffect(() => {
     setPage(1);
-  }, [filter]);
+  }, [filter, q]);
   useEffect(() => {
-    load(page, filter);
-  }, [page, filter, load]);
+    load(page, filter, q);
+  }, [page, filter, q, load]);
 
   function open(row: CenterRow, mode: CenterMode) {
     setReason('');
@@ -163,7 +170,7 @@ function CentresTab() {
       });
       if (res.ok) {
         setDlg(null);
-        load(page, filter);
+        load(page, filter, q);
       } else {
         setFailed(true);
       }
@@ -231,6 +238,9 @@ function CentresTab() {
       header: '',
       render: (r) => (
         <div className="flex flex-wrap gap-2">
+          <Link href={`/registry/admin/centres/${r.id}`} className={actionBtn}>
+            {t('manage')}
+          </Link>
           {(r.status === 'APPLIED' || r.status === 'REJECTED') && (
             <button type="button" onClick={() => open(r, 'APPROVE')} className={actionBtn}>{t('approve')}</button>
           )}
@@ -276,6 +286,43 @@ function CentresTab() {
 
   return (
     <>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-1 flex-wrap items-center gap-2">
+          <input
+            className={`${fieldClass} w-full max-w-xs`}
+            placeholder={t('searchPlaceholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                setQ(search.trim());
+              }
+            }}
+            aria-label={t('search')}
+          />
+          <button
+            type="button"
+            onClick={() => setQ(search.trim())}
+            className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-[var(--color-fg)] hover:bg-white/10"
+          >
+            <Search className="size-4" /> {t('search')}
+          </button>
+          {q && (
+            <button
+              type="button"
+              onClick={() => { setSearch(''); setQ(''); }}
+              className="text-sm text-[var(--color-muted)] hover:text-[var(--color-fg)]"
+            >
+              {t('clearSearch')}
+            </button>
+          )}
+        </div>
+        <Link href="/registry/admin/centres/new" className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white">
+          <Plus className="size-4" /> {t('newCentre')}
+        </Link>
+      </div>
+
       <div className="flex flex-wrap gap-2">
         {filters.map((f) => (
           <button key={f.key || 'all'} type="button" onClick={() => setFilter(f.key)} className={chip(filter === f.key)}>
@@ -284,14 +331,23 @@ function CentresTab() {
         ))}
       </div>
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r.id}
-        empty={t('empty')}
-        loading={loading}
-        pagination={{ page, pageSize: 20, total, onPage: setPage }}
-      />
+      {loadFailed ? (
+        <div className="flex flex-col items-center gap-3 rounded-[var(--radius-2xl)] border border-[var(--color-rose)]/30 bg-[var(--color-rose)]/5 px-4 py-12 text-center">
+          <p className="text-sm text-[var(--color-rose)]">{tc('error')}</p>
+          <button type="button" onClick={() => load(page, filter, q)} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium">
+            {tc('retry')}
+          </button>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          empty={t('empty')}
+          loading={loading}
+          pagination={{ page, pageSize: 20, total, onPage: setPage }}
+        />
+      )}
 
       <Dialog
         open={dlg !== null}
@@ -319,6 +375,11 @@ function CentresTab() {
       >
         {dlg && <p className="mb-4 text-sm font-medium">{dlg.row.nameEn} · {dlg.row.city}</p>}
         {dlg?.mode === 'APPROVE' && <p className="mb-4 text-sm text-[var(--color-muted)]">{t('approveBody')}</p>}
+        {dlg?.mode === 'APPROVE' && !dlg.row.membershipExpiresAt && (
+          <p className="mb-4 rounded-2xl border border-amber-400/30 bg-amber-400/5 p-3 text-sm text-amber-200">
+            {t('approveNoMembership')}
+          </p>
+        )}
         {(dlg?.mode === 'APPROVE' || dlg?.mode === 'SET_TIER') && (
           <div className="mb-4">
             <label htmlFor="c-tier" className={labelClass}>{t('tierLabel')}</label>
@@ -365,6 +426,7 @@ function PaymentsTab() {
   const t = useTranslations('RegistryAdmin.payments');
   const tm = useTranslations('Centres.apply.payment.methods');
   const tcc = useTranslations('RegistryAdmin.centres');
+  const tcommon = useTranslations('RegistryCommon');
   const format = useFormatter();
 
   const [filter, setFilter] = useState<'PENDING' | 'VERIFIED' | 'REJECTED'>('PENDING');
@@ -372,6 +434,7 @@ function PaymentsTab() {
   const [rows, setRows] = useState<PaymentRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const [dlg, setDlg] = useState<{ row: PaymentRow; mode: PaymentMode } | null>(null);
   const [reason, setReason] = useState('');
@@ -380,14 +443,16 @@ function PaymentsTab() {
 
   const load = useCallback(async (p: number, f: string) => {
     setLoading(true);
+    setLoadFailed(false);
     try {
       const params = new URLSearchParams({ page: String(p), status: f });
       const res = await fetch(`/api/registry/admin/center-payments?${params.toString()}`, { cache: 'no-store' });
       const data = await res.json().catch(() => ({}));
-      if (data?.ok) {
-        setRows(data.items as PaymentRow[]);
-        setTotal(data.total as number);
-      }
+      if (!res.ok || !data?.ok) throw new Error();
+      setRows(data.items as PaymentRow[]);
+      setTotal(data.total as number);
+    } catch {
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -471,14 +536,23 @@ function PaymentsTab() {
         ))}
       </div>
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r.id}
-        empty={t('empty')}
-        loading={loading}
-        pagination={{ page, pageSize: 20, total, onPage: setPage }}
-      />
+      {loadFailed ? (
+        <div className="flex flex-col items-center gap-3 rounded-[var(--radius-2xl)] border border-[var(--color-rose)]/30 bg-[var(--color-rose)]/5 px-4 py-12 text-center">
+          <p className="text-sm text-[var(--color-rose)]">{tcommon('error')}</p>
+          <button type="button" onClick={() => load(page, filter)} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium">
+            {tcommon('retry')}
+          </button>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          empty={t('empty')}
+          loading={loading}
+          pagination={{ page, pageSize: 20, total, onPage: setPage }}
+        />
+      )}
 
       <Dialog
         open={dlg !== null}

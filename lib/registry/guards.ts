@@ -157,7 +157,8 @@ export async function requireApprovedClinician(headers: Headers): Promise<Clinic
   if (user.role === 'admin') {
     return { user, profile: null };
   }
-  if (user.role !== 'clinician') throw new RegistryApiError(403, 'forbidden');
+  // A person may be both centre staff and an approved NVAR clinician; keep both portals.
+  if (user.role !== 'clinician' && user.role !== 'center') throw new RegistryApiError(403, 'forbidden');
   const profile = await prisma.clinicianProfile.findUnique({ where: { userId: user.id } });
   if (!profile || !profile.approved) throw new RegistryApiError(403, 'forbidden');
   return { user, profile };
@@ -197,4 +198,25 @@ export async function requireCenterMember(
     throw new RegistryApiError(403, 'membership-expired');
   }
   return { user, member: memberOnly, center, state };
+}
+
+/**
+ * Active centre staff member regardless of the centre's approval status. Used
+ * only for billing/renewal routes: an APPLIED or REJECTED centre must be able
+ * to submit and see its payment proof (the application form promises this).
+ */
+export async function requireCenterApplicant(
+  headers: Headers,
+  opts: { roles?: readonly CenterRoleValue[] } = {},
+): Promise<{ user: SessionUser; member: CenterMember; center: Center }> {
+  const user = await requireSession(headers);
+  if (user.role !== 'center') throw new RegistryApiError(403, 'forbidden');
+  const member = await prisma.centerMember.findUnique({
+    where: { userId: user.id },
+    include: { center: true },
+  });
+  if (!member || !member.active) throw new RegistryApiError(403, 'forbidden');
+  if (opts.roles && !opts.roles.includes(member.role)) throw new RegistryApiError(403, 'forbidden');
+  const { center, ...memberOnly } = member;
+  return { user, member: memberOnly, center };
 }

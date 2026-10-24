@@ -161,7 +161,11 @@ export type ShareRow = {
   documents: { id: string; kind: string; mime: string; size: number }[];
 };
 
-export async function listShares(center: Center, direction: 'incoming' | 'outgoing'): Promise<ShareRow[]> {
+export async function listShares(
+  center: Center,
+  direction: 'incoming' | 'outgoing',
+  ctx?: { actorId: string; ip: string | null },
+): Promise<ShareRow[]> {
   const incoming = direction === 'incoming';
   const rows = await prisma.caseShare.findMany({
     where: incoming ? { toCenterId: center.id } : { fromCenterId: center.id },
@@ -183,7 +187,7 @@ export async function listShares(center: Center, direction: 'incoming' | 'outgoi
   });
 
   const year = new Date().getFullYear();
-  return rows.map((r) => {
+  const result = rows.map((r) => {
     const other = incoming ? r.fromCenter : r.toCenter;
     const d = r.patient.diagnoses[0];
     // The sender's patient record is never exposed to the receiver; only this summary.
@@ -211,9 +215,21 @@ export async function listShares(center: Center, direction: 'incoming' | 'outgoi
       response: decryptNullable(r.response),
       patientId: incoming ? r.copiedPatientId : r.patientId,
       summary,
-      documents: incoming && r.type === 'SECOND_OPINION' && r.status !== 'DECLINED' ? r.patient.documents : [],
+      documents: incoming && r.type === 'SECOND_OPINION' && r.status === 'SENT' ? r.patient.documents : [],
     };
   });
+
+  if (ctx) {
+    await writeAudit({
+      actorId: ctx.actorId,
+      actorRole: 'center',
+      action: AuditAction.CENTER_SHARE_VIEW,
+      entity: 'CaseShare',
+      meta: { centerId: center.id, direction, count: result.length },
+      ip: ctx.ip,
+    });
+  }
+  return result;
 }
 
 /** Open requests waiting for this centre (dashboard badge). */
@@ -352,7 +368,7 @@ export async function readSharedDocument(
   ctx: Ctx,
 ): Promise<{ bytes: Buffer; mime: string; fileName: string }> {
   const share = await prisma.caseShare.findFirst({
-    where: { id: shareId, toCenterId: center.id, type: 'SECOND_OPINION', status: { in: ['SENT', 'COMPLETED'] } },
+    where: { id: shareId, toCenterId: center.id, type: 'SECOND_OPINION', status: 'SENT' },
     select: { id: true, patientId: true },
   });
   if (!share) throw new RegistryApiError(404, 'not-found');

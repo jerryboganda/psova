@@ -13,7 +13,7 @@ import { brandButtonClass, fieldClass } from './field';
 
 /** Landing page of the emailed "set your password" link (staff invites and resets). */
 export function ResetPasswordForm({ token, tokenError }: { token?: string; tokenError: boolean }) {
-  const t = useTranslations('Centres.reset');
+  const t = useTranslations('RegistryAuth.reset');
   const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
   const {
     register,

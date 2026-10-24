@@ -101,10 +101,12 @@ export default async function CentreHomePage({
           </p>
         </GlassCard>
 
-        <GlassCard interactive={false}>
-          <h2 className="mb-4 text-lg font-semibold">{t('dash.payments.title')}</h2>
-          <PaymentHistory centerId={center.id} />
-        </GlassCard>
+        {member.role === 'OWNER' && (
+          <GlassCard interactive={false}>
+            <h2 className="mb-4 text-lg font-semibold">{t('dash.payments.title')}</h2>
+            <PaymentHistory centerId={center.id} />
+          </GlassCard>
+        )}
       </div>
     </Section>
   );

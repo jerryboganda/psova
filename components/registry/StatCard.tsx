@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 
 /** Number + label tile (UI-SPEC §2), used by public stats + admin overview. */
@@ -9,7 +9,7 @@ export function StatCard({
   accent = 'var(--color-cyan)',
 }: {
   label: string;
-  value: string | number;
+  value: ReactNode;
   Icon?: ComponentType<{ className?: string }>;
   accent?: string;
 }) {

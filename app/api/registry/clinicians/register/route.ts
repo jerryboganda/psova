@@ -49,9 +49,12 @@ export async function POST(req: Request) {
         headers: req.headers,
       });
       userId = result.user.id;
-    } catch {
-      // Generic error — do not reveal whether the email already exists.
-      return apiError('validation', 400);
+    } catch (error) {
+      // Do not reveal whether the email already exists. A duplicate returns the
+      // same 201 as a genuine registration; a real failure is re-thrown as 500.
+      const existing = await prisma.user.findUnique({ where: { email: data.email }, select: { id: true } });
+      if (existing) return apiOk(undefined, { status: 201 });
+      throw error;
     }
 
     const pmcHash = blindIndex(data.pmcNumber, 'pmc');

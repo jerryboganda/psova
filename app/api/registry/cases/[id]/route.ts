@@ -28,6 +28,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     );
     if (!record) return apiError('not-found', 404);
 
+    // internalNote is PSOVA-only. Never include it in a clinician's response,
+    // even though the shared RecordView does not render it.
+    if (profile) {
+      const { internalNote: _internalNote, ...clinicianRecord } = record;
+      return apiOk({ record: clinicianRecord });
+    }
     return apiOk({ record });
   } catch (error) {
     return handleApiError(error);

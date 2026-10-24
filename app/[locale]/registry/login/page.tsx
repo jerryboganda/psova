@@ -4,6 +4,16 @@ import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { AuthForms } from '@/components/registry/AuthForms';
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'RegistryAuth' });
+  return { title: t('title'), description: t('lede') };
+}
+
 export default async function RegistryLoginPage({
   params,
 }: {

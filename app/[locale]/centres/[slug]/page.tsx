@@ -13,6 +13,21 @@ import { localized } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}) {
+  const { locale, slug } = await params;
+  setRequestLocale(locale);
+  const row = await getListedCenterBySlug(slug);
+  if (!row) return {};
+  return {
+    title: `${row.nameEn} — PSOVA`,
+    description: `${row.nameEn}, ${row.city}: a PSOVA registered vascular anomaly care centre.`,
+  };
+}
+
 export default async function CentreProfilePage({
   params,
 }: {

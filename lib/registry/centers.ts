@@ -18,8 +18,12 @@ import {
   sendRenewalReminder,
 } from './mailer';
 import type {
+  AdminCenterCreateInput,
   AdminCenterPaymentsQuery,
   AdminCentersQuery,
+  AdminCenterStaffCreateInput,
+  AdminCenterStaffUpdateInput,
+  AdminCenterUpdateInput,
   CenterActionInput,
   CenterApplyInput,
   CenterPaymentActionInput,
@@ -28,6 +32,7 @@ import type {
   StaffInviteInput,
   StaffUpdateInput,
 } from './schemas';
+import { jsonStringArray } from './json';
 
 const PAGE_SIZE = 20;
 
@@ -60,6 +65,9 @@ export async function applyCenter(
   data: CenterApplyInput,
   ctx: { headers: Headers; ip: string },
 ): Promise<void> {
+  if (data.payment && (await paymentReferenceTaken(data.payment.txnRef))) {
+    throw new RegistryApiError(409, 'conflict');
+  }
   // Create the auth user (role defaults to 'clinician'; promoted to 'center' below).
   let userId: string;
   try {
@@ -132,9 +140,24 @@ function paymentCreateData(p: CenterPaymentProofInput) {
   return {
     amount: MEMBERSHIP_FEE_PKR,
     method: p.method,
-    txnRef: p.txnRef,
+    txnRef: p.txnRef.trim().toUpperCase(),
     paidOn: new Date(`${p.paidOn}T00:00:00.000Z`),
   };
+}
+
+/** One transfer reference may only back one membership payment (replay protection). */
+async function paymentReferenceTaken(
+  txnRef: string,
+  opts: { centerId?: string; excludeId?: string } = {},
+): Promise<boolean> {
+  const count = await prisma.centerPayment.count({
+    where: {
+      txnRef: txnRef.trim().toUpperCase(),
+      ...(opts.centerId ? { centerId: opts.centerId } : {}),
+      ...(opts.excludeId ? { id: { not: opts.excludeId } } : {}),
+    },
+  });
+  return count > 0;
 }
 
 /** Renewal / late payment proof from the centre dashboard. */
@@ -145,6 +168,9 @@ export async function submitCenterPayment(
 ): Promise<void> {
   // Cap unreviewed submissions so a centre cannot flood the verification queue.
   if ((await prisma.centerPayment.count({ where: { centerId, status: 'PENDING' } })) >= 3) {
+    throw new RegistryApiError(409, 'conflict');
+  }
+  if (await paymentReferenceTaken(proof.txnRef, { centerId })) {
     throw new RegistryApiError(409, 'conflict');
   }
   const payment = await prisma.centerPayment.create({
@@ -169,11 +195,13 @@ export type CenterRow = {
   id: string;
   slug: string;
   nameEn: string;
+  nameUr: string | null;
   type: string;
   city: string;
   province: string;
   phone: string;
   email: string;
+  website: string | null;
   licenceNumber: string;
   headDoctorName: string;
   headDoctorPmc: string;
@@ -185,6 +213,7 @@ export type CenterRow = {
   membershipExpiresAt: string | null;
   membership: MembershipState;
   pendingPayments: number;
+  staffCount: number;
   createdAt: string;
 };
 
@@ -192,7 +221,23 @@ export type CenterRow = {
 export async function listCenters(
   query: AdminCentersQuery,
 ): Promise<{ items: CenterRow[]; page: number; pageSize: number; total: number }> {
-  const where: Prisma.CenterWhereInput = query.status ? { status: query.status } : {};
+  const where: Prisma.CenterWhereInput = {
+    ...(query.status ? { status: query.status } : {}),
+    ...(query.q
+      ? {
+          OR: [
+            { nameEn: { contains: query.q } },
+            { nameUr: { contains: query.q } },
+            { city: { contains: query.q } },
+            { email: { contains: query.q } },
+            { phone: { contains: query.q } },
+            { licenceNumber: { contains: query.q } },
+            { members: { some: { user: { name: { contains: query.q } } } } },
+            { members: { some: { user: { email: { contains: query.q } } } } },
+          ],
+        }
+      : {}),
+  };
   const [rows, total] = await Promise.all([
     prisma.center.findMany({
       where,
@@ -201,7 +246,7 @@ export async function listCenters(
       take: PAGE_SIZE,
       include: {
         members: { where: { role: 'OWNER' }, take: 1, include: { user: { select: { name: true, email: true } } } },
-        _count: { select: { payments: { where: { status: 'PENDING' } } } },
+        _count: { select: { payments: { where: { status: 'PENDING' } }, members: true } },
       },
     }),
     prisma.center.count({ where }),
@@ -212,11 +257,13 @@ export async function listCenters(
       id: c.id,
       slug: c.slug,
       nameEn: c.nameEn,
+      nameUr: c.nameUr,
       type: c.type,
       city: c.city,
       province: c.province,
       phone: c.phone,
       email: c.email,
+      website: c.website,
       licenceNumber: c.licenceNumber,
       headDoctorName: c.headDoctorName,
       headDoctorPmc: decryptField(c.headDoctorPmc),
@@ -228,6 +275,7 @@ export async function listCenters(
       membershipExpiresAt: c.membershipExpiresAt?.toISOString() ?? null,
       membership: membershipState(c.membershipExpiresAt),
       pendingPayments: c._count.payments,
+      staffCount: c._count.members,
       createdAt: c.createdAt.toISOString(),
     })),
     page: query.page,
@@ -314,6 +362,518 @@ export async function setCenterAction(
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Admin: direct centre management (create/edit/staff/delete)                */
+/* -------------------------------------------------------------------------- */
+
+function membershipDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  return new Date(`${value}T00:00:00.000Z`);
+}
+
+/** Creates an auth account for a centre owner/staff member without touching the admin session. */
+async function createCentreUser(name: string, email: string): Promise<string> {
+  const authCtx = await auth.$context;
+  const existing = await authCtx.internalAdapter.findUserByEmail(email);
+  if (existing?.user) throw new RegistryApiError(409, 'conflict');
+
+  const hash = await authCtx.password.hash(randomBytes(24).toString('base64url'));
+  const user = await authCtx.internalAdapter.createUser({
+    email,
+    name,
+    emailVerified: false,
+    role: 'center',
+  });
+  try {
+    await authCtx.internalAdapter.linkAccount({
+      userId: user.id,
+      providerId: 'credential',
+      accountId: user.id,
+      password: hash,
+    });
+  } catch (e) {
+    await prisma.user.delete({ where: { id: user.id } }).catch(() => {});
+    throw e;
+  }
+  return user.id;
+}
+
+async function resolveCentreOwner(
+  ownerName: string | undefined,
+  ownerEmail: string | undefined,
+): Promise<{ userId: string; created: boolean } | null> {
+  const email = ownerEmail?.trim().toLowerCase();
+  if (!email) return null;
+  const name = ownerName?.trim() || email.split('@')[0].replace(/[._-]+/g, ' ');
+
+  const authCtx = await auth.$context;
+  const existing = await authCtx.internalAdapter.findUserByEmail(email);
+  if (existing?.user) {
+    const user = existing.user as { id: string; role?: string };
+    if (user.role === 'admin') throw new RegistryApiError(409, 'conflict');
+    const member = await prisma.centerMember.findUnique({ where: { userId: user.id }, select: { id: true } });
+    if (member) throw new RegistryApiError(409, 'conflict');
+    return { userId: user.id, created: false };
+  }
+  return { userId: await createCentreUser(name, email), created: true };
+}
+
+export type CenterAdminDetail = {
+  center: {
+    id: string;
+    slug: string;
+    nameEn: string;
+    nameUr: string | null;
+    type: string;
+    city: string;
+    province: string;
+    address: string;
+    phone: string;
+    email: string;
+    website: string | null;
+    lat: number | null;
+    lng: number | null;
+    services: string[];
+    conditions: string[];
+    licenceNumber: string;
+    headDoctorName: string;
+    headDoctorPmc: string;
+    status: string;
+    tier: string;
+    statusReason: string | null;
+    approvedAt: string | null;
+    membershipExpiresAt: string | null;
+    membership: MembershipState;
+    createdAt: string;
+    updatedAt: string;
+  };
+  staff: StaffRow[];
+  payments: CenterPaymentRow[];
+  counts: {
+    patients: number;
+    appointments: number;
+    encounters: number;
+    documents: number;
+    sharesSent: number;
+    sharesReceived: number;
+    mdtPosts: number;
+    mdtComments: number;
+    supportRequests: number;
+    payments: number;
+  };
+};
+
+/** Decrypts the head-doctor PMC number, so the route must audit the view. */
+export async function getCenterAdminDetail(id: string): Promise<CenterAdminDetail | null> {
+  const c = await prisma.center.findUnique({
+    where: { id },
+    include: {
+      members: {
+        orderBy: { createdAt: 'asc' },
+        include: { user: { select: { name: true, email: true } } },
+      },
+      payments: { orderBy: { createdAt: 'desc' }, take: 20 },
+      _count: {
+        select: {
+          patients: true,
+          appointments: true,
+          encounters: true,
+          documents: true,
+          sharesSent: true,
+          sharesReceived: true,
+          mdtPosts: true,
+          mdtComments: true,
+          supportRequests: true,
+          payments: true,
+        },
+      },
+    },
+  });
+  if (!c) return null;
+
+  return {
+    center: {
+      id: c.id,
+      slug: c.slug,
+      nameEn: c.nameEn,
+      nameUr: c.nameUr,
+      type: c.type,
+      city: c.city,
+      province: c.province,
+      address: c.address,
+      phone: c.phone,
+      email: c.email,
+      website: c.website,
+      lat: c.lat,
+      lng: c.lng,
+      services: jsonStringArray(c.services),
+      conditions: jsonStringArray(c.conditions),
+      licenceNumber: c.licenceNumber,
+      headDoctorName: c.headDoctorName,
+      headDoctorPmc: decryptField(c.headDoctorPmc),
+      status: c.status,
+      tier: c.tier,
+      statusReason: c.statusReason,
+      approvedAt: c.approvedAt?.toISOString() ?? null,
+      membershipExpiresAt: c.membershipExpiresAt?.toISOString() ?? null,
+      membership: membershipState(c.membershipExpiresAt),
+      createdAt: c.createdAt.toISOString(),
+      updatedAt: c.updatedAt.toISOString(),
+    },
+    staff: c.members.map((m) => ({
+      id: m.id,
+      name: m.user.name,
+      email: m.user.email,
+      role: m.role,
+      active: m.active,
+      isOwner: m.role === 'OWNER',
+      createdAt: m.createdAt.toISOString(),
+    })),
+    payments: c.payments.map((p) => ({
+      id: p.id,
+      centerId: p.centerId,
+      centerName: c.nameEn,
+      city: c.city,
+      amount: p.amount,
+      method: p.method,
+      txnRef: p.txnRef,
+      paidOn: p.paidOn.toISOString(),
+      status: p.status,
+      rejectReason: p.rejectReason,
+      createdAt: p.createdAt.toISOString(),
+    })),
+    counts: c._count,
+  };
+}
+
+export async function createCenterByAdmin(
+  input: AdminCenterCreateInput,
+  ctx: { adminId: string; ip: string | null },
+): Promise<{ id: string; ownerCreated: boolean; ownerEmail: string | null }> {
+  const owner = await resolveCentreOwner(input.ownerName, input.ownerEmail);
+  const ownerEmail = input.ownerEmail?.trim().toLowerCase() || null;
+  const slug = await uniqueSlug(input.nameEn, input.city);
+  const headDoctorHash = blindIndex(input.headDoctorPmc, 'pmc');
+  const status = input.status;
+  const approved = status === 'APPROVED';
+
+  let centerId: string;
+  try {
+    centerId = await prisma.$transaction(async (tx) => {
+      if (owner && !owner.created) {
+        await tx.user.update({ where: { id: owner.userId }, data: { role: 'center' } });
+      }
+      const center = await tx.center.create({
+        data: {
+          slug,
+          nameEn: input.nameEn,
+          nameUr: input.nameUr || null,
+          type: input.type,
+          city: input.city,
+          province: input.province,
+          address: input.address,
+          phone: input.phone,
+          email: input.contactEmail.toLowerCase(),
+          website: input.websiteUrl || null,
+          lat: input.lat,
+          lng: input.lng,
+          services: input.services,
+          conditions: input.conditions,
+          licenceNumber: input.licenceNumber,
+          headDoctorName: input.headDoctorName,
+          headDoctorPmc: encryptField(input.headDoctorPmc),
+          headDoctorHash,
+          status,
+          tier: input.tier,
+          statusReason: input.statusReason?.trim() || null,
+          membershipExpiresAt: membershipDate(input.membershipExpiresAt),
+          ...(approved ? { approvedAt: new Date(), approvedById: ctx.adminId } : {}),
+          ...(owner ? { members: { create: { userId: owner.userId, role: 'OWNER' } } } : {}),
+        },
+      });
+      return center.id;
+    });
+  } catch (e) {
+    if (owner?.created) await prisma.user.delete({ where: { id: owner.userId } }).catch(() => {});
+    throw e;
+  }
+
+  await writeAudit({
+    actorId: ctx.adminId,
+    actorRole: 'admin',
+    action: AuditAction.CENTER_CREATE,
+    entity: 'Center',
+    entityId: centerId,
+    meta: { status, tier: input.tier, hasOwner: Boolean(owner) },
+    ip: ctx.ip,
+  });
+
+  if (owner?.created && ownerEmail) await sendSetupLink(ownerEmail);
+  if (approved && ownerEmail) void sendCenterApproved(ownerEmail, input.nameEn);
+  return { id: centerId, ownerCreated: owner?.created ?? false, ownerEmail };
+}
+
+export async function updateCenterByAdmin(
+  id: string,
+  input: AdminCenterUpdateInput,
+  ctx: { adminId: string; ip: string | null },
+): Promise<void> {
+  const center = await prisma.center.findUnique({
+    where: { id },
+    include: { members: { where: { role: 'OWNER' }, take: 1, include: { user: { select: { email: true } } } } },
+  });
+  if (!center) throw new RegistryApiError(404, 'not-found');
+
+  const data: Prisma.CenterUpdateInput = {};
+  if (input.nameEn !== undefined) data.nameEn = input.nameEn;
+  if (input.nameUr !== undefined) data.nameUr = input.nameUr || null;
+  if (input.type !== undefined) data.type = input.type;
+  if (input.city !== undefined) data.city = input.city;
+  if (input.province !== undefined) data.province = input.province;
+  if (input.address !== undefined) data.address = input.address;
+  if (input.phone !== undefined) data.phone = input.phone;
+  if (input.contactEmail !== undefined) data.email = input.contactEmail.toLowerCase();
+  if (input.websiteUrl !== undefined) data.website = input.websiteUrl || null;
+  if (input.lat !== undefined) data.lat = input.lat;
+  if (input.lng !== undefined) data.lng = input.lng;
+  if (input.services !== undefined) data.services = input.services;
+  if (input.conditions !== undefined) data.conditions = input.conditions;
+  if (input.licenceNumber !== undefined) data.licenceNumber = input.licenceNumber;
+  if (input.headDoctorName !== undefined) data.headDoctorName = input.headDoctorName;
+  if (input.headDoctorPmc !== undefined) {
+    data.headDoctorPmc = encryptField(input.headDoctorPmc);
+    data.headDoctorHash = blindIndex(input.headDoctorPmc, 'pmc');
+  }
+  if (input.tier !== undefined) data.tier = input.tier;
+  if (input.membershipExpiresAt !== undefined) {
+    data.membershipExpiresAt = membershipDate(input.membershipExpiresAt);
+  }
+  if (input.status !== undefined) {
+    const allowed: Record<string, string[]> = {
+      APPLIED: ['APPROVED', 'REJECTED'],
+      APPROVED: ['SUSPENDED'],
+      REJECTED: ['APPROVED'],
+      SUSPENDED: ['APPROVED'],
+    };
+    if (input.status !== center.status && !(allowed[center.status] ?? []).includes(input.status)) {
+      throw new RegistryApiError(409, 'invalid-transition');
+    }
+    data.status = input.status;
+    if (input.status === 'APPROVED') {
+      data.statusReason = null;
+      if (!center.approvedAt) {
+        data.approvedAt = new Date();
+        data.approvedById = ctx.adminId;
+      }
+    } else if (input.status === 'REJECTED' || input.status === 'SUSPENDED') {
+      data.statusReason = input.statusReason?.trim() || center.statusReason;
+    } else {
+      data.statusReason = input.statusReason?.trim() || null;
+    }
+  } else if (input.statusReason !== undefined) {
+    data.statusReason = input.statusReason.trim() || null;
+  }
+
+  await prisma.center.update({ where: { id }, data });
+  await writeAudit({
+    actorId: ctx.adminId,
+    actorRole: 'admin',
+    action: AuditAction.CENTER_UPDATE,
+    entity: 'Center',
+    entityId: id,
+    meta: { fields: Object.keys(data), status: input.status ?? center.status },
+    ip: ctx.ip,
+  });
+
+  const ownerEmail = center.members[0]?.user.email;
+  if (input.status === 'APPROVED' && center.status !== 'APPROVED' && ownerEmail) {
+    void sendCenterApproved(ownerEmail, input.nameEn ?? center.nameEn);
+  }
+}
+
+/**
+ * Hard-deletes an empty centre. A centre with any patients, visits, payments or
+ * other linked records must be suspended instead — deleting it would destroy
+ * clinical or financial history.
+ */
+export async function deleteCenterByAdmin(
+  id: string,
+  ctx: { adminId: string; ip: string | null },
+): Promise<void> {
+  const center = await prisma.center.findUnique({
+    where: { id },
+    select: {
+      nameEn: true,
+      members: { select: { userId: true } },
+      _count: {
+        select: {
+          patients: true,
+          payments: true,
+          appointments: true,
+          encounters: true,
+          documents: true,
+          sharesSent: true,
+          sharesReceived: true,
+          mdtPosts: true,
+          mdtComments: true,
+          supportRequests: true,
+        },
+      },
+    },
+  });
+  if (!center) throw new RegistryApiError(404, 'not-found');
+
+  const linked = Object.values(center._count).reduce((sum, n) => sum + n, 0);
+  if (linked > 0) throw new RegistryApiError(409, 'conflict');
+
+  await prisma.$transaction(async (tx) => {
+    await tx.center.delete({ where: { id } });
+    for (const member of center.members) {
+      const remaining = await tx.centerMember.count({ where: { userId: member.userId } });
+      if (remaining === 0) {
+        await tx.user.updateMany({
+          where: { id: member.userId, role: 'center' },
+          data: { role: 'clinician' },
+        });
+        await tx.session.deleteMany({ where: { userId: member.userId } });
+      }
+    }
+  });
+
+  await writeAudit({
+    actorId: ctx.adminId,
+    actorRole: 'admin',
+    action: AuditAction.CENTER_DELETE,
+    entity: 'Center',
+    entityId: id,
+    meta: { name: center.nameEn },
+    ip: ctx.ip,
+  });
+}
+
+export async function addCenterStaffByAdmin(
+  centerId: string,
+  input: AdminCenterStaffCreateInput,
+  ctx: { adminId: string; ip: string | null },
+): Promise<{ created: boolean }> {
+  const center = await prisma.center.findUnique({ where: { id: centerId }, select: { id: true } });
+  if (!center) throw new RegistryApiError(404, 'not-found');
+
+  const email = input.email.toLowerCase();
+  const name = input.name?.trim() || email.split('@')[0].replace(/[._-]+/g, ' ');
+  const authCtx = await auth.$context;
+  const existing = await authCtx.internalAdapter.findUserByEmail(email);
+  let userId: string;
+  let created = false;
+
+  if (existing?.user) {
+    const user = existing.user as { id: string; role?: string };
+    if (user.role === 'admin') throw new RegistryApiError(409, 'conflict');
+    const membership = await prisma.centerMember.findUnique({ where: { userId: user.id }, select: { id: true } });
+    if (membership) throw new RegistryApiError(409, 'conflict');
+    userId = user.id;
+    await prisma.user.update({ where: { id: userId }, data: { role: 'center' } });
+  } else {
+    userId = await createCentreUser(name, email);
+    created = true;
+  }
+
+  try {
+    await prisma.centerMember.create({ data: { centerId, userId, role: input.role } });
+  } catch (e) {
+    if (created) await prisma.user.delete({ where: { id: userId } }).catch(() => {});
+    throw e;
+  }
+
+  await writeAudit({
+    actorId: ctx.adminId,
+    actorRole: 'admin',
+    action: AuditAction.CENTER_STAFF_INVITE,
+    entity: 'CenterMember',
+    entityId: userId,
+    meta: { centerId, role: input.role, created },
+    ip: ctx.ip,
+  });
+  if (created) await sendSetupLink(email);
+  return { created };
+}
+
+async function assertNotLastOwner(centerId: string, memberId: string, role: string): Promise<void> {
+  if (role !== 'OWNER') return;
+  const others = await prisma.centerMember.count({
+    where: { centerId, role: 'OWNER', id: { not: memberId } },
+  });
+  if (others === 0) throw new RegistryApiError(409, 'conflict');
+}
+
+export async function updateCenterStaffByAdmin(
+  centerId: string,
+  memberId: string,
+  input: AdminCenterStaffUpdateInput,
+  ctx: { adminId: string; ip: string | null },
+): Promise<void> {
+  const member = await prisma.centerMember.findFirst({
+    where: { id: memberId, centerId },
+    include: { user: { select: { email: true } } },
+  });
+  if (!member) throw new RegistryApiError(404, 'not-found');
+
+  if (input.action === 'SET_ROLE') {
+    if (input.role !== 'OWNER') await assertNotLastOwner(centerId, member.id, member.role);
+    await prisma.centerMember.update({ where: { id: member.id }, data: { role: input.role } });
+  } else if (input.action === 'DEACTIVATE') {
+    await assertNotLastOwner(centerId, member.id, member.role);
+    await prisma.centerMember.update({ where: { id: member.id }, data: { active: false } });
+    await prisma.session.deleteMany({ where: { userId: member.userId } });
+  } else if (input.action === 'REACTIVATE') {
+    await prisma.centerMember.update({ where: { id: member.id }, data: { active: true } });
+  } else {
+    await sendSetupLink(member.user.email);
+  }
+
+  await writeAudit({
+    actorId: ctx.adminId,
+    actorRole: 'admin',
+    action: AuditAction.CENTER_STAFF_UPDATE,
+    entity: 'CenterMember',
+    entityId: member.id,
+    meta: { centerId, action: input.action, ...(input.action === 'SET_ROLE' ? { role: input.role } : {}) },
+    ip: ctx.ip,
+  });
+}
+
+export async function removeCenterStaffByAdmin(
+  centerId: string,
+  memberId: string,
+  ctx: { adminId: string; ip: string | null },
+): Promise<void> {
+  const member = await prisma.centerMember.findFirst({
+    where: { id: memberId, centerId },
+    select: { id: true, userId: true, role: true },
+  });
+  if (!member) throw new RegistryApiError(404, 'not-found');
+  await assertNotLastOwner(centerId, member.id, member.role);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.centerMember.delete({ where: { id: member.id } });
+    const remaining = await tx.centerMember.count({ where: { userId: member.userId } });
+    if (remaining === 0) {
+      await tx.user.updateMany({ where: { id: member.userId, role: 'center' }, data: { role: 'clinician' } });
+      await tx.session.deleteMany({ where: { userId: member.userId } });
+    }
+  });
+
+  await writeAudit({
+    actorId: ctx.adminId,
+    actorRole: 'admin',
+    action: AuditAction.CENTER_STAFF_REMOVE,
+    entity: 'CenterMember',
+    entityId: member.id,
+    meta: { centerId },
+    ip: ctx.ip,
+  });
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Admin: payments to verify                                                 */
 /* -------------------------------------------------------------------------- */
 
@@ -384,6 +944,10 @@ export async function setCenterPaymentAction(
   const now = new Date();
 
   if (action.action === 'VERIFY') {
+    // Replay guard: the same transfer must never buy two membership years.
+    if (await paymentReferenceTaken(payment.txnRef, { centerId: payment.centerId, excludeId: payment.id })) {
+      throw new RegistryApiError(409, 'conflict');
+    }
     const { start, end } = renewedPeriod(payment.center.membershipExpiresAt, now);
     // updateMany guards against two admins verifying the same payment at once.
     const claimed = await prisma.$transaction(async (tx) => {
@@ -543,6 +1107,33 @@ export async function updateStaff(
     include: { user: { select: { email: true } } },
   });
   if (!member) throw new RegistryApiError(404, 'not-found');
+
+  if (action.action === 'TRANSFER_OWNER') {
+    if (!member.active) throw new RegistryApiError(409, 'conflict');
+    if (member.role === 'OWNER') throw new RegistryApiError(409, 'conflict');
+    const actor = await prisma.centerMember.findUnique({
+      where: { userId: ctx.actorId },
+      select: { id: true, centerId: true, role: true },
+    });
+    if (!actor || actor.centerId !== center.id || actor.role !== 'OWNER') {
+      throw new RegistryApiError(403, 'forbidden');
+    }
+    await prisma.$transaction([
+      prisma.centerMember.update({ where: { id: member.id }, data: { role: 'OWNER' } }),
+      prisma.centerMember.update({ where: { id: actor.id }, data: { role: 'DOCTOR' } }),
+    ]);
+    await writeAudit({
+      actorId: ctx.actorId,
+      actorRole: 'center',
+      action: AuditAction.CENTER_STAFF_UPDATE,
+      entity: 'CenterMember',
+      entityId: member.id,
+      meta: { centerId: center.id, action: 'TRANSFER_OWNER' },
+      ip: ctx.ip,
+    });
+    return;
+  }
+
   // The applicant keeps ownership; they cannot be demoted or locked out here.
   if (member.role === 'OWNER') throw new RegistryApiError(403, 'forbidden');
 

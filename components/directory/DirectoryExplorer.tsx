@@ -22,7 +22,17 @@ export function DirectoryExplorer({ registered = [] }: { registered?: CareCenter
   const t = useTranslations('Directory');
   const locale = useLocale();
   // Registered (paying, approved) centres first, then the researched static list.
-  const allCenters = useMemo(() => [...registered, ...CARE_CENTERS], [registered]);
+  // De-duplicate a hospital that is already in the static list but has now joined.
+  const allCenters = useMemo(() => {
+    const norm = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const seen = new Set<string>();
+    return [...registered, ...CARE_CENTERS].filter((c) => {
+      const key = `${norm(c.name.en)}|${norm(c.city.en)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [registered]);
   const [query, setQuery] = useState('');
   const [province, setProvince] = useState('all');
   const [condition, setCondition] = useState('all');

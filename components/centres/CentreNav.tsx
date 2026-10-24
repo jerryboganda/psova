@@ -26,7 +26,7 @@ const LINKS = [
 const allowed = (access: Access, role: string) =>
   access === 'all' || (access === 'lead' ? role === 'OWNER' || role === 'DOCTOR' : role === 'OWNER');
 
-export function CentreNav({ role, centreName }: { role: string; centreName: string }) {
+export function CentreNav({ role, centreName, hasClinicianPortal = false }: { role: string; centreName: string; hasClinicianPortal?: boolean }) {
   const t = useTranslations('Centres.nav');
   const pathname = usePathname();
 
@@ -56,6 +56,15 @@ export function CentreNav({ role, centreName }: { role: string; centreName: stri
                 </Link>
               );
             })}
+            {hasClinicianPortal && (
+              <Link
+                href="/registry/clinician"
+                className="inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium text-[var(--color-cyan)] hover:bg-white/5"
+              >
+                <Stethoscope className="size-4" />
+                {t('clinicianPortal')}
+              </Link>
+            )}
           </nav>
         </div>
         <LogoutButton />

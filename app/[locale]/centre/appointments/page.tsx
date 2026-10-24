@@ -97,7 +97,11 @@ export default async function CentreAppointmentsPage({
               {r.status === 'SCHEDULED' && (
                 <div className="mt-4">
                   <p className="mb-2 text-xs text-[var(--color-faint)]">{t(key === 'missed' ? 'waMissed' : 'waReminder')}</p>
-                  <WhatsAppButtons patientId={r.patientId} phone={r.phone} template={key} texts={texts} />
+                  {r.consentContact ? (
+                    <WhatsAppButtons patientId={r.patientId} phone={r.phone} template={key} texts={texts} />
+                  ) : (
+                    <p className="text-xs text-[var(--color-muted)]">{t('waNoConsent')}</p>
+                  )}
                 </div>
               )}
             </li>

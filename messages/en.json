@@ -452,6 +452,7 @@
   },
   "RegistryCommon": {
     "back": "Back",
+    "close": "Close",
     "next": "Next",
     "submit": "Submit",
     "loading": "Loading…",
@@ -580,6 +581,22 @@
   "RegistryAuth": {
     "title": "Registry access",
     "lede": "Sign in as a clinician, or register a new clinician account. Enrollment for families does not need an account.",
+    "forbiddenTitle": "This area is for PSOVA administrators",
+    "forbiddenBody": "Your account does not have admin access. Use your own dashboard instead.",
+    "goToDashboard": "Go to my dashboard",
+    "reset": {
+      "title": "Set your password",
+      "lede": "Choose a password for your PSOVA account.",
+      "password": "New password",
+      "confirm": "Confirm password",
+      "hint": "At least 10 characters.",
+      "mismatch": "The passwords do not match.",
+      "submit": "Save password",
+      "error": "We could not set your password. The link may have expired.",
+      "invalid": "This link is invalid or has expired. Ask PSOVA or your centre owner to send a new invite.",
+      "toLogin": "Go to sign in",
+      "doneTitle": "Password saved"
+    },
     "signIn": "Sign in",
     "register": "Register as a clinician",
     "email": "Email address",
@@ -692,10 +709,11 @@
       "notSure": "Not sure"
     },
     "consentIntro": "Please read and confirm. Your data is encrypted and only used as described in the privacy section.",
+    "privacyLink": "Read the privacy and consent details",
     "consent": {
       "registry": "I consent to PSOVA securely storing this information (encrypted) in the National Vascular Anomaly Registry.",
       "contact": "I agree to be contacted by PSOVA about care and support (optional).",
-      "research": "I allow my anonymised data to be used for research and national statistics (optional).",
+      "research": "I allow my anonymised data to be used for research beyond the registry's public statistics (optional).",
       "guardian": "I am the parent / legal guardian of the patient and make this declaration on their behalf."
     },
     "review": {
@@ -725,7 +743,8 @@
       "bodySite": "Please choose the affected area.",
       "onset": "Please choose when it started.",
       "consentRegistry": "This consent is required to enrol.",
-      "consentGuardian": "The guardian declaration is required for a minor."
+      "consentGuardian": "The guardian declaration is required for a minor.",
+      "tooLong": "This text is too long. Please shorten it."
     },
     "successTitle": "You’re enrolled",
     "successSave": "Save this tracking code. You’ll need it, with your phone number, to check your status.",
@@ -743,6 +762,12 @@
     "check": "Check status",
     "checking": "Checking…",
     "notFound": "We could not find a matching record. Please check your tracking code and phone number and try again.",
+  "requiredCode": "Enter your tracking code.",
+  "requiredPhone": "Enter the phone number you used to enrol.",
+  "rateLimited": "Too many checks from this connection. Please wait a few minutes and try again.",
+  "error": "We could not check your status just now. Please try again.",
+  "rejectedHelp": "PSOVA needs more information. Contact us with your tracking code, or submit a new enrolment with the corrected details.",
+  "enrollAgain": "Submit a new enrolment",
     "firstNameLabel": "Patient",
     "submittedOn": "Submitted on",
     "reasonLabel": "Note from PSOVA",
@@ -767,11 +792,14 @@
     "nav": {
       "cases": "My cases",
       "new": "New case",
-      "logout": "Log out"
+      "logout": "Log out",
+      "centre": "Centre dashboard"
     },
     "casesTitle": "My cases",
     "casesLede": "Cases you have submitted to the registry.",
     "empty": "You have not submitted any cases yet.",
+    "loadError": "We could not load your cases. Your session may have expired.",
+    "retry": "Try again",
     "table": {
       "code": "Tracking code",
       "patient": "Patient",
@@ -821,7 +849,8 @@
     "successNote": "Give this tracking code to the family so they can check their status.",
     "errors": {
       "required": "This field is required.",
-      "attestation": "You must attest patient consent to submit."
+      "attestation": "You must attest patient consent to submit.",
+      "treatmentYear": "Enter a valid year between 1900 and this year."
     }
   },
   "RegistryRecord": {
@@ -930,6 +959,7 @@
       "code": "Code",
       "status": "Status",
       "source": "Source",
+      "centre": "Centre",
       "province": "Province",
       "district": "District",
       "condition": "Condition",
@@ -942,6 +972,7 @@
       "back": "Back to records",
       "duplicateBanner": "Possible duplicate records",
       "duplicateOf": "Marked duplicate of",
+      "duplicateNote": "This record is closed as a duplicate. Its canonical record holds the active case.",
       "open": "Open",
       "actions": "Actions",
       "verify": "Verify",
@@ -953,6 +984,11 @@
       "internalNote": "Internal note (optional)",
       "duplicateTitle": "Mark as duplicate",
       "canonicalCode": "Canonical record ID or tracking code",
+      "erase": "Erase record",
+      "eraseTitle": "Erase this patient record?",
+      "eraseBody": "This permanently deletes the record and its diagnoses, visits, appointments, shares and encrypted files. It cannot be undone. Use this only for a verified erasure request.",
+      "eraseReason": "Reason (recorded in the audit log, not shown publicly)",
+      "eraseConfirm": "Erase permanently",
       "updateTitle": "Edit clinical fields",
       "confirm": "Confirm",
       "cancel": "Cancel",
@@ -967,6 +1003,9 @@
       "filterAll": "All",
       "filterPending": "Pending",
       "filterApproved": "Approved",
+      "search": "Search",
+      "searchPlaceholder": "Name, email, PMC no., specialty or city",
+      "clearSearch": "Clear",
       "name": "Name",
       "email": "Email",
       "pmc": "PMC no.",
@@ -981,7 +1020,11 @@
       "confirmApproveTitle": "Approve clinician",
       "confirmApproveBody": "This clinician will be able to submit cases.",
       "confirmRejectTitle": "Reject clinician",
-      "confirmRejectBody": "This permanently deletes the clinician account."
+      "confirmRejectBody": "This permanently deletes a pending application. If the clinician has cases, access is revoked instead.",
+      "revoke": "Revoke",
+      "confirmRevokeTitle": "Revoke clinician access",
+      "confirmRevokeBody": "The account and its case history are kept, but the clinician can no longer sign in or submit cases until approved again.",
+      "error": "That action could not be completed."
     },
     "audit": {
       "title": "Audit log",
@@ -998,7 +1041,8 @@
       "confirmTitle": "Export records",
       "confirmBody": "This exports decrypted records for the medical board. The export is audit-logged.",
       "confirm": "Download CSV",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "error": "The export could not be generated. Please try again."
     },
     "centres": {
       "title": "Centres network",
@@ -1049,6 +1093,7 @@
       "extendDays": "Days to add",
       "approveTitle": "Approve centre",
       "approveBody": "The centre will be able to sign in. It appears in the public directory once its membership payment is verified.",
+      "approveNoMembership": "This centre has no active membership. It will stay hidden from the public directory until a payment is verified or you set an expiry date in the centre editor.",
       "rejectTitle": "Reject application",
       "suspendTitle": "Suspend centre",
       "reinstateTitle": "Reinstate centre",
@@ -1056,7 +1101,94 @@
       "extendTitle": "Extend membership",
       "confirm": "Confirm",
       "cancel": "Cancel",
-      "error": "That action could not be completed."
+      "error": "That action could not be completed.",
+      "newCentre": "New centre",
+      "manage": "Manage",
+      "search": "Search",
+      "searchPlaceholder": "Name, city, owner, email or licence no.",
+      "clearSearch": "Clear"
+    },
+    "centreForm": {
+      "back": "Back to centres",
+      "createTitle": "Add a centre",
+      "editTitle": "Manage centre",
+      "createLede": "Create a clinic or hospital directly. You can add its owner account now or later.",
+      "loadError": "We could not load this centre.",
+      "chooseAtLeastOne": "Choose at least one service and one condition.",
+      "reasonRequired": "Give a reason of at least 5 characters for this status.",
+      "ownerPair": "Enter both the owner name and email, or leave both blank.",
+      "conflict": "That email or centre conflicts with an existing record, or the centre still has linked records.",
+      "validation": "Please check the required fields and try again.",
+      "saveError": "The centre could not be saved.",
+      "created": "Centre created.",
+      "saved": "Centre saved.",
+      "lastOwner": "A centre must keep at least one owner.",
+      "staffError": "That staff action could not be completed.",
+      "staffExists": "That email already belongs to a centre or an admin account.",
+      "deleteBlocked": "This centre has linked patients, payments or other records. Suspend it instead of deleting it.",
+      "deleteError": "The centre could not be deleted.",
+      "delete": "Delete centre",
+      "deleteTitle": "Delete this centre?",
+      "deleteBody": "This permanently removes an empty centre. It cannot be undone.",
+      "save": "Save changes",
+      "create": "Create centre",
+      "cancel": "Cancel",
+      "name": "Name",
+      "identity": "Identity",
+      "nameEn": "Centre name (English)",
+      "nameUr": "Centre name (Urdu)",
+      "type": "Type of centre",
+      "licenceNumber": "Licence / registration number",
+      "headDoctorName": "Head doctor / lead specialist",
+      "headDoctorPmc": "Head doctor PMDC / PMC number",
+      "location": "Location and contact",
+      "city": "City",
+      "province": "Province",
+      "address": "Full address",
+      "phone": "Centre phone",
+      "contactEmail": "Centre email (shown publicly)",
+      "websiteUrl": "Website",
+      "latitude": "Latitude (optional)",
+      "longitude": "Longitude (optional)",
+      "care": "Services and conditions",
+      "careHint": "These appear on the public centre profile and in directory filters.",
+      "services": "Services offered",
+      "conditions": "Conditions treated",
+      "statusMembership": "Status and membership",
+      "status": "Status",
+      "tier": "Tier",
+      "membershipExpiresAt": "Membership expires on",
+      "membershipHint": "Approved centres appear publicly only while the membership is active or in its grace period. Leave the date empty until a payment is verified.",
+      "statusReason": "Status reason",
+      "statusReasonHint": "Shown to the centre owner when an application is rejected or a centre is suspended.",
+      "owner": "Owner account",
+      "ownerHint": "Optional. The owner gets a login to manage patients, staff and the centre profile.",
+      "ownerName": "Owner full name",
+      "ownerEmail": "Owner sign-in email",
+      "ownerEmailHint": "If this email already has an account, it is linked. Otherwise an account is created and a password-setup link is emailed.",
+      "staff": "Staff",
+      "staffHint": "Owners, doctors, nurses and reception each get their own login.",
+      "addStaff": "Add staff member",
+      "addStaffTitle": "Add a staff member",
+      "staffName": "Full name",
+      "staffEmailHint": "Existing accounts are linked; new accounts receive a password-setup email.",
+      "noStaff": "No staff accounts yet.",
+      "email": "Email",
+      "role": "Role",
+      "state": "State",
+      "active": "Active",
+      "inactive": "Inactive",
+      "resend": "Resend invite",
+      "deactivate": "Deactivate",
+      "reactivate": "Reactivate",
+      "remove": "Remove",
+      "removeTitle": "Remove staff member?",
+      "removeBody": "Remove {name} from this centre? Their login will stop working for this centre.",
+      "actions": "Actions",
+      "payments": "Payments",
+      "allPayments": "Open payments queue",
+      "noPayments": "No payments yet.",
+      "linkedRecords": "{count} linked records (patients, visits, payments, shares and requests)."
     },
     "payments": {
       "empty": "No payments in this view.",
@@ -1259,6 +1391,10 @@
     "dash": {
       "title": "Centre dashboard",
       "welcome": "Welcome, {name}",
+      "inactive": {
+        "title": "Staff account inactive",
+        "body": "This staff account has been deactivated. Contact the centre owner or PSOVA to restore access."
+      },
       "status": {
         "APPLIED": {
           "title": "Application under review",
@@ -1351,7 +1487,8 @@
       "shares": "Referrals",
       "mdt": "Case board",
       "support": "Support fund",
-      "reports": "Reports"
+      "reports": "Reports",
+      "clinicianPortal": "Clinician portal"
     },
     "staff": {
       "title": "Staff",
@@ -1382,6 +1519,9 @@
       "inactive": "Inactive",
       "resend": "Resend invite",
       "resent": "Invite sent again.",
+      "transferOwner": "Make owner",
+      "transferConfirm": "Make {name} the owner? You will become a doctor and lose owner-only access.",
+      "transferred": "Ownership transferred.",
       "deactivate": "Deactivate",
       "reactivate": "Reactivate"
     },
@@ -1458,6 +1598,10 @@
       "readOnly": "Your membership has lapsed, so new patients cannot be added. Existing records are still available to read.",
       "renew": "Renew membership",
       "waTitle": "Send the tracking code on WhatsApp",
+      "waNoConsent": "No contact consent recorded. Ask the patient before sending a message.",
+      "notSharedNvar": "This record is private to your centre. It is not counted in NVAR or public statistics until you choose to share it.",
+      "consentContact": "The patient agrees that the centre may contact them about appointments and care.",
+      "consentResearch": "The patient agrees that anonymised data may be used for research (optional).",
       "timeline": {
         "title": "Timeline",
         "intakeQr": "Registered by the patient (QR / link)",
@@ -1509,7 +1653,8 @@
       "book": "Book",
       "booked": "Appointment booked.",
       "waReminder": "Send a reminder on WhatsApp",
-      "waMissed": "Patient missed this visit: send a message on WhatsApp"
+      "waMissed": "Patient missed this visit: send a message on WhatsApp",
+      "waNoConsent": "No contact consent recorded. Ask the patient before sending a message."
     },
     "visit": {
       "add": "Record a visit",

@@ -85,6 +85,7 @@ export type AppointmentRow = {
   patientId: string;
   patientName: string;
   phone: string;
+  consentContact: boolean;
   startsAt: string;
   kind: string;
   status: string;
@@ -110,7 +111,7 @@ export async function listAppointments(
     where: { centerId: center.id, ...where },
     orderBy: { startsAt: scope === 'overdue' ? 'desc' : 'asc' },
     take: 100,
-    include: { patient: { select: { fullName: true, phone: true } } },
+    include: { patient: { select: { fullName: true, phone: true, consentContact: true } } },
   });
 
   await writeAudit({
@@ -127,6 +128,7 @@ export async function listAppointments(
     patientId: r.patientId,
     patientName: decryptField(r.patient.fullName),
     phone: decryptField(r.patient.phone),
+    consentContact: r.patient.consentContact,
     startsAt: r.startsAt.toISOString(),
     kind: r.kind,
     status: r.status,
@@ -221,7 +223,11 @@ export async function createEncounter(
 
     let followUpBooked = false;
     if (reviewDay) {
-      const at = pktInstant(input.nextReviewDate!, '09:00:00');
+      let at = pktInstant(input.nextReviewDate!, '09:00:00');
+      // Never create an appointment in the past (a review "today" after 09:00).
+      if (at.getTime() <= Date.now()) {
+        at = new Date(startOfCentreDay(new Date(Date.now() + DAY_MS)).getTime() + 9 * 60 * 60 * 1000);
+      }
       const exists = await tx.appointment.findFirst({
         where: { patientId, centerId: center.id, status: 'SCHEDULED', startsAt: { gte: reviewDay, lt: new Date(reviewDay.getTime() + DAY_MS) } },
         select: { id: true },

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
-import { Loader2, Mail, UserPlus } from 'lucide-react';
+import { Loader2, Mail, ShieldCheck, UserPlus } from 'lucide-react';
 import { staffInviteSchema, type StaffInviteInput } from '@/lib/registry/schemas';
 import { CENTER_STAFF_ROLES } from '@/lib/registry/constants';
 import { FormField } from '@/components/registry/FormField';
@@ -162,6 +162,19 @@ export function CentreStaff() {
                     <button type="button" disabled={busyId === r.id} onClick={() => patch(r.id, { action: 'RESEND' }, t('resent'))} className={smallBtn}>
                       <Mail className="size-3.5" />
                       {t('resend')}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busyId === r.id || !r.active}
+                      onClick={() => {
+                        if (window.confirm(t('transferConfirm', { name: r.name }))) {
+                          patch(r.id, { action: 'TRANSFER_OWNER' }, t('transferred'));
+                        }
+                      }}
+                      className={smallBtn}
+                    >
+                      <ShieldCheck className="size-3.5" />
+                      {t('transferOwner')}
                     </button>
                     <button
                       type="button"

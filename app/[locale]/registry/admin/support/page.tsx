@@ -21,8 +21,10 @@ export default async function AdminSupportPage({
   const status = SUPPORT_STATUSES.find((s) => s === statusParam) ?? 'SUBMITTED';
   const page = Math.max(1, Number.parseInt(pageParam ?? '1', 10) || 1);
   const t = await getTranslations('RegistryAdmin');
+  const tc = await getTranslations('RegistryCommon');
   // The admin layout has already required an admin session.
-  const { items } = await listAdminSupport({ status, page });
+  const { items, total, pageSize } = await listAdminSupport({ status, page });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <Section>
@@ -43,6 +45,25 @@ export default async function AdminSupportPage({
         ))}
       </div>
       <AdminSupport rows={items} />
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between gap-4 text-sm">
+          <span className="text-[var(--color-faint)]">
+            {tc('page')} {page} {tc('of')} {totalPages}
+          </span>
+          <div className="flex gap-2">
+            {page > 1 && (
+              <Link href={`/registry/admin/support?status=${status}&page=${page - 1}`} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 font-medium">
+                {tc('back')}
+              </Link>
+            )}
+            {page < totalPages && (
+              <Link href={`/registry/admin/support?status=${status}&page=${page + 1}`} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 font-medium">
+                {tc('next')}
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </Section>
   );
 }

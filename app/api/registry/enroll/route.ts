@@ -39,6 +39,10 @@ export async function POST(req: Request) {
       raw = null;
     }
 
+    // Rate-limit before any write so a honeypot flood cannot grow the audit table.
+    const limited = checkLimit('enroll', ip);
+    if (!limited.ok) return rateLimitedResponse(limited.retryAfter);
+
     // Honeypot: filled → silently drop, return a fake success (no record written).
     if (
       raw &&
@@ -55,9 +59,6 @@ export async function POST(req: Request) {
       });
       return apiOk({ trackingCode: generateTrackingCode() }, { status: 201 });
     }
-
-    const limited = checkLimit('enroll', ip);
-    if (!limited.ok) return rateLimitedResponse(limited.retryAfter);
 
     const parsed = enrollSchema.safeParse(raw);
     if (!parsed.success) return apiError('validation', 400);

@@ -21,7 +21,7 @@ export default async function NewCasePage({
         <p className="mt-1 text-[var(--color-muted)]">{t('newCaseLede')}</p>
       </div>
       <GlassCard interactive={false} className="mx-auto max-w-3xl">
-        <ClinicianCaseWizard />
+        <ClinicianCaseWizard openHrefBase="/registry/clinician" />
       </GlassCard>
     </Section>
   );

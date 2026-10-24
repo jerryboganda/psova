@@ -12,7 +12,7 @@ const styles: Record<Status, string> = {
 };
 
 /** Status pill (UI-SPEC §2). Works in server and client components (next-intl). */
-export function RegistryBadge({ status, className }: { status: Status; className?: string }) {
+export function RegistryBadge({ status, className, label }: { status: Status; className?: string; label?: string }) {
   const t = useTranslations('RegistryCommon');
   return (
     <span
@@ -23,7 +23,7 @@ export function RegistryBadge({ status, className }: { status: Status; className
       )}
     >
       <span className="size-1.5 rounded-full bg-current" aria-hidden />
-      {t(`statuses.${status}`)}
+      {label ?? t(`statuses.${status}`)}
     </span>
   );
 }

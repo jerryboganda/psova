@@ -3,6 +3,16 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Section } from '@/components/ui/Section';
 import { StatusLookup } from '@/components/registry/StatusLookup';
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'RegistryStatus' });
+  return { title: t('title'), description: t('lede') };
+}
+
 export default async function StatusPage({
   params,
 }: {

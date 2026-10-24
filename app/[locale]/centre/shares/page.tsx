@@ -21,11 +21,11 @@ export default async function CentreSharesPage({
   setRequestLocale(locale);
   const { dir } = await searchParams;
   const direction = dir === 'outgoing' ? 'outgoing' : 'incoming';
-  const { center, state } = await centrePageContext(locale, ['OWNER', 'DOCTOR']);
+  const { center, state, user } = await centrePageContext(locale, ['OWNER', 'DOCTOR']);
   const t = await getTranslations('Centres.sharing');
   const td = await getTranslations('Centres.documents');
   const format = await getFormatter();
-  const rows = await listShares(center, direction);
+  const rows = await listShares(center, direction, { actorId: user.id, ip: null });
   const canWrite = membershipAllowsWrites(state);
 
   return (

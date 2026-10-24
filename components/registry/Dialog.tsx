@@ -86,7 +86,7 @@ export function Dialog({
           <button
             type="button"
             onClick={onClose}
-            aria-label={tc('back')}
+            aria-label={tc('close')}
             className="grid size-9 place-items-center rounded-full text-[var(--color-muted)] hover:bg-white/10 hover:text-[var(--color-fg)]"
           >
             <X className="size-5" />

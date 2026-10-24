@@ -10,6 +10,23 @@ function suppress(count: number): number | null {
   return count < K_ANON_MIN ? null : count;
 }
 
+/**
+ * Secondary suppression: when any cell in a dimension is hidden, hide one more
+ * visible cell (the smallest) so the exact suppressed value cannot be recovered
+ * by subtracting the visible cells from the exact total.
+ */
+function suppressDimension(counts: number[]): (number | null)[] {
+  const out = counts.map(suppress);
+  if (out.some((v) => v === null) && out.some((v) => v !== null)) {
+    let smallest = -1;
+    out.forEach((v, i) => {
+      if (v !== null && (smallest === -1 || v < (out[smallest] as number))) smallest = i;
+    });
+    if (smallest >= 0) out[smallest] = null;
+  }
+  return out;
+}
+
 export type PublicStats = {
   published: boolean;
   totals: { verified: number; provinces: number; clinicians: number; conditions: number };
@@ -25,7 +42,7 @@ export async function getPublicStats(): Promise<PublicStats> {
   const [rows, condGroups] = await Promise.all([
     prisma.registryPatient.findMany({
       where: { AND: [NVAR_VISIBLE, { status: 'VERIFIED' }] },
-      select: { province: true, gender: true, birthYear: true, createdAt: true, clinicianId: true },
+      select: { province: true, gender: true, birthYear: true, birthMonth: true, createdAt: true, clinicianId: true },
     }),
     prisma.registryDiagnosis.groupBy({
       by: ['conditionSlug'],
@@ -35,7 +52,9 @@ export async function getPublicStats(): Promise<PublicStats> {
   ]);
 
   const total = rows.length;
-  const currentYear = new Date().getFullYear();
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
 
   const provinceMap = new Map<string, number>();
   const genderMap = new Map<string, number>();
@@ -46,34 +65,34 @@ export async function getPublicStats(): Promise<PublicStats> {
   for (const r of rows) {
     provinceMap.set(r.province, (provinceMap.get(r.province) ?? 0) + 1);
     genderMap.set(r.gender, (genderMap.get(r.gender) ?? 0) + 1);
-    const band = ageBandKey(Math.max(0, currentYear - r.birthYear));
+    const age = currentYear - r.birthYear - (currentMonth < r.birthMonth ? 1 : 0);
+    const band = ageBandKey(Math.max(0, age));
     bandMap.set(band, (bandMap.get(band) ?? 0) + 1);
     const yr = r.createdAt.getFullYear();
     yearMap.set(yr, (yearMap.get(yr) ?? 0) + 1);
     if (r.clinicianId) clinicianSet.add(r.clinicianId);
   }
 
-  const byProvince = [...provinceMap.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([province, c]) => ({ province, count: suppress(c) }));
+  const provinceEntries = [...provinceMap.entries()].sort((a, b) => b[1] - a[1]);
+  const provinceCounts = suppressDimension(provinceEntries.map((e) => e[1]));
+  const byProvince = provinceEntries.map(([province], i) => ({ province, count: provinceCounts[i] }));
 
-  const byCondition = [...condGroups]
-    .sort((a, b) => b._count.conditionSlug - a._count.conditionSlug)
-    .map((g) => ({ slug: g.conditionSlug, count: suppress(g._count.conditionSlug) }));
+  const conditionEntries = [...condGroups].sort((a, b) => b._count.conditionSlug - a._count.conditionSlug);
+  const conditionCounts = suppressDimension(conditionEntries.map((g) => g._count.conditionSlug));
+  const byCondition = conditionEntries.map((g, i) => ({ slug: g.conditionSlug, count: conditionCounts[i] }));
 
   const genderOrder = ['MALE', 'FEMALE', 'OTHER'];
-  const byGender = genderOrder
-    .filter((g) => genderMap.has(g))
-    .map((g) => ({ gender: g, count: suppress(genderMap.get(g)!) }));
+  const genderEntries = genderOrder.filter((g) => genderMap.has(g));
+  const genderCounts = suppressDimension(genderEntries.map((g) => genderMap.get(g)!));
+  const byGender = genderEntries.map((gender, i) => ({ gender, count: genderCounts[i] }));
 
-  const byAgeBand = AGE_BANDS.filter((b) => bandMap.has(b.key)).map((b) => ({
-    band: b.key,
-    count: suppress(bandMap.get(b.key)!),
-  }));
+  const ageEntries = AGE_BANDS.filter((b) => bandMap.has(b.key));
+  const ageCounts = suppressDimension(ageEntries.map((b) => bandMap.get(b.key)!));
+  const byAgeBand = ageEntries.map((b, i) => ({ band: b.key, count: ageCounts[i] }));
 
-  const byYear = [...yearMap.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .map(([year, c]) => ({ year, count: suppress(c) }));
+  const yearEntries = [...yearMap.entries()].sort((a, b) => a[0] - b[0]);
+  const yearCounts = suppressDimension(yearEntries.map((e) => e[1]));
+  const byYear = yearEntries.map(([year], i) => ({ year, count: yearCounts[i] }));
 
   return {
     published: total >= STATS_PUBLISH_THRESHOLD,

@@ -7,6 +7,7 @@ import { StatCard } from '@/components/registry/StatCard';
 import { BarList } from '@/components/registry/BarList';
 import { TrendLine } from '@/components/registry/TrendLine';
 import { getPublicStats, type PublicStats } from '@/lib/registry/stats';
+import { K_ANON_MIN } from '@/lib/registry/constants';
 import { CONDITIONS } from '@/data/conditions';
 import { localized } from '@/lib/utils';
 
@@ -33,6 +34,16 @@ async function safeStats(): Promise<PublicStats> {
   }
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'RegistryStats' });
+  return { title: t('title'), description: t('lede') };
+}
+
 export default async function StatisticsPage({
   params,
 }: {
@@ -47,6 +58,15 @@ export default async function StatisticsPage({
   const stats = await safeStats();
   const suppressed = t('suppressed');
   const suppressedSr = t('suppressedSr');
+  const countValue = (value: number) =>
+    value < K_ANON_MIN ? <span dir="ltr">{suppressed}</span> : value;
+  const updated =
+    new Date(stats.updatedAt).getUTCFullYear() > 2000
+      ? new Date(stats.updatedAt).toLocaleString(locale === 'ur' ? 'ur-PK' : 'en-PK', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        })
+      : null;
 
   const conditionName = (slug: string) => {
     if (slug === 'other') return te('conditionOptions.other');
@@ -65,10 +85,10 @@ export default async function StatisticsPage({
       <PageHeader eyebrow={t('eyebrow')} title={t('title')} lead={t('lede')} />
       <Section>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label={t('cards.total')} value={stats.totals.verified} Icon={Activity} accent="var(--color-cyan)" />
-          <StatCard label={t('cards.provinces')} value={stats.totals.provinces} Icon={MapPin} accent="var(--color-blue)" />
-          <StatCard label={t('cards.clinicians')} value={stats.totals.clinicians} Icon={Stethoscope} accent="var(--color-purple)" />
-          <StatCard label={t('cards.conditions')} value={stats.totals.conditions} Icon={Users} accent="var(--color-magenta)" />
+          <StatCard label={t('cards.total')} value={countValue(stats.totals.verified)} Icon={Activity} accent="var(--color-cyan)" />
+          <StatCard label={t('cards.provinces')} value={countValue(stats.totals.provinces)} Icon={MapPin} accent="var(--color-blue)" />
+          <StatCard label={t('cards.clinicians')} value={countValue(stats.totals.clinicians)} Icon={Stethoscope} accent="var(--color-purple)" />
+          <StatCard label={t('cards.conditions')} value={countValue(stats.totals.conditions)} Icon={Users} accent="var(--color-magenta)" />
         </div>
 
         {!stats.published ? (
@@ -105,6 +125,11 @@ export default async function StatisticsPage({
           <Info className="mt-0.5 size-4 shrink-0" />
           {t('notes')}
         </p>
+        {updated && (
+          <p className="mt-2 text-xs text-[var(--color-faint)]">
+            {t('updated')}: {updated}
+          </p>
+        )}
       </Section>
     </>
   );

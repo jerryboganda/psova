@@ -22,6 +22,7 @@ type Row = {
   gender: string;
   birthYear: number;
   conditionSlug: string;
+  centerName: string | null;
   possibleDuplicate: boolean;
   createdAt: string;
 };
@@ -47,7 +48,10 @@ export function AdminRecordsBrowser({ queue = false }: { queue?: boolean }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportFailed, setExportFailed] = useState(false);
 
   const buildBody = useCallback(
     (p: number) => {
@@ -74,6 +78,7 @@ export function AdminRecordsBrowser({ queue = false }: { queue?: boolean }) {
   const load = useCallback(
     async (p: number) => {
       setLoading(true);
+      setLoadFailed(false);
       try {
         // POST so any CNIC/phone lookup value travels in the body, never the URL.
         const res = await fetch('/api/registry/admin/records', {
@@ -83,10 +88,11 @@ export function AdminRecordsBrowser({ queue = false }: { queue?: boolean }) {
           cache: 'no-store',
         });
         const data = await res.json().catch(() => ({}));
-        if (data?.ok) {
-          setRows(data.items as Row[]);
-          setTotal(data.total as number);
-        }
+        if (!res.ok || !data?.ok) throw new Error();
+        setRows(data.items as Row[]);
+        setTotal(data.total as number);
+      } catch {
+        setLoadFailed(true);
       } finally {
         setLoading(false);
       }
@@ -113,6 +119,7 @@ export function AdminRecordsBrowser({ queue = false }: { queue?: boolean }) {
     { key: 'code', header: t('table.code'), render: (r) => <span dir="ltr" className="font-mono text-xs">{r.trackingCode}</span> },
     { key: 'status', header: t('table.status'), render: (r) => <RegistryBadge status={r.status} /> },
     { key: 'source', header: t('table.source'), render: (r) => tc(`sources.${r.source}`) },
+    { key: 'centre', header: t('table.centre'), render: (r) => r.centerName ?? '—' },
     { key: 'province', header: t('table.province'), render: (r) => tc(`provinces.${r.province}`) },
     { key: 'district', header: t('table.district'), render: (r) => r.district },
     { key: 'condition', header: t('table.condition'), render: (r) => conditionName(r.conditionSlug) },
@@ -120,12 +127,33 @@ export function AdminRecordsBrowser({ queue = false }: { queue?: boolean }) {
     { key: 'date', header: t('table.date'), render: (r) => format.dateTime(new Date(r.createdAt), { dateStyle: 'medium' }) },
   ];
 
-  function exportUrl() {
-    const params = new URLSearchParams();
-    if (status) params.set('status', status);
-    if (province) params.set('province', province);
-    if (conditionSlug) params.set('conditionSlug', conditionSlug);
-    return `/api/registry/admin/export?${params.toString()}`;
+  async function downloadExport() {
+    setExporting(true);
+    setExportFailed(false);
+    try {
+      const res = await fetch('/api/registry/admin/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildBody(1)),
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const disposition = res.headers.get('content-disposition') ?? '';
+      const match = /filename="([^"]+)"/.exec(disposition);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = match?.[1] ?? 'psova-registry-export.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setExportOpen(false);
+    } catch {
+      setExportFailed(true);
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -202,15 +230,24 @@ export function AdminRecordsBrowser({ queue = false }: { queue?: boolean }) {
         </div>
       )}
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r.id}
-        onRowClick={(r) => router.push(`/registry/admin/records/${r.id}`)}
-        empty={queue ? t('queue.empty') : tc('empty')}
-        loading={loading}
-        pagination={{ page, pageSize: 20, total, onPage: setPage }}
-      />
+      {loadFailed ? (
+        <div className="flex flex-col items-center gap-3 rounded-[var(--radius-2xl)] border border-[var(--color-rose)]/30 bg-[var(--color-rose)]/5 px-4 py-12 text-center">
+          <p className="text-sm text-[var(--color-rose)]">{tc('error')}</p>
+          <button type="button" onClick={() => load(page)} className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium">
+            {tc('retry')}
+          </button>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          onRowClick={(r) => router.push(`/registry/admin/records/${r.id}`)}
+          empty={queue ? t('queue.empty') : tc('empty')}
+          loading={loading}
+          pagination={{ page, pageSize: 20, total, onPage: setPage }}
+        />
+      )}
 
       <Dialog
         open={exportOpen}
@@ -221,18 +258,20 @@ export function AdminRecordsBrowser({ queue = false }: { queue?: boolean }) {
             <button type="button" onClick={() => setExportOpen(false)} className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-[var(--color-fg)]">
               {t('export.cancel')}
             </button>
-            <a
-              href={exportUrl()}
-              onClick={() => setExportOpen(false)}
-              className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white"
+            <button
+              type="button"
+              onClick={downloadExport}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
             >
               <Download className="size-4" />
               {t('export.confirm')}
-            </a>
+            </button>
           </>
         }
       >
         <p className="text-sm text-[var(--color-muted)]">{t('export.confirmBody')}</p>
+        {exportFailed && <p role="alert" className="mt-3 text-sm text-[var(--color-rose)]">{t('export.error')}</p>}
       </Dialog>
     </div>
   );

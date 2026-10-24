@@ -14,7 +14,7 @@ export default async function ResetPasswordPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const { token, error } = await searchParams;
-  const t = await getTranslations('Centres.reset');
+  const t = await getTranslations('RegistryAuth.reset');
 
   return (
     <>

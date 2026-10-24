@@ -5,7 +5,9 @@ import { useForm, type Path, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations, useLocale } from 'next-intl';
 import { Pencil } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { centreIntakeSchema, enrollSchema, type EnrollInput } from '@/lib/registry/schemas';
+import { formatCnicInput } from '@/lib/registry/normalize';
 import {
   GENDERS,
   PROVINCES,
@@ -63,6 +65,7 @@ export function EnrollWizard({ centre }: { centre?: EnrollCentre } = {}) {
   });
 
   const conditionSlug = watch('conditionSlug');
+  const cnicField = register('cnic');
 
   const stepLabels = [
     t('steps.patient'),
@@ -170,7 +173,7 @@ export function EnrollWizard({ centre }: { centre?: EnrollCentre } = {}) {
               <input id="email" type="email" dir="ltr" className={fieldClass} placeholder="name@example.com" aria-invalid={!!errors.email} {...register('email')} />
             </FormField>
             <FormField id="cnic" label={t('fields.cnic')} required hint={t('fields.cnicHint')} error={err('cnic', 'cnic')}>
-              <input id="cnic" inputMode="numeric" dir="ltr" className={fieldClass} placeholder={t('fields.cnicPh')} aria-invalid={!!errors.cnic} aria-describedby="cnic-error" {...register('cnic')} />
+              <input id="cnic" inputMode="numeric" dir="ltr" maxLength={15} className={fieldClass} placeholder={t('fields.cnicPh')} aria-invalid={!!errors.cnic} aria-describedby="cnic-error" {...cnicField} onChange={(e) => { e.target.value = formatCnicInput(e.target.value); void cnicField.onChange(e); }} />
             </FormField>
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -186,8 +189,8 @@ export function EnrollWizard({ centre }: { centre?: EnrollCentre } = {}) {
               <input id="district" className={fieldClass} placeholder={t('fields.districtPh')} aria-invalid={!!errors.district} aria-describedby="district-error" {...register('district')} />
             </FormField>
           </div>
-          <FormField id="address" label={t('fields.address')} optionalLabel={tc('optional')}>
-            <input id="address" className={fieldClass} {...register('address')} />
+          <FormField id="address" label={t('fields.address')} optionalLabel={tc('optional')} error={err('address', 'tooLong')}>
+            <input id="address" maxLength={300} className={fieldClass} aria-invalid={!!errors.address} {...register('address')} />
           </FormField>
         </div>
       )}
@@ -240,8 +243,8 @@ export function EnrollWizard({ centre }: { centre?: EnrollCentre } = {}) {
               <input id="facility" className={fieldClass} {...register('facility')} />
             </FormField>
           </div>
-          <FormField id="treatmentNotes" label={t('fields.treatmentNotes')} optionalLabel={tc('optional')}>
-            <textarea id="treatmentNotes" rows={3} className={fieldClass} placeholder={t('fields.treatmentNotesPh')} {...register('treatmentNotes')} />
+          <FormField id="treatmentNotes" label={t('fields.treatmentNotes')} optionalLabel={tc('optional')} error={err('treatmentNotes', 'tooLong')}>
+            <textarea id="treatmentNotes" rows={3} maxLength={2000} className={fieldClass} placeholder={t('fields.treatmentNotesPh')} aria-invalid={!!errors.treatmentNotes} {...register('treatmentNotes')} />
           </FormField>
         </div>
       )}
@@ -249,6 +252,9 @@ export function EnrollWizard({ centre }: { centre?: EnrollCentre } = {}) {
       {step === 4 && (
         <div className="flex flex-col gap-4">
           <p className="text-sm text-[var(--color-muted)]">{t('consentIntro')}</p>
+          <Link href="/registry#consent" className="text-sm text-[var(--color-cyan)] hover:underline">
+            {t('privacyLink')}
+          </Link>
           {centre && (
             <ConsentCheck id="consentCentre" required error={err('consentCentre', 'consentRegistry')} inputProps={register('consentCentre')}>
               {ti('consent.centre', { name: centre.name })}

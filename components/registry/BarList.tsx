@@ -28,7 +28,7 @@ export function BarList({
               <div className="mb-1 flex items-baseline justify-between gap-4 text-sm">
                 <span className="text-[var(--color-fg)]">{i.label}</span>
                 <span className="font-medium text-[var(--color-muted)]">
-                  {i.count === null ? suppressedLabel : i.count}
+                  {i.count === null ? <span dir="ltr">{suppressedLabel}</span> : i.count}
                 </span>
               </div>
               <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/5">

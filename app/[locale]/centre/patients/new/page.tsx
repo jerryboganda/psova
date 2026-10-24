@@ -27,6 +27,7 @@ export default async function NewCentrePatientPage({
           <ClinicianCaseWizard
             endpoint="/api/centre/patients"
             showMrn
+            showConsent
             openHrefBase="/centre/patients"
             // The patient's own province/district, preset to the centre's as a convenience.
             defaults={{ province: center.province, district: center.city }}

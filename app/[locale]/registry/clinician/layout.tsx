@@ -26,14 +26,14 @@ export default async function ClinicianLayout({
 
   const session = await getSession(await headers());
   const role = session?.user.role;
-  if (!session || (role !== 'admin' && role !== 'clinician')) {
+  if (!session || (role !== 'admin' && role !== 'clinician' && role !== 'center')) {
     redirect({ href: '/registry/login', locale });
     return null;
   }
 
-  // Admins act as clinicians without a profile; clinicians must be approved.
+  // Admins act as clinicians without a profile; everyone else must have an approved profile.
   let approved = role === 'admin';
-  if (role === 'clinician') {
+  if (role === 'clinician' || role === 'center') {
     const profile = await prisma.clinicianProfile.findUnique({
       where: { userId: session.user.id },
       select: { approved: true },
@@ -61,9 +61,15 @@ export default async function ClinicianLayout({
     );
   }
 
+  const centreMember = await prisma.centerMember.findUnique({
+    where: { userId: session.user.id },
+    select: { active: true, center: { select: { status: true } } },
+  });
+  const hasCentre = Boolean(centreMember?.active && centreMember.center.status === 'APPROVED');
+
   return (
     <div className="pt-24 md:pt-28">
-      <ClinicianNav />
+      <ClinicianNav hasCentre={hasCentre} />
       {children}
     </div>
   );

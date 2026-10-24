@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Plus, Trash2 } from 'lucide-react';
 import type { z } from 'zod';
 import { caseSchema, type CaseInput } from '@/lib/registry/schemas';
+import { formatCnicInput } from '@/lib/registry/normalize';
 
 // treatments has a Zod .default([]) so the form *input* type differs from the
 // validated *output* type — thread both through useForm's generics.
@@ -46,11 +47,14 @@ export function ClinicianCaseWizard({
   endpoint = '/api/registry/cases',
   defaults,
   showMrn = false,
+  showConsent = false,
   openHrefBase,
 }: {
   endpoint?: string;
   defaults?: Partial<CaseForm>;
   showMrn?: boolean;
+  /** Centre add-patient flow: capture contact/research consent. */
+  showConsent?: boolean;
   /** After saving, link to `${openHrefBase}/${patientId}`. */
   openHrefBase?: string;
 } = {}) {
@@ -79,6 +83,7 @@ export function ClinicianCaseWizard({
 
   const { fields, append, remove } = useFieldArray({ control, name: 'treatments' });
   const conditionSlug = watch('conditionSlug');
+  const cnicField = register('cnic');
 
   const stepLabels = [t('steps.patient'), t('steps.contact'), t('steps.clinical'), t('steps.attestation')];
   const stepTitles = [t('stepTitles.patient'), t('stepTitles.contact'), t('stepTitles.clinical'), t('stepTitles.attestation')];
@@ -181,7 +186,7 @@ export function ClinicianCaseWizard({
               <input id="c-email" type="email" dir="ltr" className={fieldClass} aria-invalid={!!errors.email} {...register('email')} />
             </FormField>
             <FormField id="c-cnic" label={te('fields.cnic')} required hint={te('fields.cnicHint')} error={eErr('cnic', 'cnic')}>
-              <input id="c-cnic" dir="ltr" inputMode="numeric" className={fieldClass} placeholder={te('fields.cnicPh')} aria-invalid={!!errors.cnic} {...register('cnic')} />
+              <input id="c-cnic" dir="ltr" inputMode="numeric" maxLength={15} className={fieldClass} placeholder={te('fields.cnicPh')} aria-invalid={!!errors.cnic} {...cnicField} onChange={(e) => { e.target.value = formatCnicInput(e.target.value); void cnicField.onChange(e); }} />
             </FormField>
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -286,7 +291,10 @@ export function ClinicianCaseWizard({
                     <input
                       className={`${fieldClass} w-24`}
                       inputMode="numeric"
+                      min={1900}
+                      max={new Date().getFullYear()}
                       placeholder={t('treatments.year')}
+                      aria-invalid={!!errors.treatments?.[i]?.year}
                       {...register(`treatments.${i}.year` as const, { setValueAs: (v) => (v === '' || v == null ? undefined : Number(v)) })}
                     />
                     <select className={fieldClass} {...register(`treatments.${i}.outcome` as const)}>
@@ -295,6 +303,9 @@ export function ClinicianCaseWizard({
                     <button type="button" onClick={() => remove(i)} aria-label={t('treatments.remove')} className="grid size-10 place-items-center rounded-full text-[var(--color-rose)] hover:bg-[var(--color-rose)]/10">
                       <Trash2 className="size-4" />
                     </button>
+                    {errors.treatments?.[i]?.year && (
+                      <p className="text-xs text-[var(--color-rose)] sm:col-span-5">{t('errors.treatmentYear')}</p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -309,6 +320,16 @@ export function ClinicianCaseWizard({
           <ConsentCheck id="c-attest" required error={errors.consentAttested ? t('errors.attestation') : undefined} inputProps={register('consentAttested')}>
             {t('attestation.text')}
           </ConsentCheck>
+          {showConsent && (
+            <>
+              <ConsentCheck id="c-consent-contact" inputProps={register('consentContact')}>
+                {tp('consentContact')}
+              </ConsentCheck>
+              <ConsentCheck id="c-consent-research" inputProps={register('consentResearch')}>
+                {tp('consentResearch')}
+              </ConsentCheck>
+            </>
+          )}
         </div>
       )}
 

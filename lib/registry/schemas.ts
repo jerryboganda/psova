@@ -23,6 +23,7 @@ import {
   CENTER_SERVICES,
   CENTER_PAYMENT_METHODS,
   CENTER_PAYMENT_STATUSES,
+  CENTER_ROLES,
   CENTER_STAFF_ROLES,
   APPOINTMENT_KINDS,
   RESPONSE_SCORES,
@@ -228,6 +229,9 @@ export const caseSchema = z
     treatments: z.array(treatmentSchema).max(10).default([]),
     // clinician attests patient consent
     consentAttested: z.literal(true),
+    // centre staff only: contact/research consent captured from the patient
+    consentContact: z.boolean().optional(),
+    consentResearch: z.boolean().optional(),
     // centre staff only: the centre's own patient number (ignored by the NVAR clinician flow)
     mrn: z.string().trim().max(40).optional(),
   })
@@ -260,11 +264,15 @@ export const adminActionSchema = z.discriminatedUnion('action', [
     onset: z.enum(ONSETS).optional(),
     internalNote: z.string().max(1000).optional(),
   }),
+  z.object({
+    action: z.literal('ERASE'),
+    reason: z.string().trim().min(5).max(500),
+  }),
 ]);
 export type AdminActionInput = z.infer<typeof adminActionSchema>;
 
 export const clinicianActionSchema = z.object({
-  action: z.enum(['APPROVE', 'REJECT']),
+  action: z.enum(['APPROVE', 'REJECT', 'REVOKE']),
 });
 export type ClinicianActionInput = z.infer<typeof clinicianActionSchema>;
 
@@ -291,6 +299,7 @@ export type AdminRecordsQuery = z.infer<typeof adminRecordsQuerySchema>;
 
 export const adminCliniciansQuerySchema = z.object({
   approved: BOOLISH.optional(),
+  q: z.string().trim().max(120).optional(),
   page: z.coerce.number().int().min(1).default(1),
 });
 export type AdminCliniciansQuery = z.infer<typeof adminCliniciansQuerySchema>;
@@ -308,6 +317,10 @@ export const adminExportQuerySchema = z.object({
   status: z.enum(REGISTRY_STATUSES).optional(),
   province: z.enum(PROVINCES).optional(),
   conditionSlug: z.string().max(80).optional(),
+  source: z.enum(RECORD_SOURCES).optional(),
+  possibleDuplicate: z.enum(['true', 'false']).optional(),
+  q: z.string().trim().max(80).optional(),
+  qType: z.enum(['cnic', 'phone', 'code']).optional(),
   from: z.string().max(40).optional(),
   to: z.string().max(40).optional(),
 });
@@ -396,6 +409,7 @@ export type CenterPaymentActionInput = z.infer<typeof centerPaymentActionSchema>
 
 export const adminCentersQuerySchema = z.object({
   status: z.enum(CENTER_STATUSES).optional(),
+  q: z.string().trim().max(120).optional(),
   page: z.coerce.number().int().min(1).default(1),
 });
 export type AdminCentersQuery = z.infer<typeof adminCentersQuerySchema>;
@@ -418,8 +432,127 @@ export const staffUpdateSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('DEACTIVATE') }),
   z.object({ action: z.literal('REACTIVATE') }),
   z.object({ action: z.literal('RESEND') }),
+  z.object({ action: z.literal('TRANSFER_OWNER') }),
 ]);
 export type StaffUpdateInput = z.infer<typeof staffUpdateSchema>;
+
+/* -------------------------------------------------------------------------- */
+/*  Admin: centres CRUD (PSOVA staff create/manage a centre directly)         */
+/* -------------------------------------------------------------------------- */
+
+const centreDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const centreDateOrEmpty = z.union([centreDate, z.literal(''), z.null()]).optional();
+
+const centreCoreFields = {
+  nameEn: z.string().trim().min(3).max(160),
+  nameUr: z.string().trim().max(160).optional().or(z.literal('')),
+  type: z.enum(CENTER_TYPES),
+  city: z.string().trim().min(2).max(80),
+  province: z.enum(PROVINCES),
+  address: z.string().trim().min(5).max(300),
+  phone: z.string().trim().regex(/^[0-9+\-\s()]{7,20}$/),
+  contactEmail: z.string().email(),
+  websiteUrl: z.string().url().max(200).optional().or(z.literal('')),
+  lat: PK_LAT.optional(),
+  lng: PK_LNG.optional(),
+  services: z.array(z.enum(CENTER_SERVICES)).min(1).max(CENTER_SERVICES.length),
+  conditions: z.array(z.enum(CONDITION_SLUGS)).min(1).max(CONDITION_SLUGS.length),
+  licenceNumber: z.string().trim().min(3).max(60),
+  headDoctorName: z.string().trim().min(3).max(120),
+  headDoctorPmc: z.string().trim().min(4).max(30),
+};
+
+export const adminCenterCreateSchema = z
+  .object({
+    ...centreCoreFields,
+    status: z.enum(CENTER_STATUSES).default('APPROVED'),
+    tier: z.enum(CENTER_TIERS).default('MEMBER'),
+    membershipExpiresAt: centreDateOrEmpty,
+    statusReason: z.string().trim().max(500).optional().or(z.literal('')),
+    // Optional owner account. Leave both blank for an admin-managed centre.
+    ownerName: z.string().trim().min(2).max(120).optional().or(z.literal('')),
+    ownerEmail: z.string().email().optional().or(z.literal('')),
+  })
+  .superRefine((data, ctx) => {
+    const hasName = Boolean(data.ownerName?.trim());
+    const hasEmail = Boolean(data.ownerEmail?.trim());
+    if (hasName !== hasEmail) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [hasName ? 'ownerEmail' : 'ownerName'],
+        message: 'Enter both the owner name and email, or leave both blank.',
+      });
+    }
+    if ((data.status === 'REJECTED' || data.status === 'SUSPENDED') && (data.statusReason ?? '').trim().length < 5) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['statusReason'],
+        message: 'A reason of at least 5 characters is required for this status.',
+      });
+    }
+  });
+export type AdminCenterCreateInput = z.infer<typeof adminCenterCreateSchema>;
+
+const adminCentreOptional = {
+  nameEn: z.string().trim().min(3).max(160).optional(),
+  nameUr: z.string().trim().max(160).optional().or(z.literal('')),
+  type: z.enum(CENTER_TYPES).optional(),
+  city: z.string().trim().min(2).max(80).optional(),
+  province: z.enum(PROVINCES).optional(),
+  address: z.string().trim().min(5).max(300).optional(),
+  phone: z.string().trim().regex(/^[0-9+\-\s()]{7,20}$/).optional(),
+  contactEmail: z.string().email().optional(),
+  websiteUrl: z.string().url().max(200).optional().or(z.literal('')),
+  lat: z.union([PK_LAT, z.null()]).optional(),
+  lng: z.union([PK_LNG, z.null()]).optional(),
+  services: z.array(z.enum(CENTER_SERVICES)).min(1).max(CENTER_SERVICES.length).optional(),
+  conditions: z.array(z.enum(CONDITION_SLUGS)).min(1).max(CONDITION_SLUGS.length).optional(),
+  licenceNumber: z.string().trim().min(3).max(60).optional(),
+  headDoctorName: z.string().trim().min(3).max(120).optional(),
+  // Omit to keep the stored (encrypted) PMC number unchanged.
+  headDoctorPmc: z.string().trim().min(4).max(30).optional(),
+  status: z.enum(CENTER_STATUSES).optional(),
+  tier: z.enum(CENTER_TIERS).optional(),
+  membershipExpiresAt: centreDateOrEmpty,
+  statusReason: z.string().trim().max(500).optional().or(z.literal('')),
+};
+
+export const adminCenterUpdateSchema = z
+  .object({
+    action: z.literal('UPDATE'),
+    ...adminCentreOptional,
+  })
+  .superRefine((data, ctx) => {
+    if (Object.keys(data).length <= 1) {
+      ctx.addIssue({ code: 'custom', path: ['action'], message: 'Nothing to update.' });
+    }
+    if ((data.status === 'REJECTED' || data.status === 'SUSPENDED') && (data.statusReason ?? '').trim().length < 5) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['statusReason'],
+        message: 'A reason of at least 5 characters is required for this status.',
+      });
+    }
+  });
+export type AdminCenterUpdateInput = z.infer<typeof adminCenterUpdateSchema>;
+
+/** PATCH may carry a lifecycle action or a full edit. */
+export const adminCenterPatchSchema = z.union([centerActionSchema, adminCenterUpdateSchema]);
+
+export const adminCenterStaffCreateSchema = z.object({
+  name: z.string().trim().min(2).max(120).optional(),
+  email: z.string().email(),
+  role: z.enum(CENTER_ROLES),
+});
+export type AdminCenterStaffCreateInput = z.infer<typeof adminCenterStaffCreateSchema>;
+
+export const adminCenterStaffUpdateSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('SET_ROLE'), role: z.enum(CENTER_ROLES) }),
+  z.object({ action: z.literal('DEACTIVATE') }),
+  z.object({ action: z.literal('REACTIVATE') }),
+  z.object({ action: z.literal('RESEND') }),
+]);
+export type AdminCenterStaffUpdateInput = z.infer<typeof adminCenterStaffUpdateSchema>;
 
 /** What a centre owner may edit. Name, licence and head-doctor credentials stay PSOVA-controlled. */
 export const centerProfileSchema = z.object({

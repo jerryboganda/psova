@@ -170,7 +170,7 @@ export type AdminSupportRow = {
 
 export async function listAdminSupport(
   query: { status?: string; page: number },
-): Promise<{ items: AdminSupportRow[]; total: number; pageSize: number }> {
+): Promise<{ items: AdminSupportRow[]; page: number; total: number; pageSize: number }> {
   const where: Prisma.SupportRequestWhereInput = query.status ? { status: query.status as 'SUBMITTED' } : {};
   const [rows, total] = await Promise.all([
     prisma.supportRequest.findMany({
@@ -198,6 +198,7 @@ export async function listAdminSupport(
       statusReason: r.statusReason,
       createdAt: r.createdAt.toISOString(),
     })),
+    page: query.page,
     total,
     pageSize: PAGE_SIZE,
   };
@@ -235,14 +236,24 @@ export async function reviewSupportRequest(
       break;
     case 'RECORD_FUNDING': {
       if (req.status !== 'APPROVED') throw invalid();
-      const funded = req.fundedPkr + action.amountPkr;
-      await prisma.supportRequest.update({
-        where: { id },
-        data: {
-          fundedPkr: funded,
-          status: funded >= req.estimatedCostPkr ? 'FUNDED' : 'APPROVED',
-          ...(action.sponsorName ? { sponsorName: action.sponsorName, showSponsor: action.showSponsor } : {}),
-        },
+      await prisma.$transaction(async (tx) => {
+        const claimed = await tx.supportRequest.updateMany({
+          where: { id, status: 'APPROVED' },
+          data: { fundedPkr: { increment: action.amountPkr } },
+        });
+        if (claimed.count === 0) throw invalid();
+        const row = await tx.supportRequest.findUnique({
+          where: { id },
+          select: { fundedPkr: true, estimatedCostPkr: true },
+        });
+        if (!row) throw invalid();
+        await tx.supportRequest.update({
+          where: { id },
+          data: {
+            ...(row.fundedPkr >= row.estimatedCostPkr ? { status: 'FUNDED' as const } : {}),
+            ...(action.sponsorName ? { sponsorName: action.sponsorName, showSponsor: action.showSponsor } : {}),
+          },
+        });
       });
       break;
     }

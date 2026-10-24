@@ -6,10 +6,13 @@ import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { LogoutButton } from '@/components/registry/LogoutButton';
 import { CentreNav } from '@/components/centres/CentreNav';
+import { PaymentHistory } from '@/components/centres/PaymentHistory';
+import { PaymentProofForm } from '@/components/centres/PaymentProofForm';
 import { maybeSendRenewalReminder } from '@/lib/registry/centers';
 import { membershipState } from '@/lib/registry/membership';
 import { getSession } from '@/lib/registry/guards';
 import { prisma } from '@/lib/registry/db';
+import { MEMBERSHIP_FEE_PKR } from '@/lib/registry/constants';
 import { SITE } from '@/data/site';
 
 // Reads session/DB — never static.
@@ -25,6 +28,7 @@ export default async function CentreLayout({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('Centres.dash');
+  const tm = await getTranslations('Centres.membership');
 
   const session = await getSession(await headers());
   if (!session || session.user.role !== 'center') {
@@ -36,10 +40,35 @@ export default async function CentreLayout({
     where: { userId: session.user.id },
     select: { active: true, role: true, center: true },
   });
-  if (!member || !member.active) {
+  if (!member) {
     redirect({ href: '/registry/login', locale });
     return null;
   }
+  if (!member.active) {
+    return (
+      <Section className="pt-28 md:pt-32">
+        <GlassCard interactive={false} className="mx-auto max-w-xl text-center">
+          <div className="mx-auto mb-5 grid size-14 place-items-center rounded-full bg-amber-400/15 text-amber-300">
+            <ShieldAlert className="size-7" />
+          </div>
+          <h1 className="mb-3 text-2xl font-bold">{t('inactive.title')}</h1>
+          <p className="mb-6 text-[var(--color-muted)]">{t('inactive.body')}</p>
+          <div className="flex flex-col items-center gap-4">
+            <a href={`mailto:${SITE.email}`} className="text-sm text-[var(--color-cyan)] hover:underline">
+              {t('contact')}
+            </a>
+            <LogoutButton />
+          </div>
+        </GlassCard>
+      </Section>
+    );
+  }
+
+  const clinicianProfile = await prisma.clinicianProfile.findUnique({
+    where: { userId: session.user.id },
+    select: { approved: true },
+  });
+  const hasClinicianPortal = Boolean(clinicianProfile?.approved);
 
   const { center } = member;
   const { status, statusReason } = center;
@@ -47,7 +76,7 @@ export default async function CentreLayout({
     const Icon = status === 'APPLIED' ? Hourglass : ShieldAlert;
     return (
       <Section className="pt-28 md:pt-32">
-        <GlassCard interactive={false} className="mx-auto max-w-xl text-center">
+        <GlassCard interactive={false} className="mx-auto max-w-2xl text-center">
           <div className="mx-auto mb-5 grid size-14 place-items-center rounded-full bg-amber-400/15 text-amber-300">
             <Icon className="size-7" />
           </div>
@@ -65,6 +94,23 @@ export default async function CentreLayout({
             </a>
             <LogoutButton />
           </div>
+
+          {(status === 'APPLIED' || status === 'REJECTED') && (
+            <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-start">
+              <h2 className="mb-1 text-lg font-semibold">{tm('submitTitle')}</h2>
+              <p className="mb-2 text-sm text-[var(--color-muted)]">
+                {tm('lede', { fee: MEMBERSHIP_FEE_PKR.toLocaleString('en-US') })}
+              </p>
+              <Link href="/donate" className="mb-4 inline-block text-sm text-[var(--color-cyan)] hover:underline">
+                {tm('accounts')}
+              </Link>
+              <PaymentProofForm />
+              <div className="mt-6">
+                <h3 className="mb-3 text-sm font-semibold">{t('payments.title')}</h3>
+                <PaymentHistory centerId={center.id} />
+              </div>
+            </div>
+          )}
         </GlassCard>
       </Section>
     );
@@ -72,11 +118,11 @@ export default async function CentreLayout({
 
   const state = membershipState(center.membershipExpiresAt);
   const isOwner = member.role === 'OWNER';
-  if (isOwner) void maybeSendRenewalReminder(center, session.user.email, state);
+  if (isOwner) void maybeSendRenewalReminder(center, session.user.email, state).catch(() => {});
 
   return (
     <div className="pt-24 md:pt-28">
-      <CentreNav role={member.role} centreName={center.nameEn} />
+      <CentreNav role={member.role} centreName={center.nameEn} hasClinicianPortal={hasClinicianPortal} />
       {state !== 'ACTIVE' && (
         <div className="border-b border-amber-300/20 bg-amber-300/5 print:hidden">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm text-amber-100/90 sm:px-6 lg:px-8">

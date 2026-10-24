@@ -226,7 +226,7 @@ export type AdminMdtRow = {
   comments: { id: string; body: string; centre: string; hidden: boolean }[];
 };
 
-export async function listMdtForAdmin(page: number): Promise<{ items: AdminMdtRow[]; total: number; pageSize: number }> {
+export async function listMdtForAdmin(page: number): Promise<{ items: AdminMdtRow[]; page: number; total: number; pageSize: number }> {
   const [rows, total] = await Promise.all([
     prisma.mdtPost.findMany({
       orderBy: { createdAt: 'desc' },
@@ -246,6 +246,7 @@ export async function listMdtForAdmin(page: number): Promise<{ items: AdminMdtRo
       createdAt: r.createdAt.toISOString(),
       comments: r.comments.map((c) => ({ id: c.id, body: c.body, centre: c.center.nameEn, hidden: c.hidden })),
     })),
+    page,
     total,
     pageSize: PAGE_SIZE,
   };

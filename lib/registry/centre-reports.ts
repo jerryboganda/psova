@@ -123,7 +123,7 @@ export async function exportCentreCsv(
   });
 
   const encoder = new TextEncoder();
-  const date = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : '');
+  const date = (d: Date | null) => (d ? new Date(d.getTime() + PKT_OFFSET_MS).toISOString().slice(0, 10) : '');
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {

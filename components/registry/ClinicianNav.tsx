@@ -1,18 +1,19 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { LayoutList, FilePlus } from 'lucide-react';
+import { Building2, LayoutList, FilePlus } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { LogoutButton } from './LogoutButton';
 import { cn } from '@/lib/utils';
 
-export function ClinicianNav() {
+export function ClinicianNav({ hasCentre = false }: { hasCentre?: boolean }) {
   const t = useTranslations('RegistryClinician');
   const pathname = usePathname();
 
   const links = [
     { href: '/registry/clinician', label: t('nav.cases'), Icon: LayoutList, exact: true },
     { href: '/registry/clinician/new-case', label: t('nav.new'), Icon: FilePlus, exact: false },
+    ...(hasCentre ? [{ href: '/centre', label: t('nav.centre'), Icon: Building2, exact: false }] : []),
   ];
 
   return (

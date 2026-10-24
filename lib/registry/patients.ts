@@ -13,6 +13,8 @@ import {
 } from './crypto';
 import { deriveDobParts } from './normalize';
 import { generateUniqueTrackingCode, normalizeTrackingCode } from './codes';
+import { csvCell } from './csv';
+import { removeFile } from './storage';
 import { writeAudit } from './audit';
 import { AuditAction, type ActorRole } from './constants';
 import { sendEnrollmentConfirmation, sendClinicianApproval } from './mailer';
@@ -287,10 +289,10 @@ export async function createClinicianCase(
         isMinor,
         // consent recorded from the clinician's attestation (API-SPEC §3)
         consentRegistry: !centre,
-        consentContact: false,
-        consentResearch: false,
+        consentContact: centre ? (input.consentContact ?? false) : false,
+        consentResearch: centre ? (input.consentResearch ?? false) : false,
         consentGuardian: isMinor,
-        consentVersion: centre ? 'v1-centre' : 'v1-clinician',
+        consentVersion: centre ? 'v1-centre-intake' : 'v1-clinician',
         diagnoses: {
           create: {
             conditionSlug: input.conditionSlug,
@@ -593,6 +595,7 @@ export type AdminRecordRow = {
   gender: string;
   birthYear: number;
   conditionSlug: string;
+  centerName: string | null;
   possibleDuplicate: boolean;
   createdAt: string;
 };
@@ -616,8 +619,8 @@ function buildRecordWhere(query: {
   if (query.conditionSlug) where.diagnoses = { some: { conditionSlug: query.conditionSlug } };
   if (query.from || query.to) {
     where.createdAt = {
-      ...(query.from ? { gte: new Date(query.from) } : {}),
-      ...(query.to ? { lte: new Date(`${query.to}T23:59:59.999Z`) } : {}),
+      ...(query.from ? { gte: new Date(`${query.from}T00:00:00.000+05:00`) } : {}),
+      ...(query.to ? { lte: new Date(`${query.to}T23:59:59.999+05:00`) } : {}),
     };
   }
   if (query.q && query.qType) {
@@ -649,6 +652,7 @@ export async function listRecords(
         birthYear: true,
         possibleDuplicate: true,
         createdAt: true,
+        center: { select: { nameEn: true } },
         diagnoses: { select: { conditionSlug: true }, take: 1 },
       },
     }),
@@ -665,6 +669,7 @@ export async function listRecords(
       gender: r.gender,
       birthYear: r.birthYear,
       conditionSlug: r.diagnoses[0]?.conditionSlug ?? 'not-sure',
+      centerName: r.center?.nameEn ?? null,
       possibleDuplicate: r.possibleDuplicate,
       createdAt: r.createdAt.toISOString(),
     })),
@@ -742,6 +747,7 @@ export async function applyAdminAction(
       centerId: true,
       sharedWithNvar: true,
       diagnoses: { select: { id: true }, take: 1 },
+      documents: { select: { centerId: true, storageKey: true } },
     },
   });
   if (!current || !isNvarVisible(current)) throw new RegistryApiError(404, 'not-found');
@@ -751,7 +757,13 @@ export async function applyAdminAction(
       assertTransition(current.status, 'VERIFIED');
       await prisma.registryPatient.update({
         where: { id },
-        data: { status: 'VERIFIED', verifiedAt: new Date(), verifiedById: ctx.adminId },
+        data: {
+          status: 'VERIFIED',
+          verifiedAt: new Date(),
+          verifiedById: ctx.adminId,
+          publicReason: null,
+          duplicateOfId: null,
+        },
       });
       await writeAudit({
         actorId: ctx.adminId,
@@ -772,6 +784,9 @@ export async function applyAdminAction(
           status: 'REJECTED',
           publicReason: action.publicReason,
           internalNote: action.internalNote ?? null,
+          verifiedAt: null,
+          verifiedById: null,
+          duplicateOfId: null,
         },
       });
       await writeAudit({
@@ -788,8 +803,10 @@ export async function applyAdminAction(
     case 'DUPLICATE': {
       assertTransition(current.status, 'DUPLICATE');
       if (action.canonicalId === id) throw new RegistryApiError(409, 'conflict');
-      const canonical = await prisma.registryPatient.findUnique({
-        where: { id: action.canonicalId },
+      const canonical = await prisma.registryPatient.findFirst({
+        where: {
+          OR: [{ id: action.canonicalId }, { trackingCode: normalizeTrackingCode(action.canonicalId) }],
+        },
         select: { id: true, status: true, centerId: true, sharedWithNvar: true },
       });
       if (!canonical || !isNvarVisible(canonical) || canonical.status === 'DUPLICATE') {
@@ -797,7 +814,7 @@ export async function applyAdminAction(
       }
       await prisma.registryPatient.update({
         where: { id },
-        data: { status: 'DUPLICATE', duplicateOfId: action.canonicalId },
+        data: { status: 'DUPLICATE', duplicateOfId: canonical.id },
       });
       await writeAudit({
         actorId: ctx.adminId,
@@ -842,6 +859,29 @@ export async function applyAdminAction(
       });
       return { status: current.status };
     }
+    case 'ERASE': {
+      // Fulfils the public right-to-removal promise (SECURITY §6). Cascades
+      // diagnoses/treatments/visits/appointments/shares/support rows; encrypted
+      // files are removed from disk first (best effort).
+      await prisma.registryPatient.delete({ where: { id } });
+      for (const doc of current.documents) {
+        try {
+          await removeFile(doc.centerId, doc.storageKey);
+        } catch {
+          // UPLOAD_DIR may be unset; the database record is already erased.
+        }
+      }
+      await writeAudit({
+        actorId: ctx.adminId,
+        actorRole: 'admin',
+        action: AuditAction.RECORD_UPDATE,
+        entity: 'RegistryPatient',
+        entityId: id,
+        meta: { reasonCode: 'erasure-request', documents: current.documents.length },
+        ip: ctx.ip,
+      });
+      return { status: 'ERASED' };
+    }
   }
 }
 
@@ -867,6 +907,16 @@ export async function listClinicians(
 ): Promise<{ items: ClinicianRow[]; page: number; pageSize: number; total: number }> {
   const where: Prisma.ClinicianProfileWhereInput = {};
   if (query.approved) where.approved = query.approved === 'true';
+  if (query.q) {
+    where.OR = [
+      { user: { name: { contains: query.q } } },
+      { user: { email: { contains: query.q } } },
+      { specialty: { contains: query.q } },
+      { facility: { contains: query.q } },
+      { city: { contains: query.q } },
+      { pmcHash: blindIndex(query.q, 'pmc') },
+    ];
+  }
 
   const [rows, total] = await Promise.all([
     prisma.clinicianProfile.findMany({
@@ -924,19 +974,59 @@ export async function setClinicianApproval(
       ip: ctx.ip,
     });
     void sendClinicianApproval(profile.user.email, profile.user.name);
-  } else {
-    // Reject: remove the user account (cascade deletes profile + sessions).
-    await prisma.user.delete({ where: { id: profile.user.id } });
+    return;
+  }
+
+  if (action.action === 'REVOKE' || profile.approved) {
+    // Revoking keeps the account, profile and case history — only access is withdrawn.
+    await prisma.clinicianProfile.update({
+      where: { id },
+      data: { approved: false, approvedAt: null, approvedById: null },
+    });
+    await prisma.session.deleteMany({ where: { userId: profile.user.id } });
     await writeAudit({
       actorId: ctx.adminId,
       actorRole: 'admin',
-      action: AuditAction.CLINICIAN_REJECT,
+      action: AuditAction.CLINICIAN_REVOKE,
       entity: 'ClinicianProfile',
       entityId: id,
       meta: { province: profile.province },
       ip: ctx.ip,
     });
+    return;
   }
+
+  // Rejecting a pending application removes the account (cascade deletes profile
+  // and sessions). If the clinician already owns records, revoke instead.
+  const caseCount = await prisma.registryPatient.count({ where: { clinicianId: id } });
+  if (caseCount > 0) {
+    await prisma.clinicianProfile.update({
+      where: { id },
+      data: { approved: false, approvedAt: null, approvedById: null },
+    });
+    await prisma.session.deleteMany({ where: { userId: profile.user.id } });
+    await writeAudit({
+      actorId: ctx.adminId,
+      actorRole: 'admin',
+      action: AuditAction.CLINICIAN_REVOKE,
+      entity: 'ClinicianProfile',
+      entityId: id,
+      meta: { province: profile.province, cases: caseCount },
+      ip: ctx.ip,
+    });
+    return;
+  }
+
+  await prisma.user.delete({ where: { id: profile.user.id } });
+  await writeAudit({
+    actorId: ctx.adminId,
+    actorRole: 'admin',
+    action: AuditAction.CLINICIAN_REJECT,
+    entity: 'ClinicianProfile',
+    entityId: id,
+    meta: { province: profile.province },
+    ip: ctx.ip,
+  });
 }
 
 /* -------------------------------------------------------------------------- */
@@ -965,8 +1055,8 @@ export async function listAudit(
   if (query.action) where.action = query.action;
   if (query.from || query.to) {
     where.createdAt = {
-      ...(query.from ? { gte: new Date(query.from) } : {}),
-      ...(query.to ? { lte: new Date(`${query.to}T23:59:59.999Z`) } : {}),
+      ...(query.from ? { gte: new Date(`${query.from}T00:00:00.000+05:00`) } : {}),
+      ...(query.to ? { lte: new Date(`${query.to}T23:59:59.999+05:00`) } : {}),
     };
   }
 
@@ -1023,18 +1113,12 @@ export async function getAdminOverview(): Promise<{
 /* -------------------------------------------------------------------------- */
 
 const EXPORT_COLUMNS = [
-  'trackingCode', 'status', 'source', 'fullName', 'guardianName', 'cnic', 'phone',
+  'trackingCode', 'status', 'source', 'centerName', 'fullName', 'guardianName', 'cnic', 'phone',
   'altPhone', 'email', 'province', 'district', 'address', 'dob', 'gender', 'isMinor',
   'conditionSlug', 'issvaCategory', 'bodySite', 'onset', 'severity', 'basis', 'facility',
   'treatments', 'consentRegistry', 'consentContact', 'consentResearch', 'consentGuardian',
   'clinicianName', 'clinicianFacility', 'createdAt', 'verifiedAt',
 ] as const;
-
-function csvCell(value: unknown): string {
-  const s = value === null || value === undefined ? '' : String(value);
-  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
-}
 
 export async function countExportRows(query: AdminExportQuery): Promise<number> {
   return prisma.registryPatient.count({ where: buildRecordWhere(query) });
@@ -1054,12 +1138,13 @@ export function streamExportCsv(query: AdminExportQuery): ReadableStream<Uint8Ar
         for (;;) {
           const rows = await prisma.registryPatient.findMany({
             where,
-            orderBy: { createdAt: 'desc' },
+            orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
             skip,
             take: BATCH,
             include: {
               diagnoses: { include: { treatments: true }, take: 1 },
               clinician: { include: { user: { select: { name: true } } } },
+              center: { select: { nameEn: true } },
             },
           });
           if (rows.length === 0) break;
@@ -1069,7 +1154,7 @@ export function streamExportCsv(query: AdminExportQuery): ReadableStream<Uint8Ar
               ? d.treatments.map((tr) => `${tr.type}:${tr.year ?? ''}:${tr.outcome}`).join('|')
               : '';
             const cells: unknown[] = [
-              r.trackingCode, r.status, r.source,
+              r.trackingCode, r.status, r.source, r.center?.nameEn ?? '',
               decryptField(r.fullName),
               decryptNullable(r.guardianName) ?? '',
               decryptField(r.cnic), decryptField(r.phone),
