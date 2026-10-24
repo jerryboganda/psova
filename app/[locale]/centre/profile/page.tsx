@@ -3,6 +3,7 @@ import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { CentreProfileForm } from '@/components/centres/CentreProfileForm';
 import { centrePageContext } from '@/lib/registry/centre-page';
+import { jsonStringArray } from '@/lib/registry/json';
 import type { CenterProfileInput } from '@/lib/registry/schemas';
 
 export const dynamic = 'force-dynamic';
@@ -23,8 +24,8 @@ export default async function CentreProfilePage({
     phone: center.phone,
     contactEmail: center.email,
     websiteUrl: center.website ?? '',
-    services: center.services as CenterProfileInput['services'],
-    conditions: center.conditions as string[],
+    services: jsonStringArray(center.services) as CenterProfileInput['services'],
+    conditions: jsonStringArray(center.conditions),
   };
 
   return (

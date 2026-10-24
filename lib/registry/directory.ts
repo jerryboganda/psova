@@ -10,6 +10,7 @@ import ur from '@/messages/ur.json';
 import { prisma } from './db';
 import { MEMBERSHIP_GRACE_DAYS } from './constants';
 import { addDays } from './membership';
+import { jsonStringArray } from './json';
 
 const PROVINCE_NAME: Record<string, string> = {
   PUNJAB: 'Punjab',
@@ -51,7 +52,7 @@ export function toCareCenter(c: Center): CareCenter {
     en: PROVINCE_NAME[c.province],
     ur: PROVINCE_NAME[c.province],
   };
-  const services = (c.services as string[]).map((k) => ({ en: SERVICES_EN[k] ?? k, ur: SERVICES_UR[k] ?? k }));
+  const services = jsonStringArray(c.services).map((k) => ({ en: SERVICES_EN[k] ?? k, ur: SERVICES_UR[k] ?? k }));
 
   return {
     id: c.slug,
@@ -60,7 +61,7 @@ export function toCareCenter(c: Center): CareCenter {
     province,
     type: c.type.toLowerCase() as CareCenter['type'],
     services,
-    conditions: c.conditions as string[],
+    conditions: jsonStringArray(c.conditions),
     phone: c.phone,
     website: c.website ?? undefined,
     geo,
