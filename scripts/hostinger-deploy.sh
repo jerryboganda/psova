@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Deploy the latest hostinger-build artifact to psova.org.pk. See docs/DEPLOY-HOSTINGER-MANUAL.md.
-# Usage: scripts/hostinger-deploy.sh [--with-modules] [--with-prisma] [run-id]   (default: latest successful run)
+# Usage: scripts/hostinger-deploy.sh [--with-modules] [--with-prisma] [--download-on-server] [run-id]   (default: latest successful run)
+#        --download-on-server has the Hostinger server fetch the build from GitHub's short-lived signed URL instead of
+#        downloading it here and uploading it; use it when this machine's link to GitHub storage is slow (73 MB build).
 #        --with-modules also replaces the server runtime packages (next, react, sharp, ...) from the build;
 #        use it only after a dependency change. @prisma/.prisma stay as generated on the server.
 #        --with-prisma replaces node_modules/.prisma (the generated Prisma client + query engine) with the one
@@ -14,11 +16,12 @@ HOST=u776151780@145.79.25.8
 APP='~/domains/psova.org.pk/nodejs'   # only ever touch this folder: the account also hosts other sites
 rssh() { ssh "${SSH_OPTS[@]}" -p 65002 "$HOST" "$@"; }
 
-MODULES=0; PRISMA=0
+MODULES=0; PRISMA=0; SERVER_DL=0
 while :; do
   case "${1:-}" in
     --with-modules) MODULES=1; shift ;;
     --with-prisma) PRISMA=1; shift ;;
+    --download-on-server) SERVER_DL=1; shift ;;
     *) break ;;
   esac
 done
@@ -31,10 +34,21 @@ fi
 RUN="${1:-$(gh run list --repo $REPO --workflow hostinger-build --status success --limit 1 --json databaseId -q '.[0].databaseId')}"
 [ -n "$RUN" ] || { echo "no successful hostinger-build run; start one: gh workflow run hostinger-build --repo $REPO --ref main"; exit 1; }
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
-gh run download "$RUN" --repo $REPO -n hostinger-build -D "$TMP"
 STAMP=$(date +%Y%m%d-%H%M%S)
-scp "${SSH_OPTS[@]}" -P 65002 "$TMP/hostinger-build.tgz" "$HOST:~/hostinger-build-$STAMP.tgz"
-if [ "$MODULES" = 1 ] || [ "$PRISMA" = 1 ]; then scp "${SSH_OPTS[@]}" -P 65002 "$TMP/hostinger-node_modules.tgz" "$HOST:~/hostinger-nm-$STAMP.tgz"; fi
+if [ "$SERVER_DL" = 1 ]; then
+  # The signed URL needs no credentials, so no GitHub token ever reaches the server.
+  AID=$(gh api "repos/$REPO/actions/runs/$RUN/artifacts" -q '.artifacts[] | select(.name=="hostinger-build") | .id')
+  LOC=$(curl -sI -m 30 -H "Authorization: Bearer $(gh auth token)" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/$REPO/actions/artifacts/$AID/zip" | awk 'tolower($1)=="location:"{print $2}' | tr -d '\r')
+  [ -n "$LOC" ] || { echo "could not get the artifact download URL"; exit 1; }
+  rssh "set -e; cd ~; curl -fsSL --max-time 900 -o hostinger-art-$STAMP.zip '$LOC'; mkdir hostinger-art-$STAMP; unzip -q hostinger-art-$STAMP.zip -d hostinger-art-$STAMP
+    mv hostinger-art-$STAMP/hostinger-build.tgz hostinger-build-$STAMP.tgz
+    if [ $MODULES = 1 ] || [ $PRISMA = 1 ]; then mv hostinger-art-$STAMP/hostinger-node_modules.tgz hostinger-nm-$STAMP.tgz; fi
+    rm -rf hostinger-art-$STAMP hostinger-art-$STAMP.zip; ls -l hostinger-build-$STAMP.tgz | awk '{print \"downloaded on server:\", \$5, \"bytes\"}'"
+else
+  gh run download "$RUN" --repo $REPO -n hostinger-build -D "$TMP"
+  scp "${SSH_OPTS[@]}" -P 65002 "$TMP/hostinger-build.tgz" "$HOST:~/hostinger-build-$STAMP.tgz"
+  if [ "$MODULES" = 1 ] || [ "$PRISMA" = 1 ]; then scp "${SSH_OPTS[@]}" -P 65002 "$TMP/hostinger-node_modules.tgz" "$HOST:~/hostinger-nm-$STAMP.tgz"; fi
+fi
 # Extract on the server: the tarball holds a symlink Windows can't create.
 rssh "set -e; cd $APP; B=~/backups/psova-$STAMP; mkdir -p \$B/new
   cp -a .next public \$B/                      # backup of what is live now

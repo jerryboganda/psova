@@ -15,6 +15,10 @@ scripts/hostinger-deploy.sh rollback                   # if anything looks wrong
 
 Then check `https://psova.org.pk/en/<page>` and the `/ur/` version.
 
+If downloading the 73 MB artifact from this machine stalls (GitHub's blob storage was ~20 KB/s on 2026-10-24), use
+`scripts/hostinger-deploy.sh --download-on-server`: the server fetches the build from GitHub's short-lived signed URL itself
+(no token leaves your machine) and the rest of the script is unchanged. Release with schema changes: see "Schema changes" below.
+
 ## How production is really set up
 
 | Fact | Detail |
