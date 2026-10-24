@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Loader2, Check, X, Copy, AlertTriangle, ArrowLeft, Trash2 } from 'lucide-react';
+import { Loader2, Check, X, Copy, AlertTriangle, ArrowLeft, Trash2, PencilLine } from 'lucide-react';
 import { Link, useRouter } from '@/i18n/navigation';
 import { RecordView } from './RecordView';
 import { RegistryBadge } from './RegistryBadge';
@@ -34,6 +34,7 @@ export function AdminRecordDetail({ id }: { id: string }) {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [dupOpen, setDupOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [correctOpen, setCorrectOpen] = useState(false);
   const [eraseOpen, setEraseOpen] = useState(false);
 
   const load = async () => {
@@ -121,6 +122,9 @@ export function AdminRecordDetail({ id }: { id: string }) {
         <button type="button" disabled={busy} onClick={() => setEditOpen(true)} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-[var(--color-fg)] disabled:opacity-50">
           {t('record.edit')}
         </button>
+        <button type="button" disabled={busy} onClick={() => setCorrectOpen(true)} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-[var(--color-fg)] disabled:opacity-50">
+          <PencilLine className="size-4" /> {t('record.correct')}
+        </button>
         <button type="button" disabled={busy} onClick={() => setEraseOpen(true)} className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-rose)]/40 bg-[var(--color-rose)]/10 px-4 py-2 text-sm font-semibold text-[var(--color-rose)] disabled:opacity-50">
           <Trash2 className="size-4" /> {t('record.erase')}
         </button>
@@ -189,6 +193,20 @@ export function AdminRecordDetail({ id }: { id: string }) {
           router.refresh();
         }
       }} />
+
+      {correctOpen && (
+        <CorrectDialog
+          busy={busy}
+          record={record}
+          onClose={() => setCorrectOpen(false)}
+          onSubmit={async (payload) => {
+            if (await patch({ action: 'CORRECT', ...payload })) {
+              setCorrectOpen(false);
+              load();
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -243,6 +261,77 @@ function DuplicateDialog({ open, busy, candidates, onClose, onSubmit }: { open: 
             ))}
           </div>
         )}
+      </div>
+    </Dialog>
+  );
+}
+
+function CorrectDialog({ busy, record, onClose, onSubmit }: { busy: boolean; record: DecryptedRecord; onClose: () => void; onSubmit: (payload: Record<string, string>) => void }) {
+  const t = useTranslations('RegistryAdmin');
+  const [form, setForm] = useState({
+    fullName: record.fullName,
+    guardianName: record.guardianName ?? '',
+    cnic: record.cnic,
+    phone: record.phone,
+    altPhone: record.altPhone ?? '',
+    email: record.email ?? '',
+    address: record.address ?? '',
+    dob: record.dob,
+  });
+  const set = (key: keyof typeof form, value: string) => setForm((f) => ({ ...f, [key]: value }));
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={t('record.correctTitle')}
+      footer={
+        <DialogButtons
+          onCancel={onClose}
+          onConfirm={() => onSubmit(form)}
+          busy={busy}
+          disabled={form.fullName.trim().length < 3}
+          confirmLabel={t('record.correctConfirm')}
+          cancelLabel={t('record.cancel')}
+        />
+      }
+    >
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-[var(--color-muted)]">{t('record.correctBody')}</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="cor-name" className={labelClass}>{t('record.fullName')}</label>
+            <input id="cor-name" className={fieldClass} value={form.fullName} onChange={(e) => set('fullName', e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="cor-guardian" className={labelClass}>{t('record.guardianName')}</label>
+            <input id="cor-guardian" className={fieldClass} value={form.guardianName} onChange={(e) => set('guardianName', e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="cor-cnic" className={labelClass}>{t('record.cnic')}</label>
+            <input id="cor-cnic" dir="ltr" className={fieldClass} value={form.cnic} onChange={(e) => set('cnic', e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="cor-dob" className={labelClass}>{t('record.dob')}</label>
+            <input id="cor-dob" type="date" dir="ltr" className={fieldClass} value={form.dob} onChange={(e) => set('dob', e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="cor-phone" className={labelClass}>{t('record.phone')}</label>
+            <input id="cor-phone" dir="ltr" className={fieldClass} value={form.phone} onChange={(e) => set('phone', e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="cor-alt-phone" className={labelClass}>{t('record.altPhone')}</label>
+            <input id="cor-alt-phone" dir="ltr" className={fieldClass} value={form.altPhone} onChange={(e) => set('altPhone', e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="cor-email" className={labelClass}>{t('record.email')}</label>
+            <input id="cor-email" type="email" dir="ltr" className={fieldClass} value={form.email} onChange={(e) => set('email', e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="cor-address" className={labelClass}>{t('record.address')}</label>
+            <input id="cor-address" className={fieldClass} value={form.address} onChange={(e) => set('address', e.target.value)} />
+          </div>
+        </div>
       </div>
     </Dialog>
   );

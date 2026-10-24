@@ -268,6 +268,38 @@ export const adminActionSchema = z.discriminatedUnion('action', [
     action: z.literal('ERASE'),
     reason: z.string().trim().min(5).max(500),
   }),
+  z
+    .object({
+      action: z.literal('CORRECT'),
+      fullName: z.string().trim().min(3).max(120).optional(),
+      guardianName: z.string().trim().min(3).max(120).optional().or(z.literal('')),
+      cnic: z.string().optional(),
+      phone: z.string().optional(),
+      altPhone: z.string().optional().or(z.literal('')),
+      email: z.string().email().optional().or(z.literal('')),
+      address: z.string().max(300).optional().or(z.literal('')),
+      dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    })
+    .superRefine((data, ctx) => {
+      const changed = ['fullName', 'guardianName', 'cnic', 'phone', 'altPhone', 'email', 'address', 'dob'].filter(
+        (key) => data[key as keyof typeof data] !== undefined,
+      );
+      if (changed.length === 0) {
+        ctx.addIssue({ code: 'custom', path: ['action'], message: 'Nothing to correct.' });
+      }
+      if (data.cnic && !isValidCnic(data.cnic)) {
+        ctx.addIssue({ code: 'custom', path: ['cnic'], message: 'CNIC must be 13 digits.' });
+      }
+      if (data.phone && !isValidPkMobile(data.phone)) {
+        ctx.addIssue({ code: 'custom', path: ['phone'], message: 'Enter a valid Pakistani mobile number.' });
+      }
+      if (data.altPhone && !isValidPkMobile(data.altPhone)) {
+        ctx.addIssue({ code: 'custom', path: ['altPhone'], message: 'Enter a valid Pakistani mobile number.' });
+      }
+      if (data.dob && !isPlausibleDob(data.dob)) {
+        ctx.addIssue({ code: 'custom', path: ['dob'], message: 'Enter a valid date of birth.' });
+      }
+    }),
 ]);
 export type AdminActionInput = z.infer<typeof adminActionSchema>;
 

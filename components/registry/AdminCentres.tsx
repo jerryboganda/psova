@@ -213,7 +213,16 @@ function CentresTab() {
         </div>
       ),
     },
-    { key: 'status', header: t('status'), render: (r) => t(`statuses.${r.status}`) },
+    {
+      key: 'status',
+      header: t('status'),
+      render: (r) => (
+        <div>
+          <div>{t(`statuses.${r.status}`)}</div>
+          {r.statusReason && <div className="max-w-[14rem] text-xs text-[var(--color-faint)]">{r.statusReason}</div>}
+        </div>
+      ),
+    },
     {
       key: 'membership',
       header: t('membership'),

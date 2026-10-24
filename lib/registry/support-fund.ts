@@ -155,6 +155,8 @@ export async function listPublicSupport(): Promise<{ items: PublicSupportRow[]; 
 export type AdminSupportRow = {
   id: string;
   publicCode: string;
+  centerId: string;
+  trackingCode: string;
   centre: { name: string; city: string };
   treatment: string;
   estimatedCostPkr: number;
@@ -178,7 +180,10 @@ export async function listAdminSupport(
       orderBy: { createdAt: query.status === 'SUBMITTED' ? 'asc' : 'desc' }, // the review queue is oldest first
       skip: (query.page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
-      include: { center: { select: { nameEn: true, city: true } } },
+      include: {
+        center: { select: { nameEn: true, city: true } },
+        patient: { select: { trackingCode: true } },
+      },
     }),
     prisma.supportRequest.count({ where }),
   ]);
@@ -186,6 +191,8 @@ export async function listAdminSupport(
     items: rows.map((r) => ({
       id: r.id,
       publicCode: r.publicCode,
+      centerId: r.centerId,
+      trackingCode: r.patient.trackingCode,
       centre: { name: r.center.nameEn, city: r.center.city },
       treatment: r.treatment,
       estimatedCostPkr: r.estimatedCostPkr,

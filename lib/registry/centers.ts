@@ -1059,8 +1059,25 @@ export async function inviteStaff(
 ): Promise<void> {
   const email = input.email.toLowerCase();
   const authCtx = await auth.$context;
-  if ((await authCtx.internalAdapter.findUserByEmail(email))?.user) {
-    throw new RegistryApiError(409, 'conflict');
+  const existing = await authCtx.internalAdapter.findUserByEmail(email);
+
+  if (existing?.user) {
+    const user = existing.user as { id: string; role?: string };
+    if (user.role === 'admin') throw new RegistryApiError(409, 'conflict');
+    const membership = await prisma.centerMember.findUnique({ where: { userId: user.id }, select: { id: true } });
+    if (membership) throw new RegistryApiError(409, 'conflict');
+    await prisma.user.update({ where: { id: user.id }, data: { role: 'center' } });
+    await prisma.centerMember.create({ data: { centerId: center.id, userId: user.id, role: input.role } });
+    await writeAudit({
+      actorId: ctx.actorId,
+      actorRole: 'center',
+      action: AuditAction.CENTER_STAFF_INVITE,
+      entity: 'CenterMember',
+      entityId: user.id,
+      meta: { centerId: center.id, role: input.role, created: false },
+      ip: ctx.ip,
+    });
+    return;
   }
 
   // Random throwaway password; the invitee sets their own through the emailed link.
@@ -1090,7 +1107,7 @@ export async function inviteStaff(
     action: AuditAction.CENTER_STAFF_INVITE,
     entity: 'CenterMember',
     entityId: user.id,
-    meta: { centerId: center.id, role: input.role },
+    meta: { centerId: center.id, role: input.role, created: true },
     ip: ctx.ip,
   });
   await sendSetupLink(email);

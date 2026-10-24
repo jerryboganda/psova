@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { Dialog } from './Dialog';
 import { fieldClass, labelClass } from './field';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 type Row = {
   id: string;
   publicCode: string;
+  centerId: string;
+  trackingCode: string;
   centre: { name: string; city: string };
   treatment: string;
   estimatedCostPkr: number;
@@ -113,7 +115,12 @@ export function AdminSupport({ rows }: { rows: Row[] }) {
               <div className="min-w-0">
                 <h2 className="font-semibold">{r.treatment}</h2>
                 <p className="text-xs text-[var(--color-faint)]">
-                  <span dir="ltr" className="font-mono">{r.publicCode}</span> · {r.centre.name}, {r.centre.city} ·{' '}
+                  <span dir="ltr" className="font-mono">{r.publicCode}</span> ·{' '}
+                  <Link href={`/registry/admin/centres/${r.centerId}`} className="hover:text-[var(--color-fg)] hover:underline">
+                    {r.centre.name}
+                  </Link>
+                  , {r.centre.city} ·{' '}
+                  <span dir="ltr" className="font-mono">{r.trackingCode}</span> ·{' '}
                   {format.dateTime(new Date(r.createdAt), { dateStyle: 'medium' })}
                 </p>
               </div>

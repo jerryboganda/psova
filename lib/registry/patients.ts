@@ -746,6 +746,8 @@ export async function applyAdminAction(
       status: true,
       centerId: true,
       sharedWithNvar: true,
+      cnicHash: true,
+      phoneHash: true,
       diagnoses: { select: { id: true }, take: 1 },
       documents: { select: { centerId: true, storageKey: true } },
     },
@@ -855,6 +857,55 @@ export async function applyAdminAction(
         entity: 'RegistryPatient',
         entityId: id,
         meta: { fields: Object.keys(action).filter((k) => k !== 'action') },
+        ip: ctx.ip,
+      });
+      return { status: current.status };
+    }
+    case 'CORRECT': {
+      const data: Prisma.RegistryPatientUpdateInput = {};
+      if (action.fullName !== undefined) data.fullName = encryptField(action.fullName);
+      if (action.guardianName !== undefined) {
+        data.guardianName = action.guardianName ? encryptField(action.guardianName) : null;
+      }
+      if (action.cnic !== undefined) {
+        data.cnic = encryptField(action.cnic);
+        data.cnicHash = blindIndex(action.cnic, 'cnic');
+      }
+      if (action.phone !== undefined) {
+        data.phone = encryptField(action.phone);
+        data.phoneHash = blindIndex(action.phone, 'phone');
+      }
+      if (action.altPhone !== undefined) data.altPhone = action.altPhone ? encryptField(action.altPhone) : null;
+      if (action.email !== undefined) data.email = action.email ? encryptField(action.email) : null;
+      if (action.address !== undefined) data.address = action.address ? encryptField(action.address) : null;
+      if (action.dob !== undefined) {
+        const parts = deriveDobParts(action.dob);
+        data.dob = encryptField(action.dob);
+        data.birthYear = parts.year;
+        data.birthMonth = parts.month;
+        data.isMinor = parts.isMinor;
+      }
+      await prisma.registryPatient.update({ where: { id }, data });
+
+      const cnicHash = action.cnic ? blindIndex(action.cnic, 'cnic') : current.cnicHash;
+      const phoneHash = action.phone ? blindIndex(action.phone, 'phone') : current.phoneHash;
+      const duplicate = await prisma.registryPatient.findFirst({
+        where: {
+          AND: [NVAR_VISIBLE, { id: { not: id }, OR: [{ cnicHash }, { phoneHash }] }],
+        },
+        select: { id: true },
+      });
+      if (duplicate) {
+        await prisma.registryPatient.update({ where: { id }, data: { possibleDuplicate: true } });
+      }
+
+      await writeAudit({
+        actorId: ctx.adminId,
+        actorRole: 'admin',
+        action: AuditAction.RECORD_UPDATE,
+        entity: 'RegistryPatient',
+        entityId: id,
+        meta: { reasonCode: 'data-correction', fields: Object.keys(data) },
         ip: ctx.ip,
       });
       return { status: current.status };

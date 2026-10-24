@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { Loader2, Send } from 'lucide-react';
-import { useRouter } from '@/i18n/navigation';
 import { centerPaymentProofSchema, type CenterPaymentProofInput } from '@/lib/registry/schemas';
 import { CENTER_PAYMENT_METHODS } from '@/lib/registry/constants';
 import { FormField } from '@/components/registry/FormField';
@@ -16,7 +15,6 @@ export function PaymentProofForm() {
   const t = useTranslations('Centres.membership');
   const ta = useTranslations('Centres.apply');
   const tc = useTranslations('RegistryCommon');
-  const router = useRouter();
   const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error' | 'limit'>('idle');
 
   const {
@@ -37,7 +35,9 @@ export function PaymentProofForm() {
       if (res.ok) {
         reset();
         setStatus('done');
-        router.refresh();
+        // The payment history is a server component; a full reload is the most
+        // reliable way to show the new row (router.refresh can keep a cached RSC).
+        window.location.reload();
       } else {
         setStatus(res.status === 409 ? 'limit' : 'error');
       }
