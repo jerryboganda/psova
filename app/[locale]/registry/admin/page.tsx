@@ -1,10 +1,11 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Clock, CheckCircle2, XCircle, UserCog } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, UserCog, Building2, CreditCard, HandHeart } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
 import { StatCard } from '@/components/registry/StatCard';
 import { RegistryBadge } from '@/components/registry/RegistryBadge';
 import { Link } from '@/i18n/navigation';
 import { getAdminOverview, listRecords } from '@/lib/registry/patients';
+import { adminQueueCounts } from '@/lib/registry/centers';
 import { CONDITIONS } from '@/data/conditions';
 import { localized } from '@/lib/utils';
 
@@ -20,7 +21,7 @@ export default async function AdminOverviewPage({
   const t = await getTranslations('RegistryAdmin');
   const tc = await getTranslations('RegistryCommon');
 
-  const [overview, recent] = await Promise.all([getAdminOverview(), listRecords({ page: 1 })]);
+  const [overview, recent, queues] = await Promise.all([getAdminOverview(), listRecords({ page: 1 }), adminQueueCounts()]);
   const rows = recent.items.slice(0, 10);
 
   const conditionName = (slug: string) => {
@@ -37,6 +38,19 @@ export default async function AdminOverviewPage({
         <StatCard label={t('overview.verified')} value={overview.verified} Icon={CheckCircle2} accent="var(--color-cyan)" />
         <StatCard label={t('overview.rejected')} value={overview.rejected} Icon={XCircle} accent="var(--color-rose)" />
         <StatCard label={t('overview.cliniciansPending')} value={overview.cliniciansPending} Icon={UserCog} accent="var(--color-blue)" />
+      </div>
+
+      <h2 className="mb-4 mt-10 text-lg font-bold">{t('overview.networkTitle')}</h2>
+      <div className="grid gap-5 sm:grid-cols-3">
+        <Link href="/registry/admin/centres?tab=centres" className="block">
+          <StatCard label={t('overview.centresToReview')} value={queues.centres} Icon={Building2} accent="var(--color-cyan)" />
+        </Link>
+        <Link href="/registry/admin/centres?tab=payments" className="block">
+          <StatCard label={t('overview.paymentsToVerify')} value={queues.payments} Icon={CreditCard} accent="var(--color-magenta)" />
+        </Link>
+        <Link href="/registry/admin/support" className="block">
+          <StatCard label={t('overview.supportToReview')} value={queues.support} Icon={HandHeart} accent="var(--color-rose)" />
+        </Link>
       </div>
 
       <div className="mt-10">

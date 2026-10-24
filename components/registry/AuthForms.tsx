@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Loader2, Check, LogIn, UserPlus } from 'lucide-react';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { authClient } from '@/lib/registry/auth-client';
 import {
   loginSchema,
@@ -17,7 +17,7 @@ import { PROVINCES } from '@/lib/registry/constants';
 import { fieldClass, labelClass, errorClass, brandButtonClass } from './field';
 import { cn } from '@/lib/utils';
 
-type Tab = 'signin' | 'register';
+type Tab = 'signin' | 'register' | 'forgot';
 
 export function AuthForms() {
   const t = useTranslations('RegistryAuth');
@@ -38,7 +38,16 @@ export function AuthForms() {
         </TabButton>
       </div>
 
-      {tab === 'signin' ? <SignInForm onSwitch={() => setTab('register')} /> : <RegisterForm onSwitch={() => setTab('signin')} />}
+      {tab === 'signin' && <SignInForm onSwitch={() => setTab('register')} onForgot={() => setTab('forgot')} />}
+      {tab === 'register' && <RegisterForm onSwitch={() => setTab('signin')} />}
+      {tab === 'forgot' && <ForgotForm onBack={() => setTab('signin')} />}
+
+      <p className="mt-8 text-center text-sm text-[var(--color-muted)]">
+        {t('centreCta')}{' '}
+        <Link href="/centres/apply" className="text-[var(--color-cyan)] hover:underline">
+          {t('centreCtaLink')}
+        </Link>
+      </p>
     </div>
   );
 }
@@ -73,7 +82,7 @@ function TabButton({
 
 /* ------------------------------- sign in ---------------------------------- */
 
-function SignInForm({ onSwitch }: { onSwitch: () => void }) {
+function SignInForm({ onSwitch, onForgot }: { onSwitch: () => void; onForgot: () => void }) {
   const t = useTranslations('RegistryAuth');
   const router = useRouter();
   const [status, setStatus] = useState<'idle' | 'sending' | 'error'>('idle');
@@ -119,8 +128,57 @@ function SignInForm({ onSwitch }: { onSwitch: () => void }) {
         {status === 'sending' ? <Loader2 className="size-4 animate-spin" /> : <LogIn className="size-4 rtl:-scale-x-100" />}
         {status === 'sending' ? t('signingIn') : t('submitSignIn')}
       </button>
+      <button type="button" onClick={onForgot} className="text-sm text-[var(--color-muted)] hover:text-[var(--color-fg)] hover:underline">
+        {t('forgot')}
+      </button>
       <button type="button" onClick={onSwitch} className="text-sm text-[var(--color-cyan)] hover:underline">
         {t('toRegister')}
+      </button>
+    </form>
+  );
+}
+
+/** Ask for a password-reset email. The answer is always the same, so it cannot be used to find out who has an account. */
+function ForgotForm({ onBack }: { onBack: () => void }) {
+  const t = useTranslations('RegistryAuth');
+  const locale = useLocale();
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus('sending');
+    await authClient
+      .requestPasswordReset({ email, redirectTo: `${window.location.origin}/${locale}/registry/reset-password` })
+      .catch(() => undefined);
+    setStatus('sent');
+  }
+
+  if (status === 'sent') {
+    return (
+      <div className="flex flex-col items-center gap-4 rounded-[var(--radius-2xl)] border border-[var(--color-cyan)]/30 bg-[var(--color-cyan)]/5 p-8 text-center">
+        <p className="text-sm text-[var(--color-muted)]">{t('forgotSent')}</p>
+        <button type="button" onClick={onBack} className="text-sm text-[var(--color-cyan)] hover:underline">
+          {t('backToSignIn')}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <h2 className="text-lg font-semibold">{t('forgotTitle')}</h2>
+      <p className="text-sm text-[var(--color-muted)]">{t('forgotLede')}</p>
+      <div>
+        <label htmlFor="forgot-email" className={labelClass}>{t('email')}</label>
+        <input id="forgot-email" type="email" required autoComplete="email" className={fieldClass} value={email} onChange={(e) => setEmail(e.target.value)} />
+      </div>
+      <button type="submit" disabled={status === 'sending' || !email} className={brandButtonClass}>
+        {status === 'sending' && <Loader2 className="size-4 animate-spin" />}
+        {t('forgotSend')}
+      </button>
+      <button type="button" onClick={onBack} className="text-sm text-[var(--color-cyan)] hover:underline">
+        {t('backToSignIn')}
       </button>
     </form>
   );

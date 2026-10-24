@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Link } from '@/i18n/navigation';
+import { TierBadge } from '@/components/centres/TierBadge';
 import { CentreApplyWizard } from '@/components/centres/CentreApplyWizard';
 
 const BENEFITS = [
@@ -51,6 +52,19 @@ export default async function CentreApplyPage({
                   <li key={key} className="flex gap-3 text-sm">
                     <Icon className="mt-0.5 size-5 shrink-0 text-[var(--color-cyan)]" />
                     <span>{t(`apply.benefits.${key}`)}</span>
+                  </li>
+                ))}
+              </ul>
+            </GlassCard>
+
+            <GlassCard interactive={false}>
+              <h2 className="mb-1 text-sm font-semibold text-[var(--color-muted)]">{t('apply.tiersTitle')}</h2>
+              <p className="mb-4 text-xs text-[var(--color-faint)]">{t('apply.tiersNote')}</p>
+              <ul className="flex flex-col gap-4">
+                {(['MEMBER', 'ACCREDITED', 'EXCELLENCE'] as const).map((tier) => (
+                  <li key={tier} className="flex flex-col gap-1.5 text-sm">
+                    <TierBadge tier={tier} />
+                    <span className="text-[var(--color-muted)]">{t(`tiersInfo.${tier}`)}</span>
                   </li>
                 ))}
               </ul>

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 type Row = {
   id: string;
   title: string;
+  summary: string;
   status: string;
   centre: string;
   createdAt: string;
@@ -66,6 +67,7 @@ export function AdminMdt({ rows }: { rows: Row[] }) {
                 {hidden ? t('unhide') : t('hide')}
               </button>
             </div>
+            <p className="mt-3 whitespace-pre-wrap text-sm text-[var(--color-muted)]">{p.summary}</p>
             {p.comments.length > 0 && (
               <ul className="mt-4 flex flex-col gap-2 border-t border-white/10 pt-4">
                 {p.comments.map((c) => (

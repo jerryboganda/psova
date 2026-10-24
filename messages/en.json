@@ -603,7 +603,15 @@
     "errorsGeneric": "We could not complete that. Please check your details and try again.",
     "toSignIn": "Already have an account? Sign in",
     "toRegister": "New clinician? Register here",
-    "logout": "Log out"
+    "logout": "Log out",
+    "forgot": "Forgot your password?",
+    "forgotTitle": "Reset your password",
+    "forgotLede": "Enter the email address of your account. If it has an account, we will email you a link to choose a new password.",
+    "forgotSend": "Send reset link",
+    "forgotSent": "If that email address has an account, a reset link is on its way. Check your inbox and your spam folder. The link works for 7 days.",
+    "backToSignIn": "Back to sign in",
+    "centreCta": "Own a clinic or hospital that treats vascular anomalies?",
+    "centreCtaLink": "Join the PSOVA centres network"
   },
   "Registry": {
     "eyebrow": "NVAR — National Registry",
@@ -889,7 +897,11 @@
       "rejected": "Rejected",
       "cliniciansPending": "Clinicians awaiting approval",
       "recent": "Recent submissions",
-      "viewAll": "View all"
+      "viewAll": "View all",
+      "networkTitle": "Centres network: waiting for you",
+      "centresToReview": "Centre applications to review",
+      "paymentsToVerify": "Membership payments to verify",
+      "supportToReview": "Support-fund requests to review"
     },
     "queue": {
       "title": "Verification queue",
@@ -1223,7 +1235,9 @@
       "successTitle": "Application received",
       "successBody": "Thank you. PSOVA will review your application and verify your payment. We will email you when your centre is approved. You can sign in at any time to see the status.",
       "signIn": "Sign in to your centre account",
-      "already": "Already applied? Sign in"
+      "already": "Already applied? Sign in",
+      "tiersTitle": "Centre tiers",
+      "tiersNote": "Every approved centre starts as a Member Centre. PSOVA assigns higher tiers after review."
     },
     "services": {
       "consultation": "Specialist consultation",
@@ -1303,7 +1317,9 @@
       "contact": "Contact",
       "registered": "PSOVA Registered Centre",
       "since": "Registered since {date}",
-      "verifyLink": "Verify this centre"
+      "verifyLink": "Verify this centre",
+      "registerHere": "Register as a patient here",
+      "registerHint": "Patients can register with this centre online. You will get a tracking code, and the centre holds your record securely."
     },
     "verify": {
       "validTitle": "Registered PSOVA centre",
@@ -1709,6 +1725,11 @@
       "none": "Nothing to show yet.",
       "conditionOther": "Other",
       "conditionUnknown": "Not sure"
+    },
+    "tiersInfo": {
+      "MEMBER": "Registered and verified by PSOVA: listed in the directory, with a registration certificate and a dashboard.",
+      "ACCREDITED": "PSOVA has reviewed the centre's credentials and team, and the centre keeps its records and follow-ups active.",
+      "EXCELLENCE": "A multidisciplinary centre with a high case volume that shares cases with NVAR and takes part in the case board."
     }
   },
   "SupportFund": {

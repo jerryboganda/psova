@@ -219,6 +219,7 @@ export async function readMdtDocument(
 export type AdminMdtRow = {
   id: string;
   title: string;
+  summary: string;
   status: string;
   centre: string;
   createdAt: string;
@@ -239,6 +240,7 @@ export async function listMdtForAdmin(page: number): Promise<{ items: AdminMdtRo
     items: rows.map((r) => ({
       id: r.id,
       title: r.title,
+      summary: r.summary,
       status: r.status,
       centre: r.center.nameEn,
       createdAt: r.createdAt.toISOString(),

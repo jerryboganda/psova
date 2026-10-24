@@ -6,6 +6,7 @@ import { Section } from '@/components/ui/Section';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { TierBadge } from '@/components/centres/TierBadge';
 import { Link } from '@/i18n/navigation';
+import { brandButtonClass } from '@/components/registry/field';
 import { CONDITIONS } from '@/data/conditions';
 import { getListedCenterBySlug, toCareCenter } from '@/lib/registry/directory';
 import { localized } from '@/lib/utils';
@@ -74,6 +75,13 @@ export default async function CentreProfilePage({
           </div>
 
           <aside className="flex flex-col gap-6">
+            <GlassCard interactive={false}>
+              <p className="mb-3 text-sm text-[var(--color-muted)]">{t('registerHint')}</p>
+              <Link href={`/c/${row.slug}`} className={`${brandButtonClass} w-full`}>
+                {t('registerHere')}
+              </Link>
+            </GlassCard>
+
             <GlassCard interactive={false}>
               <h2 className="mb-4 text-lg font-semibold">{t('contact')}</h2>
               <ul className="flex flex-col gap-3 text-sm">

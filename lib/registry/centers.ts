@@ -428,6 +428,16 @@ export async function setCenterPaymentAction(
   if (ownerEmail) void sendCenterPaymentResult(ownerEmail, payment.center.nameEn, false);
 }
 
+/** Work waiting for PSOVA across the centres network (admin overview). */
+export async function adminQueueCounts(): Promise<{ centres: number; payments: number; support: number }> {
+  const [centres, payments, support] = await Promise.all([
+    prisma.center.count({ where: { status: 'APPLIED' } }),
+    prisma.centerPayment.count({ where: { status: 'PENDING' } }),
+    prisma.supportRequest.count({ where: { status: 'SUBMITTED' } }),
+  ]);
+  return { centres, payments, support };
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Centre self-service: staff, profile, renewal reminder                     */
 /* -------------------------------------------------------------------------- */

@@ -56,9 +56,9 @@ const actionBtn =
 const dangerBtn =
   'inline-flex items-center gap-1 rounded-full border border-[var(--color-rose)]/40 bg-[var(--color-rose)]/10 px-3 py-1 text-xs font-semibold text-[var(--color-rose)]';
 
-export function AdminCentres() {
+export function AdminCentres({ initialTab = 'centres' }: { initialTab?: 'centres' | 'payments' }) {
   const t = useTranslations('RegistryAdmin.centres');
-  const [tab, setTab] = useState<'centres' | 'payments'>('centres');
+  const [tab, setTab] = useState<'centres' | 'payments'>(initialTab);
   return (
     <div className="flex flex-col gap-5">
       <div className="flex gap-2">
