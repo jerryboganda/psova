@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations, useFormatter } from 'next-intl';
-import { Check, X, Loader2, Search } from 'lucide-react';
+import { Check, X, Loader2, Search, Settings2 } from 'lucide-react';
 import { DataTable, type Column } from './DataTable';
 import { Dialog } from './Dialog';
+import { fieldClass, labelClass } from './field';
+import { PROVINCES } from '@/lib/registry/constants';
 import { cn } from '@/lib/utils';
 
 type Row = {
@@ -38,6 +40,11 @@ export function AdminClinicians() {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [edit, setEdit] = useState<Row | null>(null);
+  const [editForm, setEditForm] = useState({ specialty: '', facility: '', city: '', province: 'PUNJAB' });
+  const [editBusy, setEditBusy] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async (p: number, f: string, query: string) => {
     setLoading(true);
@@ -86,6 +93,53 @@ export function AdminClinicians() {
     }
   }
 
+  function openEdit(row: Row) {
+    setEditForm({ specialty: row.specialty, facility: row.facility, city: row.city, province: row.province });
+    setEditError(null);
+    setNotice(null);
+    setEdit(row);
+  }
+
+  async function saveEdit() {
+    if (!edit) return;
+    setEditBusy(true);
+    setEditError(null);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/registry/admin/clinicians/${edit.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'UPDATE', ...editForm }),
+      });
+      if (!res.ok) {
+        setEditError(t('clinicians.error'));
+        return;
+      }
+      setEdit(null);
+      setNotice(t('clinicians.saved'));
+      load(page, filter, q);
+    } finally {
+      setEditBusy(false);
+    }
+  }
+
+  async function sendReset() {
+    if (!edit) return;
+    setEditBusy(true);
+    setEditError(null);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/registry/admin/clinicians/${edit.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'RESET' }),
+      });
+      setNotice(res.ok ? t('clinicians.resetSent') : t('clinicians.error'));
+    } finally {
+      setEditBusy(false);
+    }
+  }
+
   const columns: Column<Row>[] = [
     { key: 'name', header: t('clinicians.name'), render: (r) => r.name },
     { key: 'email', header: t('clinicians.email'), render: (r) => <span dir="ltr" className="text-xs">{r.email}</span> },
@@ -100,6 +154,9 @@ export function AdminClinicians() {
       render: (r) =>
         r.approved ? (
           <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => openEdit(r)} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-[var(--color-fg)]">
+              <Settings2 className="size-3.5" /> {t('clinicians.manage')}
+            </button>
             <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-cyan)]/40 bg-[var(--color-cyan)]/10 px-3 py-1 text-xs font-semibold text-[var(--color-cyan)]">
               {t('clinicians.approved')}
             </span>
@@ -108,7 +165,10 @@ export function AdminClinicians() {
             </button>
           </div>
         ) : (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => openEdit(r)} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-[var(--color-fg)]">
+              <Settings2 className="size-3.5" /> {t('clinicians.manage')}
+            </button>
             <button type="button" onClick={() => { setFailed(false); setConfirm({ row: r, mode: 'APPROVE' }); }} className="inline-flex items-center gap-1 rounded-full border border-[var(--color-cyan)]/40 bg-[var(--color-cyan)]/10 px-3 py-1 text-xs font-semibold text-[var(--color-cyan)]">
               <Check className="size-3.5" /> {t('clinicians.approve')}
             </button>
@@ -220,6 +280,53 @@ export function AdminClinicians() {
         </p>
         {confirm && <p className="mt-3 text-sm font-medium text-[var(--color-fg)]">{confirm.row.name} · {confirm.row.email}</p>}
         {failed && <p role="alert" className="mt-3 text-sm text-[var(--color-rose)]">{t('clinicians.error')}</p>}
+      </Dialog>
+
+      <Dialog
+        open={edit !== null}
+        onClose={() => setEdit(null)}
+        title={t('clinicians.manageTitle')}
+        footer={
+          <>
+            <button type="button" onClick={() => setEdit(null)} className="rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-[var(--color-fg)]">
+              {t('record.cancel')}
+            </button>
+            <button type="button" onClick={sendReset} disabled={editBusy} className="inline-flex items-center gap-2 rounded-full border border-[var(--color-cyan)]/40 bg-[var(--color-cyan)]/10 px-5 py-2.5 text-sm font-semibold text-[var(--color-cyan)] disabled:opacity-60">
+              {editBusy && <Loader2 className="size-4 animate-spin" />} {t('clinicians.reset')}
+            </button>
+            <button type="button" onClick={saveEdit} disabled={editBusy} className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
+              {editBusy && <Loader2 className="size-4 animate-spin" />} {t('clinicians.save')}
+            </button>
+          </>
+        }
+      >
+        {edit && (
+          <>
+            <p className="mb-4 text-sm font-medium">{edit.name} · <span dir="ltr">{edit.email}</span></p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="cl-specialty" className={labelClass}>{t('clinicians.specialty')}</label>
+                <input id="cl-specialty" className={fieldClass} value={editForm.specialty} onChange={(e) => setEditForm((f) => ({ ...f, specialty: e.target.value }))} />
+              </div>
+              <div>
+                <label htmlFor="cl-facility" className={labelClass}>{t('clinicians.facility')}</label>
+                <input id="cl-facility" className={fieldClass} value={editForm.facility} onChange={(e) => setEditForm((f) => ({ ...f, facility: e.target.value }))} />
+              </div>
+              <div>
+                <label htmlFor="cl-city" className={labelClass}>{t('clinicians.city')}</label>
+                <input id="cl-city" className={fieldClass} value={editForm.city} onChange={(e) => setEditForm((f) => ({ ...f, city: e.target.value }))} />
+              </div>
+              <div>
+                <label htmlFor="cl-province" className={labelClass}>{t('clinicians.province')}</label>
+                <select id="cl-province" className={fieldClass} value={editForm.province} onChange={(e) => setEditForm((f) => ({ ...f, province: e.target.value }))}>
+                  {PROVINCES.map((p) => <option key={p} value={p}>{tc(`provinces.${p}`)}</option>)}
+                </select>
+              </div>
+            </div>
+            {notice && <p role="status" className="mt-3 text-sm text-[var(--color-cyan)]">{notice}</p>}
+            {editError && <p role="alert" className="mt-3 text-sm text-[var(--color-rose)]">{editError}</p>}
+          </>
+        )}
       </Dialog>
     </div>
   );

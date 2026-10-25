@@ -4,6 +4,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { CentreProfileForm } from '@/components/centres/CentreProfileForm';
 import { centrePageContext } from '@/lib/registry/centre-page';
 import { jsonStringArray } from '@/lib/registry/json';
+import { membershipAllowsWrites } from '@/lib/registry/membership';
 import type { CenterProfileInput } from '@/lib/registry/schemas';
 
 export const dynamic = 'force-dynamic';
@@ -15,8 +16,9 @@ export default async function CentreProfilePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const { center } = await centrePageContext(locale, ['OWNER']);
+  const { center, state } = await centrePageContext(locale, ['OWNER']);
   const t = await getTranslations('Centres.profileEdit');
+  const readOnly = !membershipAllowsWrites(state);
 
   const initial: CenterProfileInput = {
     nameUr: center.nameUr ?? '',
@@ -33,7 +35,7 @@ export default async function CentreProfilePage({
       <h1 className="mb-1 text-2xl font-bold md:text-3xl">{t('title')}</h1>
       <p className="mb-8 text-[var(--color-muted)]">{t('lede')}</p>
       <GlassCard interactive={false} className="max-w-3xl">
-        <CentreProfileForm initial={initial} />
+        <CentreProfileForm initial={initial} readOnly={readOnly} />
       </GlassCard>
     </Section>
   );

@@ -6,6 +6,7 @@ import { AppointmentActions } from '@/components/centres/AppointmentActions';
 import { WhatsAppButtons } from '@/components/centres/WhatsAppButtons';
 import { listAppointments, type AppointmentScope } from '@/lib/registry/centre-journey';
 import { centrePageContext } from '@/lib/registry/centre-page';
+import { membershipAllowsWrites } from '@/lib/registry/membership';
 import { CENTRE_TIME_ZONE } from '@/lib/registry/constants';
 import { clientIpFromHeaders } from '@/lib/registry/guards';
 import { firstToken } from '@/lib/registry/patients';
@@ -26,7 +27,8 @@ export default async function CentreAppointmentsPage({
   setRequestLocale(locale);
   const { scope: scopeParam } = await searchParams;
   const scope = SCOPES.find((s) => s === scopeParam) ?? 'today';
-  const { user, center } = await centrePageContext(locale);
+  const { user, center, state } = await centrePageContext(locale);
+  const canWrite = membershipAllowsWrites(state);
   const t = await getTranslations('Centres.appointments');
   const rows = await listAppointments(center, scope, { actorId: user.id, ip: clientIpFromHeaders(await headers()) });
 
@@ -92,7 +94,7 @@ export default async function CentreAppointmentsPage({
                   </p>
                   {r.note && <p className="mt-1 text-xs text-[var(--color-faint)]">{r.note}</p>}
                 </div>
-                <AppointmentActions id={r.id} status={r.status} />
+                <AppointmentActions id={r.id} status={r.status} readOnly={!canWrite} />
               </div>
               {r.status === 'SCHEDULED' && (
                 <div className="mt-4">

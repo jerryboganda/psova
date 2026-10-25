@@ -3,7 +3,7 @@
 
 import { Prisma, type Center, type RegistryPatient } from '@prisma/client';
 import { prisma } from './db';
-import { blindIndex, decryptField } from './crypto';
+import { blindIndex, decryptField, encryptField, encryptNullable } from './crypto';
 import { writeAudit } from './audit';
 import { AuditAction, type CenterRoleValue } from './constants';
 import { RegistryApiError } from './guards';
@@ -15,7 +15,7 @@ import {
   getDecryptedRecord,
   type DecryptedRecord,
 } from './patients';
-import type { CaseInput, CentreIntakeInput } from './schemas';
+import type { CaseInput, CentreIntakeInput, CentrePatientUpdateInput } from './schemas';
 
 const PAGE_SIZE = 20;
 /** ponytail: name search decrypts this many newest records in memory; add a name-token blind index beyond it. */
@@ -168,6 +168,45 @@ export function registerViaIntake(
   ctx: { ip: string | null },
 ): Promise<{ trackingCode: string; patientId: string }> {
   return createEnrollment(input, ctx, { id: center.id });
+}
+
+/** Centre staff correcting contact details and recording consent. Scoped + audited. */
+export async function updateCentrePatient(
+  center: Center,
+  patientId: string,
+  input: CentrePatientUpdateInput,
+  ctx: { actorId: string; ip: string | null },
+): Promise<void> {
+  const owned = await prisma.registryPatient.findFirst({
+    where: { id: patientId, centerId: center.id },
+    select: { id: true },
+  });
+  if (!owned) throw new RegistryApiError(404, 'not-found');
+
+  const data: Prisma.RegistryPatientUpdateInput = {};
+  if (input.phone !== undefined) {
+    data.phone = encryptField(input.phone);
+    data.phoneHash = blindIndex(input.phone, 'phone');
+  }
+  if (input.altPhone !== undefined) data.altPhone = encryptNullable(input.altPhone);
+  if (input.email !== undefined) data.email = encryptNullable(input.email);
+  if (input.address !== undefined) data.address = encryptNullable(input.address);
+  if (input.consentContact !== undefined) data.consentContact = input.consentContact;
+  if (input.consentResearch !== undefined) data.consentResearch = input.consentResearch;
+  if (input.consentContact !== undefined || input.consentResearch !== undefined) {
+    data.consentAt = new Date();
+  }
+
+  await prisma.registryPatient.update({ where: { id: patientId }, data });
+  await writeAudit({
+    actorId: ctx.actorId,
+    actorRole: 'center',
+    action: AuditAction.CENTER_PATIENT_UPDATE,
+    entity: 'RegistryPatient',
+    entityId: patientId,
+    meta: { centerId: center.id, fields: Object.keys(data).filter((k) => k !== 'consentAt') },
+    ip: ctx.ip,
+  });
 }
 
 /** Audit that staff opened WhatsApp for a patient (no PII, no message text). */

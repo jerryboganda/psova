@@ -12,6 +12,7 @@ import { DocumentUpload } from '@/components/centres/DocumentUpload';
 import { NvarSharePanel } from '@/components/centres/NvarSharePanel';
 import { SendShareForm } from '@/components/centres/SendShareForm';
 import { WhatsAppButtons } from '@/components/centres/WhatsAppButtons';
+import { PatientEditForm } from '@/components/centres/PatientEditForm';
 import { getJourney } from '@/lib/registry/centre-journey';
 import { listDocuments } from '@/lib/registry/centre-documents';
 import { listPatientShares, listShareTargets } from '@/lib/registry/centre-sharing';
@@ -122,6 +123,24 @@ export default async function CentrePatientPage({
         <p className="mb-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-[var(--color-muted)]">
           {t('notSharedNvar')}
         </p>
+      )}
+
+      {canWrite && (
+        <GlassCard interactive={false} className="mb-6">
+          <h2 className="mb-1 text-lg font-bold">{t('editDetails')}</h2>
+          <p className="mb-4 text-sm text-[var(--color-muted)]">{t('editDetailsLede')}</p>
+          <PatientEditForm
+            patient={{
+              id: record.id,
+              phone: record.phone,
+              altPhone: record.altPhone,
+              email: record.email,
+              address: record.address,
+              consentContact: record.consent.contact,
+              consentResearch: record.consent.research,
+            }}
+          />
+        </GlassCard>
       )}
 
       <RecordView

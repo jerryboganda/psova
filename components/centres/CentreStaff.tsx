@@ -16,7 +16,7 @@ type Row = { id: string; name: string; email: string; role: string; active: bool
 const smallBtn =
   'inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold transition-colors hover:bg-white/10 disabled:opacity-60';
 
-export function CentreStaff() {
+export function CentreStaff({ readOnly = false }: { readOnly?: boolean }) {
   const t = useTranslations('Centres.staff');
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +86,12 @@ export function CentreStaff() {
 
   return (
     <div className="flex flex-col gap-8">
+      {readOnly && (
+        <p className="rounded-2xl border border-amber-400/30 bg-amber-400/5 px-4 py-3 text-sm text-amber-200">
+          {t('readOnly')}
+        </p>
+      )}
+      {!readOnly && (
       <form
         onSubmit={handleSubmit(invite)}
         noValidate
@@ -130,6 +136,7 @@ export function CentreStaff() {
           )}
         </div>
       </form>
+      )}
 
       <div className="overflow-hidden rounded-[var(--radius-2xl)] border border-white/10 bg-white/[0.02]">
         <h2 className="border-b border-white/10 px-6 py-4 text-lg font-semibold">{t('listTitle')}</h2>
@@ -146,9 +153,9 @@ export function CentreStaff() {
                   </p>
                   <p dir="ltr" className="truncate text-xs text-[var(--color-faint)]">{r.email}</p>
                 </div>
-                {r.isOwner ? (
+                {r.isOwner || readOnly ? (
                   <span className="rounded-full bg-[var(--color-cyan)]/15 px-3 py-1 text-xs font-semibold text-[var(--color-cyan)]">
-                    {t('roles.OWNER')}
+                    {t(`roles.${r.role}`)}
                   </span>
                 ) : (
                   <div className="flex flex-wrap items-center gap-2">

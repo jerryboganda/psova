@@ -10,7 +10,7 @@ const btn =
   'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-60';
 
 /** Done / missed / cancelled for a scheduled appointment (read-only once decided). */
-export function AppointmentActions({ id, status }: { id: string; status: string }) {
+export function AppointmentActions({ id, status, readOnly = false }: { id: string; status: string; readOnly?: boolean }) {
   const t = useTranslations('Centres.appointments');
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
@@ -36,6 +36,14 @@ export function AppointmentActions({ id, status }: { id: string; status: string 
 
   if (status !== 'SCHEDULED') {
     return <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-[var(--color-muted)]">{t(`statuses.${status}`)}</span>;
+  }
+
+  if (readOnly) {
+    return (
+      <span className="text-xs text-[var(--color-faint)]">
+        {t(`statuses.${status}`)} · {t('readOnly')}
+      </span>
+    );
   }
 
   return (

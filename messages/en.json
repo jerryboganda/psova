@@ -921,6 +921,7 @@
     },
     "overview": {
       "title": "Overview",
+      "emailOff": "Email delivery is not configured on this server. Approval notices and password reset emails will be skipped. Set SMTP_HOST, SMTP_USER and SMTP_PASS in the hosting panel. Temporary passwords still work.",
       "pending": "Pending review",
       "verified": "Verified",
       "rejected": "Rejected",
@@ -1034,6 +1035,12 @@
       "confirmRejectTitle": "Reject clinician",
       "confirmRejectBody": "This permanently deletes a pending application. If the clinician has cases, access is revoked instead.",
       "revoke": "Revoke",
+      "manage": "Manage",
+      "manageTitle": "Manage clinician",
+      "reset": "Send password reset",
+      "save": "Save changes",
+      "saved": "Clinician profile saved.",
+      "resetSent": "If email delivery is configured, a password reset link is on its way.",
       "confirmRevokeTitle": "Revoke clinician access",
       "confirmRevokeBody": "The account and its case history are kept, but the clinician can no longer sign in or submit cases until approved again.",
       "error": "That action could not be completed."
@@ -1510,6 +1517,7 @@
       "title": "Staff",
       "lede": "Invite your team. Each person gets their own login, so every action is traceable.",
       "inviteTitle": "Invite a team member",
+      "readOnly": "Membership has expired. Staff changes are read-only until the membership is renewed.",
       "inviteLede": "They receive an email with a link to set their password.",
       "name": "Full name",
       "email": "Email",
@@ -1547,6 +1555,7 @@
     },
     "profileEdit": {
       "title": "Centre profile",
+      "readOnly": "Membership has expired. Your profile is read-only until it is renewed.",
       "lede": "This is what patients see on your public page and in the directory.",
       "locked": "The centre name, licence number and head-doctor credentials can only be changed by PSOVA. Contact us if they need updating.",
       "save": "Save changes",
@@ -1620,6 +1629,15 @@
       "waTitle": "Send the tracking code on WhatsApp",
       "waNoConsent": "No contact consent recorded. Ask the patient before sending a message.",
       "notSharedNvar": "This record is private to your centre. It is not counted in NVAR or public statistics until you choose to share it.",
+      "editDetails": "Contact details and consent",
+      "editDetailsLede": "Correct the patient's phone, email or address, and record their consent choices.",
+      "phone": "Phone",
+      "altPhone": "Alternate phone",
+      "email": "Email",
+      "address": "Address",
+      "saveDetails": "Save details",
+      "savedDetails": "Details saved.",
+      "detailsError": "The details could not be saved. Check the phone number and try again.",
       "consentContact": "The patient agrees that the centre may contact them about appointments and care.",
       "consentResearch": "The patient agrees that anonymised data may be used for research (optional).",
       "timeline": {
@@ -1674,7 +1692,8 @@
       "booked": "Appointment booked.",
       "waReminder": "Send a reminder on WhatsApp",
       "waMissed": "Patient missed this visit: send a message on WhatsApp",
-      "waNoConsent": "No contact consent recorded. Ask the patient before sending a message."
+      "waNoConsent": "No contact consent recorded. Ask the patient before sending a message.",
+      "readOnly": "read-only until membership is renewed"
     },
     "visit": {
       "add": "Record a visit",

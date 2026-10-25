@@ -18,9 +18,11 @@ import { removeFile } from './storage';
 import { writeAudit } from './audit';
 import { AuditAction, type ActorRole } from './constants';
 import { sendEnrollmentConfirmation, sendClinicianApproval } from './mailer';
+import { auth } from './auth';
 import { RegistryApiError } from './guards';
 import { NVAR_VISIBLE, isNvarVisible } from './visibility';
 import type {
+  AdminClinicianUpdateInput,
   CaseInput,
   CasesQuery,
   EnrollInput,
@@ -1076,6 +1078,57 @@ export async function setClinicianApproval(
     entity: 'ClinicianProfile',
     entityId: id,
     meta: { province: profile.province },
+    ip: ctx.ip,
+  });
+}
+
+/** Admin edit of a clinician's public professional profile, or a password reset. */
+export async function updateClinicianByAdmin(
+  id: string,
+  input: AdminClinicianUpdateInput | { action: 'RESET' },
+  ctx: { adminId: string; ip: string | null },
+): Promise<void> {
+  const profile = await prisma.clinicianProfile.findUnique({
+    where: { id },
+    include: { user: { select: { name: true, email: true } } },
+  });
+  if (!profile) throw new RegistryApiError(404, 'not-found');
+
+  if (input.action === 'RESET') {
+    const site = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+    try {
+      await auth.api.requestPasswordReset({
+        body: { email: profile.user.email, redirectTo: `${site}/en/registry/reset-password` },
+      });
+    } catch (error) {
+      console.error('[clinician reset]', error instanceof Error ? error.message : error);
+      throw new RegistryApiError(503, 'unavailable');
+    }
+    await writeAudit({
+      actorId: ctx.adminId,
+      actorRole: 'admin',
+      action: AuditAction.CLINICIAN_RESET,
+      entity: 'ClinicianProfile',
+      entityId: id,
+      meta: { province: profile.province },
+      ip: ctx.ip,
+    });
+    return;
+  }
+
+  const data: Prisma.ClinicianProfileUpdateInput = {};
+  if (input.specialty !== undefined) data.specialty = input.specialty;
+  if (input.facility !== undefined) data.facility = input.facility;
+  if (input.city !== undefined) data.city = input.city;
+  if (input.province !== undefined) data.province = input.province;
+  await prisma.clinicianProfile.update({ where: { id }, data });
+  await writeAudit({
+    actorId: ctx.adminId,
+    actorRole: 'admin',
+    action: AuditAction.CLINICIAN_UPDATE,
+    entity: 'ClinicianProfile',
+    entityId: id,
+    meta: { fields: Object.keys(data) },
     ip: ctx.ip,
   });
 }

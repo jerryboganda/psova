@@ -1,6 +1,6 @@
 // PATCH /api/registry/admin/clinicians/[id] — approve/reject (API-SPEC §4).
-import { setClinicianApproval } from '@/lib/registry/patients';
-import { clinicianActionSchema } from '@/lib/registry/schemas';
+import { setClinicianApproval, updateClinicianByAdmin } from '@/lib/registry/patients';
+import { adminClinicianPatchSchema } from '@/lib/registry/schemas';
 import {
   apiError,
   apiOk,
@@ -18,9 +18,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const admin = await requireAdmin(req.headers);
     const { id } = await params;
     const raw = await req.json().catch(() => null);
-    const parsed = clinicianActionSchema.safeParse(raw);
+    const parsed = adminClinicianPatchSchema.safeParse(raw);
     if (!parsed.success) return apiError('validation', 400);
-    await setClinicianApproval(id, parsed.data, { adminId: admin.id, ip: getClientIp(req) });
+    if (parsed.data.action === 'UPDATE' || parsed.data.action === 'RESET') {
+      await updateClinicianByAdmin(id, parsed.data, { adminId: admin.id, ip: getClientIp(req) });
+    } else {
+      await setClinicianApproval(id, parsed.data, { adminId: admin.id, ip: getClientIp(req) });
+    }
     return apiOk();
   } catch (error) {
     return handleApiError(error);

@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Clock, CheckCircle2, XCircle, UserCog, Building2, CreditCard, HandHeart } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, UserCog, Building2, CreditCard, HandHeart, MailWarning } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
 import { StatCard } from '@/components/registry/StatCard';
 import { RegistryBadge } from '@/components/registry/RegistryBadge';
@@ -28,10 +28,18 @@ export default async function AdminOverviewPage({
     const c = CONDITIONS.find((x) => x.slug === slug);
     return c ? localized(c.name, locale) : slug;
   };
+  const emailConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 
   return (
     <Section>
       <h1 className="mb-6 text-2xl font-bold md:text-3xl">{t('overview.title')}</h1>
+
+      {!emailConfigured && (
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/5 px-4 py-3 text-sm text-amber-200">
+          <MailWarning className="mt-0.5 size-4 shrink-0" />
+          <p>{t('overview.emailOff')}</p>
+        </div>
+      )}
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label={t('overview.pending')} value={overview.pending} Icon={Clock} accent="var(--color-magenta)" />

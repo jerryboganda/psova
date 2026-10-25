@@ -308,6 +308,23 @@ export const clinicianActionSchema = z.object({
 });
 export type ClinicianActionInput = z.infer<typeof clinicianActionSchema>;
 
+export const adminClinicianUpdateSchema = z
+  .object({
+    action: z.literal('UPDATE'),
+    specialty: z.string().trim().min(2).max(80).optional(),
+    facility: z.string().trim().min(2).max(160).optional(),
+    city: z.string().trim().min(2).max(80).optional(),
+    province: z.enum(PROVINCES).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 1, { message: 'Nothing to update.', path: ['action'] });
+export type AdminClinicianUpdateInput = z.infer<typeof adminClinicianUpdateSchema>;
+
+export const adminClinicianPatchSchema = z.union([
+  clinicianActionSchema,
+  adminClinicianUpdateSchema,
+  z.object({ action: z.literal('RESET') }),
+]);
+
 /* -------------------------------------------------------------------------- */
 /*  List / query schemas (GET routes; values come from query strings)         */
 /* -------------------------------------------------------------------------- */
@@ -601,6 +618,29 @@ export const centerProfileSchema = z.object({
   conditions: z.array(z.enum(CONDITION_SLUGS)).min(1).max(CONDITION_SLUGS.length),
 });
 export type CenterProfileInput = z.infer<typeof centerProfileSchema>;
+
+/** Centre staff correcting a patient's contact details and recorded consent. */
+export const centrePatientUpdateSchema = z
+  .object({
+    phone: z.string().optional(),
+    altPhone: z.string().optional().or(z.literal('')),
+    email: z.string().email().optional().or(z.literal('')),
+    address: z.string().max(300).optional().or(z.literal('')),
+    consentContact: z.boolean().optional(),
+    consentResearch: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (Object.values(data).every((v) => v === undefined)) {
+      ctx.addIssue({ code: 'custom', path: ['phone'], message: 'Nothing to update.' });
+    }
+    if (data.phone && !isValidPkMobile(data.phone)) {
+      ctx.addIssue({ code: 'custom', path: ['phone'], message: 'Enter a valid Pakistani mobile number.' });
+    }
+    if (data.altPhone && !isValidPkMobile(data.altPhone)) {
+      ctx.addIssue({ code: 'custom', path: ['altPhone'], message: 'Enter a valid Pakistani mobile number.' });
+    }
+  });
+export type CentrePatientUpdateInput = z.infer<typeof centrePatientUpdateSchema>;
 
 export const resetPasswordSchema = z
   .object({
